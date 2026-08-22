@@ -1,26 +1,157 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --navy: #071526;
+  --navy-2: #0d2238;
+  --black: #02060d;
+  --gold: #d4af37;
+  --gold-light: #f1d27a;
+  --cream: #f7f5ef;
+  --muted: #a9b4c2;
+  --green: #4fb27a;
+  --yellow: #d6b650;
+  --red: #d35d5d;
+
+  --surface: color-mix(in srgb, var(--navy-2) 55%, transparent);
+  --surface-strong: color-mix(in srgb, var(--navy-2) 78%, transparent);
+  --hairline: color-mix(in srgb, var(--gold) 16%, transparent);
+  --hairline-strong: color-mix(in srgb, var(--gold) 30%, transparent);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --font-sans: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-navy: var(--navy);
+  --color-navy-2: var(--navy-2);
+  --color-black: var(--black);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-cream: var(--cream);
+  --color-muted: var(--muted);
+  --color-green: var(--green);
+  --color-yellow: var(--yellow);
+  --color-red: var(--red);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(ellipse 1200px 800px at 15% -10%, color-mix(in srgb, var(--gold) 7%, transparent), transparent 60%),
+    radial-gradient(ellipse 900px 700px at 100% 0%, color-mix(in srgb, var(--navy-2) 90%, transparent), transparent 55%),
+    var(--black);
+  background-attachment: fixed;
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  border-color: var(--hairline);
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--gold) 20%, var(--navy-2));
+  border-radius: 8px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--gold) 30%, transparent);
+  color: var(--cream);
+}
+
+.font-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===========================================================
+   Glass surface — the one visual primitive every panel/card/
+   sidebar/modal in this app is built from. Backdrop blur, a
+   low-opacity gold hairline border, and a soft inner top
+   highlight so edges catch light. Small radius — crisp, not
+   pill-shaped. Keep density tight; this is not a spacious
+   marketing-page aesthetic.
+   =========================================================== */
+.glass-panel {
+  background: var(--surface);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--gold) 14%, transparent),
+    0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+
+.glass-panel-strong {
+  background: var(--surface-strong);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--gold) 18%, transparent),
+    0 24px 60px -20px rgba(0, 0, 0, 0.7);
+}
+
+.glow-gold-hover {
+  transition: box-shadow 150ms ease, transform 150ms ease, background 150ms ease;
+}
+.glow-gold-hover:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 55%, transparent), 0 0 22px -4px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+
+.glow-gold-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--gold), 0 0 0 4px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+
+.row-hover-lift {
+  transition: transform 120ms ease, background 120ms ease;
+}
+.row-hover-lift:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--gold) 6%, transparent);
+}
+
+@keyframes fade-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.fade-scale-in {
+  animation: fade-scale-in 160ms ease-out;
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 16px color-mix(in srgb, var(--gold) 45%, transparent);
 }

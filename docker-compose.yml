@@ -1,0 +1,20 @@
+services:
+  verus-os:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+    container_name: verus-os
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    ports:
+      - "3009:3000"
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
+    name: command-center-proxy_default
