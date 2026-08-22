@@ -31,9 +31,16 @@ export async function getMyProfile(userId: string): Promise<ProfileResult> {
     .maybeSingle();
 
   if (error) {
-    // Postgres "undefined_table" — the migrations haven't been run yet.
-    if (error.code === "42P01") return { status: "not_configured" };
-    return { status: "not_configured" };
+    // "Table doesn't exist yet" can surface two ways: Postgres's own
+    // undefined_table error (42P01), or PostgREST's schema-cache miss
+    // (PGRST205) when a table was created via a direct DATABASE_URL
+    // migration rather than the Supabase SQL Editor and the cache hasn't
+    // reloaded. Both genuinely mean "not configured yet." Any other error
+    // is a real problem — it must not be silently relabeled as "not
+    // configured", which would hide the actual failure behind a
+    // misleading "run the migrations" banner.
+    if (error.code === "42P01" || error.code === "PGRST205") return { status: "not_configured" };
+    throw error;
   }
   if (!data) return { status: "not_found" };
   return { status: "ok", profile: data as Profile };

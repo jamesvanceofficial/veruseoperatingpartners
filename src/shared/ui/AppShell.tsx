@@ -71,16 +71,18 @@ export function AppShell({
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="glass-panel flex items-center justify-between rounded-none border-x-0 border-t-0 px-6 py-3">
-          <span className="text-[11px] uppercase tracking-[0.18em] text-[var(--muted)]">COMPASS</span>
-          <div className="flex items-center gap-3 text-right">
-            <div>
-              <p className="text-[12.5px] font-medium text-[var(--cream)]">{userName}</p>
-              <p className="text-[11px] text-[var(--muted)]">{userEmail}</p>
+        <header className="glass-panel rounded-none border-x-0 border-t-0 py-3">
+          <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-8">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-[var(--muted)]">COMPASS</span>
+            <div className="flex items-center gap-3 text-right">
+              <div>
+                <p className="text-[12.5px] font-medium text-[var(--cream)]">{userName}</p>
+                <p className="text-[11px] text-[var(--muted)]">{userEmail}</p>
+              </div>
+              <span className="rounded-[var(--radius-sm)] border border-[var(--hairline-strong)] px-2 py-1 text-[10.5px] font-medium uppercase tracking-wide text-[var(--gold-light)]">
+                {roleLabel}
+              </span>
             </div>
-            <span className="rounded-[var(--radius-sm)] border border-[var(--hairline-strong)] px-2 py-1 text-[10.5px] font-medium uppercase tracking-wide text-[var(--gold-light)]">
-              {roleLabel}
-            </span>
           </div>
         </header>
 

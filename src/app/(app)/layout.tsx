@@ -17,10 +17,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const profileResult = await getMyProfile(user.id);
 
-  // The database migrations haven't been run yet in the Supabase SQL
-  // Editor — render the shell anyway rather than crash, with a small
-  // non-blocking banner explaining why nothing is personalized yet.
-  const notConfigured = profileResult.status === "not_configured" || profileResult.status === "not_found";
+  // The database migrations haven't been run yet — render the shell anyway
+  // rather than crash, with a small non-blocking banner explaining why
+  // nothing is personalized yet. This is distinct from "not_found" (an
+  // authenticated user with no profile row) — the DB can be fully
+  // configured while that's true, so it must not trigger this banner.
+  const notConfigured = profileResult.status === "not_configured";
   const profile = profileResult.status === "ok" ? profileResult.profile : null;
 
   return (
@@ -32,9 +34,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       roleLabel={profile ? (ROLE_LABELS[profile.role] ?? profile.role) : "Unassigned"}
       banner={
         notConfigured ? (
-          <div className="border-b border-[var(--hairline)] bg-[color-mix(in_srgb,var(--yellow)_10%,transparent)] px-6 py-2 text-[11.5px] text-[var(--yellow)]">
-            Database not set up yet — run the migrations in supabase/migrations under the Supabase SQL Editor to
-            unlock roles and org scoping.
+          <div className="border-b border-[var(--hairline)] bg-[color-mix(in_srgb,var(--yellow)_10%,transparent)]">
+            <div className="mx-auto w-full max-w-[1400px] px-8 py-2 text-[11.5px] text-[var(--yellow)]">
+              Database not set up yet — run the migrations in supabase/migrations against DATABASE_URL to unlock
+              roles and org scoping.
+            </div>
           </div>
         ) : undefined
       }
