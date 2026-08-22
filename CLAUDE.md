@@ -20,6 +20,16 @@ get built yet — no placeholder screens for future stages beyond an honest
 empty shell if one was explicitly asked for, no speculative schema, no
 "while I'm in here" additions.
 
+## Standing rules
+
+- Never use Playwright, Puppeteer, headless browsers, or screenshots to
+  verify work. Verification is limited to: `npm run typecheck`,
+  `npm run build`, `curl` for status codes, reading files, and direct
+  database queries. James does the visual checking.
+- No background agents. Work in the foreground so failures surface
+  immediately.
+- Do not install browser-testing packages.
+
 ## Naming / hosting (decided — do not deviate)
 
 - Folder: `/opt/verus-os`
@@ -86,13 +96,14 @@ Four roles (`src/shared/roles.ts`): `verus_admin`, `verus_staff`,
 
 ## Migrations rule
 
-**Never attempt DDL from the app — there is no `DATABASE_URL` wired to any
-tool here, and even if one existed, schema changes are SQL files under
-`supabase/migrations/`, numbered sequentially, additive only (never drop/
-rename a column in place). James runs every migration himself in the
-Supabase SQL Editor.** This project has the automatic-RLS event trigger
-enabled — every new table starts with RLS ON and returns nothing until you
-write an explicit policy for it. Never ship a table without one.
+**Every schema change lands as a numbered SQL file under
+`supabase/migrations/` first, additive only (never drop/rename a column in
+place).** Migrations are then run directly against `DATABASE_URL` (present
+in `.env.local`, gitignored) — the file is still the source of truth and
+must exist and be committed before (or in the same change as) running it.
+This project has the automatic-RLS event trigger enabled — every new table
+starts with RLS ON and returns nothing until you write an explicit policy
+for it. Never ship a table without one.
 
 The app must degrade gracefully when a migration hasn't been run yet
 (`relation does not exist`, Postgres error code `42P01`) — see
