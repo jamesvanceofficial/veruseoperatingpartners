@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
 import { FormField, Input, Select } from "@/shared/ui/FormField";
-import { cn } from "@/shared/ui/cn";
 import { REVENUE_RANGES } from "./labels";
 import { QuickScanResult } from "./QuickScanResult";
+import { AnswerOptionButton } from "./AnswerOptionButton";
 import type { Question } from "./types";
 
 type Step = "intake" | "questions" | "result";
@@ -131,22 +131,14 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
               {q.answer_options
                 .slice()
                 .sort((a, b) => a.value - b.value)
-                .map((opt) => {
-                  const selected = answers[q.id] === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.value }))}
-                      className={cn(
-                        "field-control glow-gold-hover rounded-[var(--radius-sm)] px-3.5 py-2.5 text-left text-[12.5px] transition-colors",
-                        selected ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_14%,var(--navy))] text-[var(--cream)]" : "text-[var(--muted)]"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
+                .map((opt) => (
+                  <AnswerOptionButton
+                    key={opt.value}
+                    option={opt}
+                    selected={answers[q.id] === opt.value}
+                    onSelect={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.value }))}
+                  />
+                ))}
             </div>
           </Card>
         ))}

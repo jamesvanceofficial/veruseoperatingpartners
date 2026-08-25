@@ -7,6 +7,7 @@ import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { computeScores } from "./scoring";
+import { AnswerOptionButton } from "./AnswerOptionButton";
 import type { Category, Question } from "./types";
 
 /**
@@ -173,23 +174,15 @@ export function AssessmentRunner({
                     {q.answer_options
                       .slice()
                       .sort((a, b) => a.value - b.value)
-                      .map((opt) => {
-                        const selected = answers[q.id] === opt.value;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => handleAnswer(q, opt.value)}
-                            disabled={savingId === q.id}
-                            className={cn(
-                              "field-control glow-gold-hover rounded-[var(--radius-sm)] px-3.5 py-2.5 text-left text-[12.5px] transition-colors",
-                              selected ? "border-[var(--gold)] bg-[color-mix(in_srgb,var(--gold)_14%,var(--navy))] text-[var(--cream)]" : "text-[var(--muted)]"
-                            )}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
+                      .map((opt) => (
+                        <AnswerOptionButton
+                          key={opt.value}
+                          option={opt}
+                          selected={answers[q.id] === opt.value}
+                          disabled={savingId === q.id}
+                          onSelect={() => handleAnswer(q, opt.value)}
+                        />
+                      ))}
                   </div>
                 </div>
               ))}
