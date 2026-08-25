@@ -2,14 +2,7 @@ import { notFound } from "next/navigation";
 import { BrandMark } from "@/shared/ui/BrandMark";
 import { Badge } from "@/shared/ui/Badge";
 import { createAdminClient } from "@/shared/supabase/admin";
-import {
-  getAssessmentByToken,
-  getAssessmentReport,
-  getCategories,
-  getBands,
-  getQuestionsForType,
-  getAnswersMap,
-} from "@/modules/assessments/data";
+import { getAssessmentByToken, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap } from "@/modules/assessments/data";
 import { ASSESSMENT_TYPE_LABELS } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -82,9 +75,8 @@ async function PublicRunner({
   assessmentType: "quick_scan" | "full";
   token: string;
 }) {
-  const [categories, bands, questions, answersMap] = await Promise.all([
+  const [categories, questions, answersMap] = await Promise.all([
     getCategories(admin),
-    getBands(admin),
     getQuestionsForType(admin, assessmentType),
     getAnswersMap(admin, assessmentId),
   ]);
@@ -93,7 +85,6 @@ async function PublicRunner({
     <AssessmentRunner
       categories={categories}
       questions={questions}
-      bands={bands}
       initialAnswers={Object.fromEntries(answersMap)}
       saveUrl={`/api/public/assessment/${token}/answer`}
       completeUrl={`/api/public/assessment/${token}/complete`}

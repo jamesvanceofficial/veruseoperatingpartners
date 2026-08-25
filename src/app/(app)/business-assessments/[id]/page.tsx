@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
-import { getAssessmentById, getAssessmentReport, getCategories, getBands, getQuestionsForType, getAnswersMap } from "@/modules/assessments/data";
+import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap } from "@/modules/assessments/data";
 import { ASSESSMENT_TYPE_LABELS, ASSESSMENT_STATUS_LABELS, ASSESSMENT_STATUS_TONE } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -91,9 +91,8 @@ async function Runner({
   assessmentId: string;
   assessmentType: "quick_scan" | "full";
 }) {
-  const [categories, bands, questions, answersMap] = await Promise.all([
+  const [categories, questions, answersMap] = await Promise.all([
     getCategories(supabase),
-    getBands(supabase),
     getQuestionsForType(supabase, assessmentType),
     getAnswersMap(supabase, assessmentId),
   ]);
@@ -102,7 +101,6 @@ async function Runner({
     <AssessmentRunner
       categories={categories}
       questions={questions}
-      bands={bands}
       initialAnswers={Object.fromEntries(answersMap)}
       saveUrl={`/api/assessments/${assessmentId}/answer`}
       completeUrl={`/api/assessments/${assessmentId}/complete`}

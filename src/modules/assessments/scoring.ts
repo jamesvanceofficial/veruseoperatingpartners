@@ -5,8 +5,22 @@
 // fixed to a bank size, which is what makes that possible.
 //
 //   category score  = sum(answers) / (questions answered × 3) × 10
-//   enterprise score = sum over categories of (category score / 10 × weight)
+//   enterprise score = sum of (category score / 10 × weight) for every
+//                      category with at least one answer, DIVIDED BY the
+//                      sum of THOSE categories' weights, × 100
 //   bottleneck rank  = (10 − category score) × weight, highest first
+//
+// A category with zero answers is excluded entirely — never counted as a
+// zero. The division by answered-weight (not the full 100) is what makes
+// the in-progress score meaningful instead of just "how much of the whole
+// 100-point budget have you touched so far": with only Vision (weight 3)
+// answered and a perfect 10/10 in it, the old un-normalized formula gave
+// enterpriseScore = 3 (reads as a near-failing score); this gives 100
+// (correct — the one thing measured so far is perfect). Once every
+// category has at least one answer, answered-weight always equals 100 (the
+// locked category weights sum to exactly that), so this collapses to
+// literally the same number the old un-normalized formula produced — the
+// final, complete-assessment score is mathematically unchanged.
 
 export type ScoredAnswer = { categoryId: string; weight: number; value: number };
 
@@ -33,12 +47,14 @@ export function computeScores(answers: ScoredAnswer[]): { enterpriseScore: numbe
   }
 
   const categories: CategoryComputed[] = [];
-  let enterpriseScoreRaw = 0;
+  let weightedSum = 0;
+  let answeredWeight = 0;
 
   for (const [categoryId, { sum, count, weight }] of buckets) {
     const rawScore = count > 0 ? (sum / (count * 3)) * 10 : 0;
     const weightedScore = (rawScore / 10) * weight;
-    enterpriseScoreRaw += weightedScore;
+    weightedSum += weightedScore;
+    answeredWeight += weight;
     categories.push({
       categoryId,
       rawScore: round1(rawScore),
@@ -48,6 +64,8 @@ export function computeScores(answers: ScoredAnswer[]): { enterpriseScore: numbe
       bottleneckRank: 0, // assigned below
     });
   }
+
+  const enterpriseScoreRaw = answeredWeight > 0 ? (weightedSum / answeredWeight) * 100 : 0;
 
   // Highest (10 − score) × weight = biggest weighted gap = rank 1.
   const byBottleneck = [...categories].sort((a, b) => (10 - a.rawScore) * a.weight < (10 - b.rawScore) * b.weight ? 1 : -1);

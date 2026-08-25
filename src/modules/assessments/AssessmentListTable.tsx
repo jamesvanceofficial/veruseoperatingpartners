@@ -31,7 +31,12 @@ export function AssessmentListTable({ rows, showOrgColumn = true }: { rows: Asse
       : []),
     { key: "status", header: "Status", render: (row) => <Badge tone={ASSESSMENT_STATUS_TONE[row.status]}>{ASSESSMENT_STATUS_LABELS[row.status]}</Badge> },
     { key: "score", header: "Score", align: "right", render: (row) => row.enterprise_score ?? "—" },
-    { key: "band", header: "Band", render: (row) => row.bandLabel ?? "—" },
+    // Band only ever shows once completed — a band on an in-progress row
+    // implies a read that isn't final yet, which is exactly what's
+    // misleading. The Status column already says "In Progress" right
+    // next to it, so the score itself stays visible (it's a real,
+    // correctly-computed provisional number since the scoring fix).
+    { key: "band", header: "Band", render: (row) => (row.status === "completed" ? (row.bandLabel ?? "—") : "—") },
     { key: "created_at", header: "Started", render: (row) => formatDate(row.created_at) },
   ];
 

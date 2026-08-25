@@ -7,26 +7,32 @@ import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { computeScores } from "./scoring";
-import type { Category, Band, Question } from "./types";
+import type { Category, Question } from "./types";
 
 /**
  * Shared by both the staff-authenticated runner (/business-assessments/[id])
  * and the public share-link runner (/assessment/[token]) — only saveUrl/
  * completeUrl differ. The live score is computed client-side with the same
- * pure scoring.ts the server uses, so it updates instantly with no round
- * trip; the server save is still the source of truth once persisted.
+ * pure scoring.ts the server uses (categories with zero answers are
+ * excluded entirely, never counted as zero — see scoring.ts), so it
+ * updates instantly with no round trip; the server save is still the
+ * source of truth once persisted.
+ *
+ * This component only ever renders while the assessment is NOT complete
+ * (the parent page swaps to the report view once it is), so the band is
+ * never shown here — a band implies "this is the read," and nothing here
+ * is final. The score itself is always labeled provisional for the same
+ * reason.
  */
 export function AssessmentRunner({
   categories,
   questions,
-  bands,
   initialAnswers,
   saveUrl,
   completeUrl,
 }: {
   categories: Category[];
   questions: Question[];
-  bands: Band[];
   initialAnswers: Record<string, number>;
   saveUrl: string;
   completeUrl: string;
@@ -43,7 +49,7 @@ export function AssessmentRunner({
     return categories.filter((c) => categoryIdsInUse.includes(c.id)).map((c) => ({ category: c, questions: questions.filter((q) => q.category_id === c.id) }));
   }, [categories, questions]);
 
-  const { enterpriseScore, categories: liveCategories } = useMemo(() => {
+  const { enterpriseScore } = useMemo(() => {
     const weightByCategory = new Map(categories.map((c) => [c.id, c.weight]));
     const scored = Object.entries(answers).map(([questionId, value]) => {
       const q = questions.find((qq) => qq.id === questionId);
@@ -52,11 +58,10 @@ export function AssessmentRunner({
     return computeScores(scored);
   }, [answers, categories, questions]);
 
-  const currentBand = useMemo(() => bands.find((b) => enterpriseScore >= b.min_score && enterpriseScore <= b.max_score) ?? null, [bands, enterpriseScore]);
-
   const answeredCount = Object.keys(answers).length;
   const totalCount = questions.length;
   const complete = answeredCount === totalCount;
+  const halfway = totalCount > 0 && answeredCount / totalCount >= 0.5;
 
   async function handleAnswer(question: Question, value: number) {
     setError(null);
@@ -103,9 +108,15 @@ export function AssessmentRunner({
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
       <div className="flex flex-col gap-4 lg:sticky lg:top-8 lg:self-start">
         <Card className="flex flex-col gap-1.5">
-          <span className="section-label">Live Score</span>
-          <span className="font-tabular text-[28px] font-semibold leading-none text-[var(--gold-light)]">{enterpriseScore}</span>
-          <span className="text-[11px] text-[var(--muted)]">{currentBand ? currentBand.label : "Not enough answers yet"}</span>
+          <span className="section-label">Provisional Score</span>
+          <span className="font-tabular text-[28px] font-semibold leading-none text-[var(--gold-light)]">{answeredCount > 0 ? enterpriseScore : "—"}</span>
+          <span className="text-[11px] text-[var(--muted)]">
+            {answeredCount === 0
+              ? "Answer a few questions to see a provisional score"
+              : halfway
+                ? "Provisional — the band appears once the assessment is complete"
+                : "Too early to be meaningful yet — keep going"}
+          </span>
         </Card>
 
         <Card className="flex flex-col gap-2">

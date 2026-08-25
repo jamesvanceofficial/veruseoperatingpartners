@@ -12,6 +12,37 @@ Assessment → Enterprise Score → Build Recommendation → Proposal → Build
 Package → Client Onboarding → Projects → Tasks → Meetings → KPIs → Support
 Subscription → Retention/Upsell.
 
+## Definition of done (standing rule — every task, every time, unasked)
+
+A task is **not done** until every one of these has actually happened, in
+this order:
+
+1. Coded.
+2. `npm run typecheck` — clean.
+3. `npm run build` — clean.
+4. Deployed — `bash deploy.sh`.
+5. Container confirmed healthy — `docker ps` shows `healthy`, and
+   `docker logs verus-os --tail N` shows no new errors from the deploy.
+6. Verified working on the live site — `curl` status checks against the
+   actual running container at minimum; a real end-to-end exercise of the
+   changed behavior (e.g. hitting the actual API route, not just guessing
+   from the code) whenever the change is reachable that way. If something
+   fails here, fix it and re-run from step 2 — do not commit a fix you
+   haven't rebuilt and reverified.
+7. Committed — `git add -A` (never selective/partial staging — everything
+   changed goes in) and pushed to `origin/main`.
+8. **Drift check** — after pushing, confirm local and remote agree and
+   that what's running is what's committed:
+   - `git status --short` is empty (nothing left uncommitted).
+   - `git rev-parse HEAD` matches `git rev-parse origin/main` (the push
+     actually landed and origin/main is what you think it is).
+   - No edits were made to the working tree between the deploy in step 4
+     and the commit in step 7 — the commit must capture exactly what was
+     deployed and verified, not a "close enough" approximation of it.
+
+Never report work as finished before this entire chain has completed.
+Never stop partway and describe remaining steps as if they were done.
+
 ## Scope rule
 
 **Never build anything not explicitly requested.** This product is built in
