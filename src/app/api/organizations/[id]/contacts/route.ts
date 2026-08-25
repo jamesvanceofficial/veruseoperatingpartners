@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { requireStaff } from "@/shared/apiGuards";
 import { createAdminClient } from "@/shared/supabase/admin";
+import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { emptyToNull } from "@/shared/format";
 import { CONTACT_ROLES, type ContactRole } from "@/modules/organizations/labels";
+
+/** Powers the opportunity form's org-dependent contact dropdown. RLS-scoped read via the request-scoped client — no staff guard needed, same as any other page fetch. */
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id: orgId } = await params;
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase.from("contacts").select("id, full_name").eq("org_id", orgId).order("full_name", { ascending: true });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ data: data ?? [] });
+}
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireStaff();

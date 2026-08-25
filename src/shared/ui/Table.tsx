@@ -2,7 +2,7 @@ import { cn } from "./cn";
 
 export type TableColumn<T> = {
   key: string;
-  header: string;
+  header: React.ReactNode;
   align?: "left" | "right";
   render?: (row: T) => React.ReactNode;
 };

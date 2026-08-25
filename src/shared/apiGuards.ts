@@ -7,7 +7,7 @@ import { isVerusStaff } from "@/shared/roles";
  * profiles.role → reject before doing anything with the admin client. See
  * /api/settings/brand-logo/route.ts, the original example this factors out.
  */
-export async function requireStaff(): Promise<{ ok: true } | { ok: false; response: NextResponse }> {
+export async function requireStaff(): Promise<{ ok: true; userId: string } | { ok: false; response: NextResponse }> {
   const user = await getSessionUser();
   if (!user) {
     return { ok: false, response: NextResponse.json({ error: "Your session expired — reload and try again." }, { status: 401 }) };
@@ -28,5 +28,5 @@ export async function requireStaff(): Promise<{ ok: true } | { ok: false; respon
     return { ok: false, response: NextResponse.json({ error: "Only VERUS admins/staff can do this." }, { status: 403 }) };
   }
 
-  return { ok: true };
+  return { ok: true, userId: user.id };
 }

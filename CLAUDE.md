@@ -154,9 +154,11 @@ today, no exceptions.
   role, bypasses RLS; no RLS write policy needed or added).
 - `contacts` — org_id, full_name, title, contact_role, email, phone,
   is_primary, notes.
-- `opportunities` — org_id, primary_contact_id, stage (Lead → ... →
+- `opportunities` — org_id, name, primary_contact_id, stage (Lead → ... →
   Support Subscription Active / Lost / Nurture), owner, source,
-  expected_value, probability, lost_reason, stage_changed_at.
+  expected_value, probability, pain_points, business_goals, next_action,
+  next_action_date, notes, lost_reason, stage_changed_at (Stage 6 added
+  name/pain_points/business_goals/next_action/next_action_date/notes).
 - `opportunity_stage_history` — immutable append log of stage transitions.
   Insert-only (staff); no update/delete policy exists at all.
 - `assessment_categories` — the 10 VERUS categories, seeded with locked
