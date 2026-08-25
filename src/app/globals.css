@@ -124,6 +124,17 @@ h1, h2, h3, h4 {
   margin-inline: calc(-1 * var(--page-pad));
 }
 
+/* 48px a side was sized for the desktop app shell — on a 375px phone
+   that's a quarter of the screen gone to padding before anything can
+   render. --page-pad is the one variable both .page-container and
+   .bleed-x key off, so redefining it here keeps every page (and the
+   kanban board's bleed math) correctly in sync automatically. */
+@media (max-width: 640px) {
+  :root {
+    --page-pad: 20px;
+  }
+}
+
 /* ===========================================================
    Glass surface — the one visual primitive every panel/card/sidebar/
    modal in this app is built from. A faint top-to-bottom gradient (not

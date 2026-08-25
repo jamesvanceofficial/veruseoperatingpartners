@@ -106,106 +106,135 @@ export function AssessmentRunner({
   const activeSection = sections[sectionIndex];
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
-      <div className="flex flex-col gap-4 lg:sticky lg:top-8 lg:self-start">
-        <Card className="flex flex-col gap-1.5">
-          <span className="section-label">Provisional Score</span>
-          <span className="font-tabular text-[28px] font-semibold leading-none text-[var(--gold-light)]">{answeredCount > 0 ? enterpriseScore : "—"}</span>
-          <span className="text-[11px] text-[var(--muted)]">
-            {answeredCount === 0
-              ? "Answer a few questions to see a provisional score"
-              : halfway
-                ? "Provisional — the band appears once the assessment is complete"
-                : "Too early to be meaningful yet — keep going"}
-          </span>
-        </Card>
-
-        <Card className="flex flex-col gap-2">
+    <div className="flex flex-col gap-4">
+      {/* Mobile-only: the full sidebar below collapses to this one compact
+          bar so the questions start near the top of the screen instead of
+          below three stacked cards. */}
+      <Card className="flex flex-col gap-2 lg:hidden">
+        <div className="flex items-center justify-between gap-3">
           <span className="section-label">Progress</span>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--navy)]">
-            <div className="h-full rounded-full bg-[var(--gold)] transition-[width] duration-150 ease-out" style={{ width: `${totalCount > 0 ? (answeredCount / totalCount) * 100 : 0}%` }} />
-          </div>
-          <span className="text-[11px] text-[var(--muted)]">
-            {answeredCount} of {totalCount} answered
-          </span>
-        </Card>
+          <span className="font-tabular text-[13px] font-semibold text-[var(--gold-light)]">{answeredCount > 0 ? `${enterpriseScore} · provisional` : "—"}</span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--navy)]">
+          <div className="h-full rounded-full bg-[var(--gold)] transition-[width] duration-150 ease-out" style={{ width: `${totalCount > 0 ? (answeredCount / totalCount) * 100 : 0}%` }} />
+        </div>
+        <span className="text-[11px] text-[var(--muted)]">
+          {answeredCount} of {totalCount} answered
+        </span>
+      </Card>
 
-        <Card className="flex flex-col gap-1 p-2">
-          {sections.map((s, i) => {
-            const sectionAnswered = s.questions.filter((q) => answers[q.id] !== undefined).length;
-            const done = sectionAnswered === s.questions.length;
-            return (
-              <button
-                key={s.category.id}
-                type="button"
-                onClick={() => setSectionIndex(i)}
-                className={cn(
-                  "row-hover-lift flex items-center justify-between gap-2 rounded-[var(--radius-sm)] px-2.5 py-2 text-left text-[12px] transition-colors",
-                  i === sectionIndex ? "text-[var(--gold-light)]" : "text-[var(--muted)]"
-                )}
-              >
-                <span>{s.category.name}</span>
-                <span className={cn("font-tabular text-[10.5px]", done && "text-[var(--green)]")}>
-                  {sectionAnswered}/{s.questions.length}
-                </span>
-              </button>
-            );
-          })}
-        </Card>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {error ? <p className="text-[12.5px] text-[var(--red)]">{error}</p> : null}
-
-        {activeSection ? (
-          <Card className="flex flex-col gap-6">
-            <div>
-              <span className="section-label">
-                Section {sectionIndex + 1} of {sections.length}
-              </span>
-              <h2 className="mt-1 text-[17px] font-semibold text-[var(--cream)]">{activeSection.category.name}</h2>
-            </div>
-
-            <div className="flex flex-col gap-6">
-              {activeSection.questions.map((q) => (
-                <div key={q.id} className="flex flex-col gap-2.5">
-                  <p className="text-[13.5px] font-medium text-[var(--cream)]">{q.question_text}</p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {q.answer_options
-                      .slice()
-                      .sort((a, b) => a.value - b.value)
-                      .map((opt) => (
-                        <AnswerOptionButton
-                          key={opt.value}
-                          option={opt}
-                          selected={answers[q.id] === opt.value}
-                          disabled={savingId === q.id}
-                          onSelect={() => handleAnswer(q, opt.value)}
-                        />
-                      ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-between gap-3">
-              <Button type="button" variant="ghost" disabled={sectionIndex === 0} onClick={() => setSectionIndex((i) => Math.max(0, i - 1))}>
-                Previous section
-              </Button>
-              {sectionIndex < sections.length - 1 ? (
-                <Button type="button" variant="secondary" onClick={() => setSectionIndex((i) => Math.min(sections.length - 1, i + 1))}>
-                  Next section
-                </Button>
-              ) : null}
-            </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
+        <div className="hidden flex-col gap-4 lg:sticky lg:top-8 lg:flex lg:self-start">
+          <Card className="flex flex-col gap-1.5">
+            <span className="section-label">Provisional Score</span>
+            <span className="font-tabular text-[28px] font-semibold leading-none text-[var(--gold-light)]">{answeredCount > 0 ? enterpriseScore : "—"}</span>
+            <span className="text-[11px] text-[var(--muted)]">
+              {answeredCount === 0
+                ? "Answer a few questions to see a provisional score"
+                : halfway
+                  ? "Provisional — the band appears once the assessment is complete"
+                  : "Too early to be meaningful yet — keep going"}
+            </span>
           </Card>
-        ) : null}
 
-        <div className="flex items-center gap-3">
-          <Button type="button" variant="primary" loading={submitting} disabled={!complete} onClick={handleSubmit}>
-            Submit assessment
-          </Button>
-          {!complete ? <span className="text-[11.5px] text-[var(--muted)]">Answer every question to submit.</span> : null}
+          <Card className="flex flex-col gap-2">
+            <span className="section-label">Progress</span>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--navy)]">
+              <div className="h-full rounded-full bg-[var(--gold)] transition-[width] duration-150 ease-out" style={{ width: `${totalCount > 0 ? (answeredCount / totalCount) * 100 : 0}%` }} />
+            </div>
+            <span className="text-[11px] text-[var(--muted)]">
+              {answeredCount} of {totalCount} answered
+            </span>
+          </Card>
+
+          <Card className="flex flex-col gap-1 p-2">
+            {sections.map((s, i) => {
+              const sectionAnswered = s.questions.filter((q) => answers[q.id] !== undefined).length;
+              const done = sectionAnswered === s.questions.length;
+              return (
+                <button
+                  key={s.category.id}
+                  type="button"
+                  onClick={() => setSectionIndex(i)}
+                  className={cn(
+                    "row-hover-lift flex items-center justify-between gap-2 rounded-[var(--radius-sm)] px-2.5 py-2 text-left text-[12px] transition-colors",
+                    i === sectionIndex ? "text-[var(--gold-light)]" : "text-[var(--muted)]"
+                  )}
+                >
+                  <span>{s.category.name}</span>
+                  <span className={cn("font-tabular text-[10.5px]", done && "text-[var(--green)]")}>
+                    {sectionAnswered}/{s.questions.length}
+                  </span>
+                </button>
+              );
+            })}
+          </Card>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {error ? <p className="text-[12.5px] text-[var(--red)]">{error}</p> : null}
+
+          {activeSection ? (
+            <Card className="flex flex-col gap-6">
+              <div>
+                <span className="section-label">
+                  Section {sectionIndex + 1} of {sections.length}
+                </span>
+                <h2 className="mt-1 text-[17px] font-semibold text-[var(--cream)]">{activeSection.category.name}</h2>
+              </div>
+
+              <div className="flex flex-col gap-6">
+                {activeSection.questions.map((q) => (
+                  <div key={q.id} className="flex flex-col gap-2.5">
+                    <p className="text-[13.5px] font-medium text-[var(--cream)]">{q.question_text}</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {q.answer_options
+                        .slice()
+                        .sort((a, b) => a.value - b.value)
+                        .map((opt) => (
+                          <AnswerOptionButton
+                            key={opt.value}
+                            option={opt}
+                            selected={answers[q.id] === opt.value}
+                            disabled={savingId === q.id}
+                            onSelect={() => handleAnswer(q, opt.value)}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={sectionIndex === 0}
+                  onClick={() => setSectionIndex((i) => Math.max(0, i - 1))}
+                  className="w-full py-3 sm:w-auto"
+                >
+                  Previous section
+                </Button>
+                {sectionIndex < sections.length - 1 ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setSectionIndex((i) => Math.min(sections.length - 1, i + 1))}
+                    className="w-full py-3 sm:w-auto"
+                  >
+                    Next section
+                  </Button>
+                ) : null}
+              </div>
+            </Card>
+          ) : null}
+
+          <div className="flex flex-col items-start gap-3">
+            <Button type="button" variant="primary" loading={submitting} disabled={!complete} onClick={handleSubmit} className="w-full py-3.5 sm:w-auto">
+              Submit assessment
+            </Button>
+            {!complete ? <span className="text-[11.5px] text-[var(--muted)]">Answer every question to submit.</span> : null}
+          </div>
         </div>
       </div>
     </div>

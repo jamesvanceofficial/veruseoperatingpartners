@@ -60,8 +60,14 @@ async function FullCompleted({ admin, assessmentId }: { admin: ReturnType<typeof
 async function QuickScanCompleted({ admin, assessmentId }: { admin: ReturnType<typeof createAdminClient>; assessmentId: string }) {
   const report = await getAssessmentReport(admin, assessmentId);
   if (!report) return null;
-  const topBottleneck = [...report.categoryScores].sort((a, b) => a.bottleneckRank - b.bottleneckRank)[0] ?? null;
-  return <QuickScanResult score={report.assessment.enterprise_score ?? 0} bandLabel={report.bandLabel} topBottleneckName={topBottleneck?.categoryName ?? null} />;
+  return (
+    <QuickScanResult
+      score={report.assessment.enterprise_score ?? 0}
+      bandLabel={report.bandLabel}
+      bandDescription={report.bandDescription}
+      categoryScores={report.categoryScores}
+    />
+  );
 }
 
 async function PublicRunner({

@@ -7,11 +7,13 @@ import { FormField, Input, Select } from "@/shared/ui/FormField";
 import { REVENUE_RANGES } from "./labels";
 import { QuickScanResult } from "./QuickScanResult";
 import { AnswerOptionButton } from "./AnswerOptionButton";
-import type { Question } from "./types";
+import type { Question, CategoryScoreDetail } from "./types";
 
 type Step = "intake" | "questions" | "result";
 
 type Intake = { fullName: string; email: string; phone: string; companyName: string; industry: string; revenueRange: string };
+
+type ScanResultData = { enterpriseScore: number; bandLabel: string | null; bandDescription: string | null; categoryScores: CategoryScoreDetail[] };
 
 export function QuickScanWizard({ questions }: { questions: Question[] }) {
   const [step, setStep] = useState<Step>("intake");
@@ -19,7 +21,7 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ enterpriseScore: number; bandLabel: string | null; topBottleneckCategoryName: string | null } | null>(null);
+  const [result, setResult] = useState<ScanResultData | null>(null);
 
   const answeredCount = Object.keys(answers).length;
   const allAnswered = answeredCount === questions.length;
@@ -56,7 +58,8 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
       setResult({
         enterpriseScore: payload.data.enterpriseScore,
         bandLabel: payload.data.bandLabel,
-        topBottleneckCategoryName: payload.data.topBottleneckCategoryName,
+        bandDescription: payload.data.bandDescription,
+        categoryScores: payload.data.categoryScores ?? [],
       });
       setStep("result");
     } catch {
@@ -66,7 +69,14 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
   }
 
   if (step === "result" && result) {
-    return <QuickScanResult score={result.enterpriseScore} bandLabel={result.bandLabel} topBottleneckName={result.topBottleneckCategoryName} />;
+    return (
+      <QuickScanResult
+        score={result.enterpriseScore}
+        bandLabel={result.bandLabel}
+        bandDescription={result.bandDescription}
+        categoryScores={result.categoryScores}
+      />
+    );
   }
 
   if (step === "intake") {
@@ -101,7 +111,7 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
             </FormField>
           </div>
         </Card>
-        <Button type="submit" variant="primary" className="self-start">
+        <Button type="submit" variant="primary" className="w-full px-6 py-3.5 text-[13.5px] sm:w-auto">
           Start the Quick Scan
         </Button>
       </form>
@@ -144,7 +154,14 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
         ))}
       </div>
 
-      <Button type="button" variant="primary" loading={submitting} disabled={!allAnswered} onClick={handleFinalSubmit} className="self-start">
+      <Button
+        type="button"
+        variant="primary"
+        loading={submitting}
+        disabled={!allAnswered}
+        onClick={handleFinalSubmit}
+        className="w-full px-6 py-3.5 text-[13.5px] sm:w-auto"
+      >
         See my score
       </Button>
     </div>

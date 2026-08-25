@@ -3,7 +3,7 @@ import type { AssessmentType, AssessmentStatus } from "./labels";
 export type AnswerOption = { value: number; label: string };
 
 export type Category = { id: string; name: string; weight: number; sort_order: number };
-export type Band = { id: string; label: string; min_score: number; max_score: number; sort_order: number };
+export type Band = { id: string; label: string; min_score: number; max_score: number; description: string | null; sort_order: number };
 
 export type Question = {
   id: string;
@@ -65,5 +65,6 @@ export type AssessmentReport = {
   assessment: Assessment;
   orgName: string;
   bandLabel: string | null;
+  bandDescription: string | null;
   categoryScores: CategoryScoreDetail[];
 };

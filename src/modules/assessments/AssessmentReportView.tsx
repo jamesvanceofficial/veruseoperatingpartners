@@ -4,13 +4,8 @@ import { Badge } from "@/shared/ui/Badge";
 import { PrintButton } from "@/shared/ui/PrintButton";
 import { formatDate } from "@/shared/format";
 import { ASSESSMENT_TYPE_LABELS } from "./labels";
+import { categoryScoreTone } from "./scoreTone";
 import type { AssessmentReport } from "./types";
-
-function scoreTone(score: number): "green" | "yellow" | "red" {
-  if (score >= 7) return "green";
-  if (score >= 4) return "yellow";
-  return "red";
-}
 
 /** The completed-assessment view — every category, weighted score, band, and the ranked bottleneck list. Printable via window.print(); .no-print / aside / header are hidden in the print stylesheet. */
 export function AssessmentReportView({ report }: { report: AssessmentReport }) {
@@ -47,7 +42,7 @@ export function AssessmentReportView({ report }: { report: AssessmentReport }) {
                     style={{ width: `${Math.min(100, (c.rawScore / 10) * 100)}%` }}
                   />
                 </div>
-                <Badge tone={scoreTone(c.rawScore)}>{c.rawScore.toFixed(1)} / 10</Badge>
+                <Badge tone={categoryScoreTone(c.rawScore)}>{c.rawScore.toFixed(1)} / 10</Badge>
               </div>
             </div>
           ))}
@@ -64,7 +59,7 @@ export function AssessmentReportView({ report }: { report: AssessmentReport }) {
                 <span className="font-tabular text-[12px] text-[var(--muted)]">#{c.bottleneckRank}</span>
                 <span className="text-[12.5px] text-[var(--cream)]">{c.categoryName}</span>
               </div>
-              <Badge tone={scoreTone(c.rawScore)}>{c.rawScore.toFixed(1)} / 10</Badge>
+              <Badge tone={categoryScoreTone(c.rawScore)}>{c.rawScore.toFixed(1)} / 10</Badge>
             </div>
           ))}
         </div>

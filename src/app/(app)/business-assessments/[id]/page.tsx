@@ -78,8 +78,14 @@ async function FullReport({ supabase, assessmentId }: { supabase: SupabaseClient
 async function QuickScanReport({ supabase, assessmentId }: { supabase: SupabaseClient; assessmentId: string }) {
   const report = await getAssessmentReport(supabase, assessmentId);
   if (!report) return null;
-  const topBottleneck = [...report.categoryScores].sort((a, b) => a.bottleneckRank - b.bottleneckRank)[0] ?? null;
-  return <QuickScanResult score={report.assessment.enterprise_score ?? 0} bandLabel={report.bandLabel} topBottleneckName={topBottleneck?.categoryName ?? null} />;
+  return (
+    <QuickScanResult
+      score={report.assessment.enterprise_score ?? 0}
+      bandLabel={report.bandLabel}
+      bandDescription={report.bandDescription}
+      categoryScores={report.categoryScores}
+    />
+  );
 }
 
 async function Runner({

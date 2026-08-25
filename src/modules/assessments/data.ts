@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeScores, findBandId } from "./scoring";
 import type { AssessmentType } from "./labels";
-import type { Assessment, AssessmentListRow, AssessmentReport, Category, Band, Question, AnswerOption } from "./types";
+import type { Assessment, AssessmentListRow, AssessmentReport, Category, Band, Question, AnswerOption, CategoryScoreDetail } from "./types";
 
 // ===========================================================
 // Reference data
@@ -15,7 +15,10 @@ export async function getCategories(supabase: SupabaseClient): Promise<Category[
 }
 
 export async function getBands(supabase: SupabaseClient): Promise<Band[]> {
-  const { data, error } = await supabase.from("assessment_bands").select("id, label, min_score, max_score, sort_order").order("sort_order", { ascending: true });
+  const { data, error } = await supabase
+    .from("assessment_bands")
+    .select("id, label, min_score, max_score, description, sort_order")
+    .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data as Band[]) ?? [];
 }
@@ -112,7 +115,9 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
 
   const [orgResult, bandResult, categories, scoresResult] = await Promise.all([
     supabase.from("organizations").select("name").eq("id", assessment.org_id).maybeSingle(),
-    assessment.band_id ? supabase.from("assessment_bands").select("label").eq("id", assessment.band_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    assessment.band_id
+      ? supabase.from("assessment_bands").select("label, description").eq("id", assessment.band_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
     getCategories(supabase),
     supabase.from("assessment_category_scores").select("category_id, raw_score, weighted_score, bottleneck_rank").eq("assessment_id", id),
   ]);
@@ -135,10 +140,13 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
     }))
     .sort((a, b) => a.bottleneckRank - b.bottleneckRank === 0 ? 0 : a.bottleneckRank - b.bottleneckRank);
 
+  const band = bandResult.data as { label: string; description: string | null } | null;
+
   return {
     assessment,
     orgName: (orgResult.data as { name: string } | null)?.name ?? "Unknown organization",
-    bandLabel: (bandResult.data as { label: string } | null)?.label ?? null,
+    bandLabel: band?.label ?? null,
+    bandDescription: band?.description ?? null,
     categoryScores,
   };
 }
@@ -330,14 +338,16 @@ export type QuickScanInput = {
   answers: { questionId: string; value: number }[];
 };
 
-export type QuickScanResult = {
+// Named distinctly from the QuickScanResult *component* (modules/assessments/QuickScanResult.tsx) — this is the data shape the API returns, not UI.
+export type QuickScanSubmissionResult = {
   assessmentId: string;
   enterpriseScore: number;
   bandLabel: string | null;
-  topBottleneckCategoryName: string | null;
+  bandDescription: string | null;
+  categoryScores: CategoryScoreDetail[];
 };
 
-export async function submitQuickScan(admin: SupabaseClient, input: QuickScanInput): Promise<QuickScanResult> {
+export async function submitQuickScan(admin: SupabaseClient, input: QuickScanInput): Promise<QuickScanSubmissionResult> {
   const { data: org, error: orgError } = await admin
     .from("organizations")
     .insert({
@@ -384,12 +394,12 @@ export async function submitQuickScan(admin: SupabaseClient, input: QuickScanInp
   if (!completed.ok) throw new Error(completed.error);
 
   const report = await getAssessmentReport(admin, assessmentId);
-  const topBottleneck = report?.categoryScores.find((c) => c.bottleneckRank === 1) ?? null;
 
   return {
     assessmentId,
     enterpriseScore: report?.assessment.enterprise_score ?? 0,
     bandLabel: report?.bandLabel ?? null,
-    topBottleneckCategoryName: topBottleneck?.categoryName ?? null,
+    bandDescription: report?.bandDescription ?? null,
+    categoryScores: report?.categoryScores ?? [],
   };
 }
