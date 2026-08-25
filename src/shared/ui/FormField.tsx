@@ -47,3 +47,15 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
     />
   );
 }
+
+export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      {...props}
+      className={cn(
+        "glow-gold-focus rounded-[var(--radius-sm)] border border-[var(--hairline-strong)] bg-[var(--navy)] px-3 py-2 text-[13px] text-[var(--cream)] outline-none placeholder:text-[var(--muted)]",
+        props.className
+      )}
+    />
+  );
+}
