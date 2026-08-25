@@ -47,9 +47,18 @@ export function AppShell({
 
       <aside
         className={cn(
-          "glass-panel-strong plane-edge fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col justify-between rounded-none border-y-0 border-l-0 px-4 py-5 transition-transform duration-200 ease-out",
-          "lg:sticky lg:top-0 lg:z-10 lg:w-60 lg:translate-x-0",
-          navOpen ? "translate-x-0" : "-translate-x-full"
+          // Below lg and at/above lg are mutually exclusive variant sets
+          // (max-lg: / lg:) — never a base utility relying on a later
+          // responsive utility to override it. That override does work in
+          // this Tailwind build (verified: .lg\:sticky sits inside
+          // @media (min-width:64rem) and is emitted after the unconditional
+          // .fixed in the same cascade layer, so it wins at lg+), but
+          // structuring it this way removes any doubt and survives future
+          // edits that could reorder generated utilities.
+          "glass-panel-strong plane-edge z-50 flex h-screen flex-col justify-between rounded-none border-y-0 border-l-0 px-4 py-5 transition-transform duration-200 ease-out",
+          "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-64",
+          "lg:sticky lg:top-0 lg:w-60",
+          navOpen ? "translate-x-0" : "max-lg:-translate-x-full"
         )}
       >
         <div>
