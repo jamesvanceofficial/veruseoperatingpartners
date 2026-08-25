@@ -34,7 +34,7 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="glass-panel-strong sticky top-0 flex h-screen w-60 flex-col justify-between rounded-none border-y-0 border-l-0 px-4 py-5">
+      <aside className="glass-panel-strong plane-edge sticky top-0 z-10 flex h-screen w-60 flex-col justify-between rounded-none border-y-0 border-l-0 px-4 py-5">
         <div>
           <div className="mb-6 px-2">{brand}</div>
           <nav className="flex flex-col gap-0.5">
@@ -72,7 +72,7 @@ export function AppShell({
 
       <div className="flex flex-1 flex-col">
         <header className="glass-panel rounded-none border-x-0 border-t-0 py-3">
-          <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-8">
+          <div className="page-container flex items-center justify-between">
             <span className="text-[11px] uppercase tracking-[0.18em] text-[var(--muted)]">COMPASS</span>
             <div className="flex items-center gap-3 text-right">
               <div>

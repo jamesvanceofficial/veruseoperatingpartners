@@ -16,10 +16,7 @@ export function Table<T extends { id: string }>({ columns, rows }: { columns: Ta
             {columns.map((c) => (
               <th
                 key={c.key}
-                className={cn(
-                  "px-4 py-2.5 text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]",
-                  c.align === "right" ? "text-right" : "text-left"
-                )}
+                className={cn("section-label px-5 py-3", c.align === "right" ? "text-right" : "text-left")}
               >
                 {c.header}
               </th>
@@ -30,7 +27,7 @@ export function Table<T extends { id: string }>({ columns, rows }: { columns: Ta
           {rows.map((row) => (
             <tr key={row.id} className="row-hover-lift border-b border-[var(--hairline)] last:border-0">
               {columns.map((c) => (
-                <td key={c.key} className={cn("px-4 py-2.5", c.align === "right" ? "text-right font-tabular" : "text-left")}>
+                <td key={c.key} className={cn("px-5 py-3", c.align === "right" ? "text-right font-tabular" : "text-left")}>
                   {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key] ?? "")}
                 </td>
               ))}

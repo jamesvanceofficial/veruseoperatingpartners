@@ -1,3 +1,4 @@
+import { Card } from "./Card";
 import { cn } from "./cn";
 
 export function Stat({
@@ -12,11 +13,11 @@ export function Stat({
   tone?: "neutral" | "gold" | "green" | "yellow" | "red";
 }) {
   return (
-    <div className="glass-panel fade-scale-in flex flex-col gap-1 p-5">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">{label}</span>
+    <Card className="flex flex-col gap-1.5">
+      <span className="section-label">{label}</span>
       <span
         className={cn(
-          "font-tabular text-[22px] font-semibold",
+          "font-tabular text-[28px] font-semibold leading-none",
           tone === "neutral" && "text-[var(--cream)]",
           tone === "gold" && "text-[var(--gold-light)]",
           tone === "green" && "text-[var(--green)]",
@@ -27,6 +28,6 @@ export function Stat({
         {value}
       </span>
       {hint ? <span className="text-[11px] text-[var(--muted)]">{hint}</span> : null}
-    </div>
+    </Card>
   );
 }

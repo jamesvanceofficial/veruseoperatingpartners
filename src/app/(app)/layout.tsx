@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       banner={
         notConfigured ? (
           <div className="border-b border-[var(--hairline)] bg-[color-mix(in_srgb,var(--yellow)_10%,transparent)]">
-            <div className="mx-auto w-full max-w-[1400px] px-8 py-2 text-[11.5px] text-[var(--yellow)]">
+            <div className="page-container py-2 text-[11.5px] text-[var(--yellow)]">
               Database not set up yet — run the migrations in supabase/migrations against DATABASE_URL to unlock
               roles and org scoping.
             </div>

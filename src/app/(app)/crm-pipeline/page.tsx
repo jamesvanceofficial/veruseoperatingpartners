@@ -12,7 +12,7 @@ import { listStaffProfiles } from "@/modules/organizations/data";
 import { listOpportunities, listDueNextActions, getPipelineStats } from "@/modules/opportunities/data";
 import { sortOpportunityRows } from "@/modules/opportunities/sort";
 import { PIPELINE_STAGES, STAGE_LABELS } from "@/modules/opportunities/labels";
-import { PipelineValueSummary, NextActionsDue } from "@/modules/opportunities/PipelineSummary";
+import { PipelineTotalValue, ValueByStageCard, NextActionsDue } from "@/modules/opportunities/PipelineSummary";
 import { KanbanBoard } from "@/modules/opportunities/KanbanBoard";
 import { OpportunityListTable } from "@/modules/opportunities/OpportunityListTable";
 import type { OpportunityListRow } from "@/modules/opportunities/types";
@@ -69,11 +69,12 @@ export default async function CrmPipelinePage({ searchParams }: { searchParams: 
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <PipelineValueSummary stats={stats} />
+          <div className="flex flex-col gap-4">
+            <PipelineTotalValue stats={stats} />
+            <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+              <ValueByStageCard stats={stats} />
+              <NextActionsDue rows={dueRows} todayIso={todayIso} />
             </div>
-            <NextActionsDue rows={dueRows} todayIso={todayIso} />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4">

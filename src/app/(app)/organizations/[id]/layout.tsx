@@ -26,7 +26,7 @@ export default async function OrganizationLayout({
   const canEdit = profileResult.status === "ok" && isVerusStaff(profileResult.profile.role);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-5 px-8 py-6">
+    <div className="page-container flex flex-1 flex-col gap-6 py-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link href="/organizations" className="text-[11px] uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--cream)]">

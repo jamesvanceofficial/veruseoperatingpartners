@@ -10,7 +10,7 @@ export function Card({
   strong?: boolean;
 }) {
   return (
-    <div className={cn(strong ? "glass-panel-strong" : "glass-panel", "fade-scale-in p-5", className)}>
+    <div className={cn(strong ? "glass-panel-strong" : "glass-panel", "fade-scale-in p-6", className)}>
       {children}
     </div>
   );

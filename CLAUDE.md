@@ -71,11 +71,24 @@ brand palette, never hardcode a hex value in a component:
 ```
 
 Dark executive/PE-dashboard feel: glassmorphism (`.glass-panel` /
-`.glass-panel-strong` utility classes), soft radial gradients, tight
-spacing, restrained glow (`.glow-gold-hover`, `.glow-gold-focus`). Every
-screen builds from `src/shared/ui/*` primitives (Card, Table, Button,
-FormField/Input/Select, Badge, EmptyState, PageShell, AppShell, BrandMark)
-— never a one-off styled div. No stock SaaS blue, no cartoon icons.
+`.glass-panel-strong` utility classes), soft radial gradients deepening
+toward the bottom, tight spacing, restrained glow (`.glow-gold-hover`,
+`.glow-gold-focus`). Every screen builds from `src/shared/ui/*` primitives
+(Card, Table, Button, FormField/Input/Select/Textarea, Badge, EmptyState,
+Stat, PageShell, AppShell, BrandMark, LinkButton) — never a one-off styled
+div. No stock SaaS blue, no cartoon icons.
+
+Page width/padding is one system, `.page-container` (globals.css):
+`max-width: var(--page-max)` (1800px) centered, `padding-inline:
+var(--page-pad)` (48px) — used by PageShell and every page that builds its
+own header instead of using PageShell (organization/opportunity detail
+layouts). A section that needs to escape the padding without escaping the
+cap (the kanban board) uses `.bleed-x`, which cancels exactly
+`var(--page-pad)` — never hand-roll a different negative margin. Every
+label/eyebrow/column-header uses `.section-label`, not a repeated Tailwind
+string, so hierarchy can't drift. Every input/select/textarea uses
+`.field-control` (+ `.field-select` for the hand-drawn chevron on
+selects) — never bare browser chrome.
 
 ## Role model
 

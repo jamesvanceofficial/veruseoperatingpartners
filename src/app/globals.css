@@ -21,6 +21,12 @@
   --radius-md: 10px;
   --radius-lg: 16px;
 
+  /* The one width/padding system every page's content area is built
+     from — see .page-container / .bleed-x below. Defined once so the
+     bleed math can never drift out of sync with the padding it cancels. */
+  --page-max: 1800px;
+  --page-pad: 48px;
+
   --font-sans: var(--font-geist-sans), "Inter", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
@@ -44,10 +50,21 @@ html {
   color-scheme: dark;
 }
 
+/* Deeper toward the bottom: the two radial glows (gold top-left, navy
+   top-right) sit on top of a vertical fade that darkens as it descends,
+   so the page reads as a lit surface receding into shadow rather than a
+   flat fill. Every stop is color-mix() over an existing token — no new
+   hues. */
 body {
   background:
-    radial-gradient(ellipse 1200px 800px at 15% -10%, color-mix(in srgb, var(--gold) 7%, transparent), transparent 60%),
-    radial-gradient(ellipse 900px 700px at 100% 0%, color-mix(in srgb, var(--navy-2) 90%, transparent), transparent 55%),
+    radial-gradient(ellipse 1300px 900px at 12% -12%, color-mix(in srgb, var(--gold) 9%, transparent), transparent 58%),
+    radial-gradient(ellipse 1100px 850px at 102% -6%, color-mix(in srgb, var(--navy-2) 95%, transparent), transparent 52%),
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--black) 35%, transparent) 45%,
+      color-mix(in srgb, var(--black) 75%, transparent) 100%
+    ),
     var(--black);
   background-attachment: fixed;
   color: var(--cream);
@@ -89,37 +106,76 @@ h1, h2, h3, h4 {
 }
 
 /* ===========================================================
-   Glass surface — the one visual primitive every panel/card/
-   sidebar/modal in this app is built from. Backdrop blur, a
-   low-opacity gold hairline border, and a soft inner top
-   highlight so edges catch light. Small radius — crisp, not
-   pill-shaped. Keep density tight; this is not a spacious
+   Page container — the one place the content width/padding system
+   lives. The sidebar (fixed 240px) is a separate flex sibling, so this
+   never needs to account for it: it just fills whatever space the
+   sidebar leaves, capped and padded symmetrically. .bleed-x cancels
+   exactly --page-pad, for sections (the kanban board) that need to
+   escape the padding — never the cap.
+   =========================================================== */
+.page-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--page-max);
+  padding-inline: var(--page-pad);
+}
+
+.bleed-x {
+  margin-inline: calc(-1 * var(--page-pad));
+}
+
+/* ===========================================================
+   Glass surface — the one visual primitive every panel/card/sidebar/
+   modal in this app is built from. A faint top-to-bottom gradient (not
+   a flat tint) plus an inset highlight brighter than the inset shadow
+   below it, so the top edge visibly catches light and the bottom edge
+   reads as receding — a pane, not a painted rectangle. Backdrop blur
+   does the actual glass work; the highlight/shadow pair sells it even
+   where there's nothing behind the panel to blur. Small radius — crisp,
+   not pill-shaped. Keep density tight; this is not a spacious
    marketing-page aesthetic.
    =========================================================== */
 .glass-panel {
-  background: var(--surface);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--navy-2) 60%, transparent) 0%,
+    color-mix(in srgb, var(--navy-2) 42%, transparent) 100%
+  );
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-lg);
   box-shadow:
-    inset 0 1px 0 0 color-mix(in srgb, var(--gold) 14%, transparent),
-    0 20px 50px -20px rgba(0, 0, 0, 0.6);
+    inset 0 1px 0 0 color-mix(in srgb, var(--gold-light) 20%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--black) 30%, transparent),
+    0 24px 48px -20px color-mix(in srgb, var(--black) 70%, transparent),
+    0 2px 10px -4px color-mix(in srgb, var(--black) 55%, transparent);
 }
 
 .glass-panel-strong {
-  background: var(--surface-strong);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--navy-2) 84%, transparent) 0%,
+    color-mix(in srgb, var(--navy-2) 66%, transparent) 100%
+  );
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
   border: 1px solid var(--hairline-strong);
   border-radius: var(--radius-lg);
   box-shadow:
-    inset 0 1px 0 0 color-mix(in srgb, var(--gold) 18%, transparent),
-    0 24px 60px -20px rgba(0, 0, 0, 0.7);
+    inset 0 1px 0 0 color-mix(in srgb, var(--gold-light) 26%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--black) 35%, transparent),
+    0 28px 56px -20px color-mix(in srgb, var(--black) 75%, transparent),
+    0 2px 12px -4px color-mix(in srgb, var(--black) 60%, transparent);
+}
+
+/* Sidebar reads as its own plane, separate from the content behind it. */
+.plane-edge {
+  box-shadow: 10px 0 32px -16px color-mix(in srgb, var(--black) 75%, transparent);
 }
 
 .glow-gold-hover {
-  transition: box-shadow 150ms ease, transform 150ms ease, background 150ms ease;
+  transition: box-shadow 150ms ease, transform 150ms ease, background-color 150ms ease, border-color 150ms ease;
 }
 .glow-gold-hover:hover {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 55%, transparent), 0 0 22px -4px color-mix(in srgb, var(--gold) 55%, transparent);
@@ -131,7 +187,7 @@ h1, h2, h3, h4 {
 }
 
 .row-hover-lift {
-  transition: transform 120ms ease, background 120ms ease;
+  transition: transform 120ms ease, background-color 120ms ease;
 }
 .row-hover-lift:hover {
   transform: translateY(-1px);
@@ -154,4 +210,59 @@ h1, h2, h3, h4 {
 
 .text-glow-gold {
   text-shadow: 0 0 16px color-mix(in srgb, var(--gold) 45%, transparent);
+}
+
+/* ===========================================================
+   Section labels — every eyebrow/field-label/column-header in the app
+   uses this one rule, so hierarchy stays consistent by construction
+   instead of by convention. Small, letterspaced, muted; the numbers and
+   values beneath it carry the actual weight.
+   =========================================================== */
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ===========================================================
+   Form controls — every input/select/textarea in the app, one visual
+   treatment. Real hover and focus states (native form chrome has
+   neither). .field-select strips the OS dropdown appearance and draws
+   a hand-built chevron via background layers instead of an <img> — its
+   color is #a9b4c2 hardcoded (a data: URI can't reference a CSS custom
+   property), which is exactly --muted's current value, not a new color.
+   =========================================================== */
+.field-control {
+  background-color: var(--navy);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  color: var(--cream);
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+.field-control::placeholder {
+  color: var(--muted);
+}
+.field-control:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--hairline-strong));
+  background-color: color-mix(in srgb, var(--navy) 94%, var(--gold) 3%);
+}
+.field-control:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 20%, transparent);
+}
+.field-control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23a9b4c2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 2.25rem;
 }

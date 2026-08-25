@@ -9,7 +9,7 @@ import { formatCurrency, formatDate, formatNumber } from "@/shared/format";
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">{label}</p>
+      <p className="section-label">{label}</p>
       <p className="text-[13px] text-[var(--cream)]">{value ?? "—"}</p>
     </div>
   );
@@ -59,7 +59,7 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
       </Card>
 
       <Card>
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">Notes</p>
+        <p className="mb-2 section-label">Notes</p>
         <p className="whitespace-pre-wrap text-[13px] text-[var(--cream)]">{org.notes ?? "No notes yet."}</p>
       </Card>
     </div>

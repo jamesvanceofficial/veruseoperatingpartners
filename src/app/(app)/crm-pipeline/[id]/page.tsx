@@ -13,7 +13,7 @@ import { formatCurrency, formatDate } from "@/shared/format";
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">{label}</p>
+      <p className="section-label">{label}</p>
       <p className="text-[13px] text-[var(--cream)]">{value ?? "—"}</p>
     </div>
   );
@@ -32,7 +32,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
   const canEdit = profileResult.status === "ok" && isVerusStaff(profileResult.profile.role);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-5 px-8 py-6">
+    <div className="page-container flex flex-1 flex-col gap-6 py-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link href="/crm-pipeline" className="text-[11px] uppercase tracking-[0.18em] text-[var(--muted)] hover:text-[var(--cream)]">
@@ -65,22 +65,22 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">Pain Points</p>
+        <p className="section-label">Pain Points</p>
         <p className="whitespace-pre-wrap text-[13px] text-[var(--cream)]">{opportunity.pain_points ?? "None recorded."}</p>
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">Business Goals</p>
+        <p className="section-label">Business Goals</p>
         <p className="whitespace-pre-wrap text-[13px] text-[var(--cream)]">{opportunity.business_goals ?? "None recorded."}</p>
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">Notes</p>
+        <p className="section-label">Notes</p>
         <p className="whitespace-pre-wrap text-[13px] text-[var(--cream)]">{opportunity.notes ?? "No notes yet."}</p>
       </Card>
 
       <Card className="flex flex-col gap-2">
-        <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--muted)]">Stage History</p>
+        <p className="mb-1 section-label">Stage History</p>
         {stageHistory.length === 0 ? (
           <p className="text-[12.5px] text-[var(--muted)]">No stage changes recorded yet.</p>
         ) : (
