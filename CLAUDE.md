@@ -53,10 +53,19 @@ empty shell if one was explicitly asked for, no speculative schema, no
 - `src/proxy.ts` (Next 16 renamed `middleware.ts` → `proxy.ts`, same
   semantics) gates everything else: unauthenticated requests to any
   non-public path redirect to `/login?next=<path>`. Public paths: `/`,
-  `/login`, `/reset-password`, `/update-password`.
+  `/login`, `/reset-password`, `/update-password`, `/scan`, `/assessment`.
 - Everything under the `(app)` route group requires a session (enforced
   again at the layout level via `redirect()` as defense in depth, not just
   the proxy).
+- `/scan` (Stage 7) — the free Quick Scan, public, no auth. `/assessment/[token]`
+  (Stage 7) — the share-link runner for a Full Assessment sent to a
+  client. Both live outside `(app)`, both do every read/write through
+  `src/shared/supabase/admin.ts` (never the request-scoped client — RLS on
+  the assessment tables is `to authenticated` only, so an anon request has
+  zero access via the normal client regardless). `/assessment/[token]`'s
+  only authorization is resolving the token to one assessment id in
+  `getAssessmentByToken()`; nothing downstream ever accepts a client-
+  supplied assessment id. See `/api/public/*` route handlers.
 
 ## Design tokens
 
@@ -181,18 +190,35 @@ today, no exceptions.
 - `assessment_bands` — seeded: Founder Dependent 0-39, Emerging Operator
   40-59, Growth Company 60-79, System-Driven Company 80-89, Enterprise
   Ready 90-100. Read = all authenticated.
-- `assessment_questions` — question bank structure only, NOT seeded yet
-  (question bank is Stage 7). Read = all authenticated.
+- `assessment_questions` — 120 questions seeded (Stage 7, version 1): 12
+  per category, `answer_options` (jsonb, exactly 4 `{value,label}` choices
+  worth 0/1/2/3 — nothing in place / ad hoc / documented / documented and
+  running well), `is_quick_scan` flags the 2-per-category subset the free
+  Quick Scan uses. Read = all authenticated.
 - `assessments` — one row per assessment sitting: org_id, opportunity_id,
-  conducted_by, status, started_at/completed_at, enterprise_score, band_id,
-  recommended_build_tier, price_paid, notes.
+  conducted_by, status, `assessment_type` (quick_scan/full, Stage 7),
+  started_at/completed_at, enterprise_score, band_id,
+  recommended_build_tier, price_paid, notes, `share_token`/
+  `share_token_expires_at`/`share_token_revoked_at` (Stage 7 — the public
+  `/assessment/[token]` runner's only credential).
 - `assessment_answers` — one row per question answered per assessment.
-  Snapshots `question_text_snapshot`/`category_id_snapshot`/`weight_snapshot`
-  at answer time so a completed assessment stays accurate even if the live
-  question bank changes later — this is what makes re-running an assessment
-  and comparing it to a prior one safe.
+  Snapshots `question_text_snapshot`/`category_id_snapshot`/`weight_snapshot`/
+  `answer_options_snapshot` (Stage 7) at answer time — re-captured from the
+  live question on every save while the assessment is still open, so a
+  completed assessment stays accurate even after the question bank
+  changes later. Unique on `(assessment_id, question_id)` — NOT partial;
+  a partial unique index can't be an `ON CONFLICT` target for the
+  upsert in `saveAnswer()` (Postgres requires the predicate to match
+  exactly), and it was never needed since Postgres already treats every
+  NULL as distinct from every other NULL in a unique index.
 - `assessment_category_scores` — per-assessment, per-category rollup:
-  raw_score, weighted_score, bottleneck_rank.
+  raw_score, weighted_score, bottleneck_rank. Scoring engine (Stage 7,
+  `src/modules/assessments/scoring.ts`, pure functions, no DB access):
+  category score = sum(answers) / (questions answered × 3) × 10;
+  enterprise score = sum over categories of (category score / 10 × weight);
+  bottleneck rank = (10 − category score) × weight, highest first. Same
+  formulas for Quick Scan and Full — they're answered-count-relative, not
+  fixed to a bank size.
 - `build_packages` — org_id, opportunity_id, tier (foundation/growth/
   enterprise/custom), status, price, deposit/balance amounts + paid_at,
   timeline dates, notes.

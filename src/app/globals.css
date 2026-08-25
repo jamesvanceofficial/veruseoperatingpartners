@@ -266,3 +266,34 @@ h1, h2, h3, h4 {
   background-position: right 12px center;
   padding-right: 2.25rem;
 }
+
+/* ===========================================================
+   Print — the assessment report (Stage 7) is meant to be printable.
+   The on-screen dark glass theme doesn't belong on paper, so print
+   output switches to plain black-on-white; nothing about the on-screen
+   palette changes. .no-print hides chrome (sidebar, header, buttons)
+   that has no business on a printed page.
+   =========================================================== */
+@media print {
+  .no-print,
+  aside,
+  header {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .glass-panel,
+  .glass-panel-strong {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    color: black !important;
+  }
+  .glass-panel *,
+  .glass-panel-strong * {
+    color: black !important;
+  }
+}
