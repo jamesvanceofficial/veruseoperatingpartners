@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buttonClassName, type ButtonVariant } from "./Button";
+import { buttonClassName, type ButtonVariant } from "./buttonStyles";
 
 /** A navigation link styled identically to Button — for "New X" / "Edit X" actions that go to a route rather than submit a form. */
 export function LinkButton({
