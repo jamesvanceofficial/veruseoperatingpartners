@@ -14,6 +14,7 @@ import { ShareLinkPanel } from "@/modules/assessments/ShareLinkPanel";
 import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { DangerZone } from "@/shared/ui/DangerZone";
+import { LinkButton } from "@/shared/ui/LinkButton";
 
 export default async function AssessmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -49,6 +50,11 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
             </Link>
           </div>
         </div>
+        {assessment.status === "completed" && assessment.assessment_type === "full" ? (
+          <LinkButton href={`/business-assessments/${id}/report`} variant="primary" target="_blank">
+            Client report ↗
+          </LinkButton>
+        ) : null}
       </div>
 
       {canEdit ? (

@@ -132,6 +132,8 @@ export type BuildTierInfo = {
   price: number | null;
   priceLabel: string;
   forCompanies: string;
+  /** Typical kickoff-to-handover duration — shown on the client report's Recommended Path section. */
+  timeline: string;
   included: string[];
   excluded: string[];
 };
@@ -142,6 +144,7 @@ export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
     price: 15000,
     priceLabel: "$15,000",
     forCompanies: "Smaller, simpler companies.",
+    timeline: "4-6 weeks from kickoff to handover",
     included: ["Website", "Basic systems", "Basic SOPs", "Basic dashboard", "Setup", "Implementation", subscriptionScopeLine("foundation")],
     excluded: ["CRM", "Software workflows", "Automations", "Client/staff portals", "Multiple user roles", "Advanced dashboards"],
   },
@@ -150,6 +153,7 @@ export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
     price: 22500,
     priceLabel: "$22,500",
     forCompanies: "Most clients.",
+    timeline: "6-9 weeks from kickoff to handover",
     included: [
       "Website",
       "Software workflows",
@@ -168,6 +172,7 @@ export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
     price: 30000,
     priceLabel: "$30,000+",
     forCompanies: "Larger, complex clients.",
+    timeline: "10-14 weeks from kickoff to handover",
     included: [
       "Advanced website and software",
       "Portals",
@@ -187,6 +192,7 @@ export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
     price: null,
     priceLabel: "Quoted separately",
     forCompanies: "Anything beyond $30,000.",
+    timeline: "Scoped and scheduled individually",
     included: ["Scope defined individually based on the client's needs", subscriptionScopeLine("custom")],
     excluded: ["No fixed inclusions or exclusions — scoped and quoted per engagement"],
   },

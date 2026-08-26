@@ -347,3 +347,114 @@ h1, h2, h3, h4 {
     color: black !important;
   }
 }
+
+/* ===========================================================
+   Client Report (Stage 15) — a distinct, branded print document, not the
+   admin screen converted to grayscale. Everything here is scoped under
+   .client-report so it can never leak onto any other printed page, and
+   it overrides the generic .glass-panel print rule above (higher
+   specificity: .client-report .glass-panel beats the bare .glass-panel).
+   On screen the report stays the normal dark COMPASS theme — Card/Badge/
+   etc. all read their color from the CSS custom properties below, which
+   this block redefines to a print-safe light palette ONLY inside
+   .client-report ONLY when printing, so no component needs its own
+   print-specific markup. .cr-avoid-break / .cr-page-break are the page-
+   break primitives every section below is built from.
+   =========================================================== */
+@media print {
+  .client-report {
+    --navy: #0a1930;
+    --navy-2: #0a1930;
+    --black: #0a1930;
+    --gold: #b8912e;
+    --gold-light: #8a6a1f;
+    --cream: #16233a;
+    --muted: #57606e;
+    --green: #2f8f5b;
+    --yellow: #9c7a1f;
+    --red: #b8433f;
+    --hairline: #d8d2c2;
+    --hairline-strong: #c9bfa0;
+    --surface: #ffffff;
+    --surface-strong: #ffffff;
+    background: #ffffff !important;
+    color: var(--cream);
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .client-report .glass-panel,
+  .client-report .glass-panel-strong {
+    background: #ffffff !important;
+    border: 1px solid var(--hairline-strong) !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .client-report .glass-panel *,
+  .client-report .glass-panel-strong * {
+    color: var(--cream) !important;
+  }
+  /* Tone-bearing elements keep their real color even inside a glass
+     panel — .glass-panel * above would otherwise flatten every badge
+     and score bar to plain navy text. */
+  .client-report .cr-tone-green,
+  .client-report .cr-tone-green * {
+    color: var(--green) !important;
+  }
+  .client-report .cr-tone-yellow,
+  .client-report .cr-tone-yellow * {
+    color: var(--yellow) !important;
+  }
+  .client-report .cr-tone-red,
+  .client-report .cr-tone-red * {
+    color: var(--red) !important;
+  }
+  .client-report .cr-tone-gold,
+  .client-report .cr-tone-gold * {
+    color: var(--gold-light) !important;
+  }
+  .client-report h1,
+  .client-report h2,
+  .client-report h3 {
+    break-after: avoid;
+  }
+  .client-report p {
+    orphans: 3;
+    widows: 3;
+  }
+  .client-report .cr-avoid-break {
+    break-inside: avoid;
+  }
+  .client-report .cr-page-break {
+    break-before: page;
+  }
+  .client-report .cr-cover {
+    height: 9.2in;
+  }
+  .client-report .cr-footer {
+    display: flex !important;
+    position: fixed;
+    bottom: 0.3in;
+    left: 0.55in;
+    right: 0.55in;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--muted) !important;
+    border-top: 1px solid var(--hairline-strong);
+    padding-top: 4px;
+  }
+  /* Best-effort — CSS Paged Media page counters render in Chromium's
+     print/Save-as-PDF but aren't universally supported; where they
+     aren't, this line is simply blank, which degrades gracefully. */
+  .client-report .cr-page-number::after {
+    content: "Page " counter(page);
+  }
+  @page {
+    margin: 0.6in 0.55in 0.9in 0.55in;
+  }
+}
+@media screen {
+  .client-report .cr-footer {
+    display: none;
+  }
+}

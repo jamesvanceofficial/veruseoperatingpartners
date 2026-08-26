@@ -6,15 +6,17 @@ export function LinkButton({
   href,
   variant = "secondary",
   className,
+  target,
   children,
 }: {
   href: string;
   variant?: ButtonVariant;
   className?: string;
+  target?: string;
   children: React.ReactNode;
 }) {
   return (
-    <Link href={href} className={buttonClassName({ variant, className })}>
+    <Link href={href} target={target} rel={target === "_blank" ? "noopener noreferrer" : undefined} className={buttonClassName({ variant, className })}>
       {children}
     </Link>
   );

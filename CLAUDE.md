@@ -166,6 +166,53 @@ hand-delete children. Contacts already had delete (`ContactsPanel.tsx`,
 plain `window.confirm`) — copy its route pattern, not its confirm-message
 shape, for anything new.
 
+## Client Report (Stage 16)
+
+`/business-assessments/[id]/report` (`ClientReportView.tsx`) is a
+distinct, executive-document view of a completed Full Assessment —
+never quick_scan, gated 404 otherwise. It shares no markup with the
+internal admin screen (`AssessmentReportView.tsx`): no override
+dropdowns, no Save, no Delete, nothing an internal user would need —
+verified by rendering the actual component tree against real data and
+grepping the output for exactly those strings. Reached via a "Client
+report ↗" button on the internal detail page (opens in a new tab, shown
+only once an assessment is completed), with a "Download PDF" button on
+the report itself that's just `PrintButton` — `window.print()` and the
+browser's own Save-as-PDF, since this project doesn't use a headless-
+browser/PDF-generation dependency for anything.
+
+On screen it stays the normal dark COMPASS theme. Printing is handled by
+the `.client-report` block in `globals.css` (scoped so it can never
+affect any other page's printing) — it redefines the SAME CSS custom
+properties every component already reads color from (`--cream`,
+`--muted`, `--navy`, `--gold`, etc.) to a print-safe light palette, so no
+component needs print-specific markup; `.cr-tone-{green,yellow,red,gold}`
+restore a tone-bearing element's real color where the blanket
+`.glass-panel *` override would otherwise flatten it to plain text.
+`.cr-avoid-break` / `.cr-page-break` are the page-break primitives every
+section is built from. Page numbers use the CSS `counter(page)` trick in
+a `position: fixed` footer — best-effort (Chromium's print/Save-as-PDF
+honors it; it degrades to a blank page-number span where a browser
+doesn't, not a broken layout) since this project has no way to generate
+PDFs itself to guarantee it, and browser print/PDF rendering isn't
+something the standing verification rules can check directly (no
+Playwright/screenshots) — only James's own print/PDF check can confirm
+the visual rendering actually looks right.
+
+All report copy — the category weighting rationale, the tone-aware
+"what this score means" blurb per category, and each category's typical-
+cost/fix-involves pair for the Three Biggest Constraints section — lives
+in `reportCopy.ts`, written once and reused for every client, same
+pattern as `buildTiers.ts`/`bottleneckCopy.ts`. `BuildTierInfo.timeline`
+(also `buildTiers.ts`) is a new static per-tier field for the Recommended
+Path section — there's no real build-package timeline tracked anywhere
+yet. The back page's VERUS contact details are a placeholder
+(`VERUS_CONTACT` in `reportCopy.ts`) — only the company name and the
+`verusoperatingpartners.com` domain are verified facts; there's no real
+phone/email on file anywhere in this app, so none is fabricated. Replace
+`VERUS_CONTACT` with real contact details before this goes to an actual
+client.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
