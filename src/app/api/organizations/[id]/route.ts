@@ -44,3 +44,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data: { id } });
 }
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const guard = await requireStaff();
+  if (!guard.ok) return guard.response;
+
+  const { id } = await params;
+  const admin = createAdminClient();
+  // Every org-scoped table's org_id FK is ON DELETE CASCADE — the DB
+  // handles removing contacts, opportunities, assessments (and their
+  // answers/scores), and everything else hanging off this org.
+  const { error } = await admin.from("organizations").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ data: { id } });
+}

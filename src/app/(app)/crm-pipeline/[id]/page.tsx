@@ -3,11 +3,12 @@ import Link from "next/link";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
-import { getOpportunityDetail } from "@/modules/opportunities/data";
+import { getOpportunityDetail, getOpportunityDeletePreview } from "@/modules/opportunities/data";
 import { STAGE_LABELS, STAGE_TONE } from "@/modules/opportunities/labels";
 import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { LinkButton } from "@/shared/ui/LinkButton";
+import { DangerZone } from "@/shared/ui/DangerZone";
 import { formatCurrency, formatDate } from "@/shared/format";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -30,6 +31,17 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
   const user = await getSessionUser();
   const profileResult = user ? await getMyProfile(user.id) : ({ status: "not_configured" } as const);
   const canEdit = profileResult.status === "ok" && isVerusStaff(profileResult.profile.role);
+
+  let deleteConfirmMessage = "";
+  if (canEdit) {
+    const preview = await getOpportunityDeletePreview(supabase, id);
+    const lines = [`Delete "${opportunity.name}"? This cannot be undone.`];
+    if (preview.linkedItems.length > 0) {
+      lines.push("Linked records below will be kept but unlinked from this opportunity:");
+      lines.push(...preview.linkedItems.map((i) => `• ${i.count} ${i.label}`));
+    }
+    deleteConfirmMessage = lines.join("\n");
+  }
 
   return (
     <div className="page-container flex flex-1 flex-col gap-6 py-8">
@@ -101,6 +113,15 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
           </div>
         )}
       </Card>
+
+      {canEdit ? (
+        <DangerZone
+          itemLabel="this opportunity"
+          confirmMessage={deleteConfirmMessage}
+          deleteUrl={`/api/opportunities/${id}`}
+          redirectUrl="/crm-pipeline"
+        />
+      ) : null}
     </div>
   );
 }

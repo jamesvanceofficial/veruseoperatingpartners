@@ -505,6 +505,13 @@ export async function revokeShareLink(admin: SupabaseClient, assessmentId: strin
 // Answers — for resuming the runner
 // ===========================================================
 
+/** For the delete confirmation — answers and category scores both cascade-delete with the assessment at the DB level, so this is the only count that needs computing. */
+export async function getAnswerCount(supabase: SupabaseClient, assessmentId: string): Promise<number> {
+  const { count, error } = await supabase.from("assessment_answers").select("*", { count: "exact", head: true }).eq("assessment_id", assessmentId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getAnswersMap(supabase: SupabaseClient, assessmentId: string): Promise<Map<string, number>> {
   const { data, error } = await supabase.from("assessment_answers").select("question_id, answer_value").eq("assessment_id", assessmentId);
   if (error) throw error;

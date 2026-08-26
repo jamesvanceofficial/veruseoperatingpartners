@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
-import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap } from "@/modules/assessments/data";
+import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getAnswerCount } from "@/modules/assessments/data";
 import { ASSESSMENT_TYPE_LABELS, ASSESSMENT_STATUS_LABELS, ASSESSMENT_STATUS_TONE } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -12,6 +12,7 @@ import { AssessmentRunner } from "@/modules/assessments/AssessmentRunner";
 import { ShareLinkPanel } from "@/modules/assessments/ShareLinkPanel";
 import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
+import { DangerZone } from "@/shared/ui/DangerZone";
 
 export default async function AssessmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,6 +26,12 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
 
   const [orgResult] = await Promise.all([supabase.from("organizations").select("name").eq("id", assessment.org_id).maybeSingle()]);
   const orgName = (orgResult.data as { name: string } | null)?.name ?? "Unknown organization";
+
+  let deleteConfirmMessage = "";
+  if (canEdit) {
+    const answerCount = await getAnswerCount(supabase, id);
+    deleteConfirmMessage = `Delete this ${ASSESSMENT_TYPE_LABELS[assessment.assessment_type]} for ${orgName}? This permanently deletes its ${answerCount} answer${answerCount === 1 ? "" : "s"} and category scores. This cannot be undone.`;
+  }
 
   return (
     <div className="page-container flex flex-1 flex-col gap-6 py-8">
@@ -65,6 +72,15 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
       ) : (
         <Runner supabase={supabase} assessmentId={id} assessmentType={assessment.assessment_type} />
       )}
+
+      {canEdit ? (
+        <DangerZone
+          itemLabel="this assessment"
+          confirmMessage={deleteConfirmMessage}
+          deleteUrl={`/api/assessments/${id}`}
+          redirectUrl="/business-assessments"
+        />
+      ) : null}
     </div>
   );
 }

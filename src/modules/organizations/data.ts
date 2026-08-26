@@ -212,6 +212,58 @@ export async function listOrgOptions(supabase: SupabaseClient, excludeId?: strin
 // Contacts
 // ===========================================================
 
+// ===========================================================
+// Delete preview — everything an org-delete cascades to at the DB level
+// (every org-scoped table's org_id FK is ON DELETE CASCADE), surfaced with
+// real counts so the confirmation never has to guess or go silent.
+// ===========================================================
+
+export type OrgDeletePreview = { items: { label: string; count: number }[]; linkedProfileCount: number };
+
+const ORG_SCOPED_TABLES: { table: string; label: string }[] = [
+  { table: "contacts", label: "contacts" },
+  { table: "opportunities", label: "opportunities (with their stage history)" },
+  { table: "assessments", label: "assessments (with their answers and scores)" },
+  { table: "build_packages", label: "build packages" },
+  { table: "client_health_scores", label: "client health score records" },
+  { table: "client_sop_deliverables", label: "SOP deliverables" },
+  { table: "communication_log", label: "communication log entries" },
+  { table: "documents", label: "documents" },
+  { table: "kpi_values", label: "KPI value records" },
+  { table: "meetings", label: "meetings" },
+  { table: "projects", label: "projects" },
+  { table: "revenue_transactions", label: "revenue transactions" },
+  { table: "subscriptions", label: "subscriptions" },
+  { table: "support_tickets", label: "support tickets" },
+  { table: "tasks", label: "tasks" },
+  { table: "vendor_agreements", label: "vendor agreements" },
+];
+
+export async function getOrganizationDeletePreview(supabase: SupabaseClient, orgId: string): Promise<OrgDeletePreview> {
+  const [items, vendorEventsResult, profileResult] = await Promise.all([
+    Promise.all(
+      ORG_SCOPED_TABLES.map(async ({ table, label }) => {
+        const { count, error } = await supabase.from(table).select("*", { count: "exact", head: true }).eq("org_id", orgId);
+        if (error) throw error;
+        return { label, count: count ?? 0 };
+      })
+    ),
+    // vendor_revenue_events isn't org-scoped by org_id — it's scoped by
+    // source_org_id (the client that generated the commission), which can
+    // differ from the vendor's own org, so it isn't in ORG_SCOPED_TABLES.
+    supabase.from("vendor_revenue_events").select("*", { count: "exact", head: true }).eq("source_org_id", orgId),
+    // Not deleted (profiles.org_id is ON DELETE SET NULL) — surfaced
+    // separately so a client login losing its org access is never silent.
+    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("org_id", orgId),
+  ]);
+  if (vendorEventsResult.error) throw vendorEventsResult.error;
+  if (profileResult.error) throw profileResult.error;
+
+  items.push({ label: "vendor revenue events", count: vendorEventsResult.count ?? 0 });
+
+  return { items: items.filter((i) => i.count > 0), linkedProfileCount: profileResult.count ?? 0 };
+}
+
 export async function listContacts(supabase: SupabaseClient, orgId: string): Promise<Contact[]> {
   const { data, error } = await supabase
     .from("contacts")

@@ -147,6 +147,25 @@ Four roles (`src/shared/roles.ts`): `verus_admin`, `verus_staff`,
   the pattern (get session → look up `profiles.role` → reject before doing
   anything with the admin/secret-key client).
 
+## Delete
+
+Organizations, Opportunities, and Assessments (any status) are deletable,
+staff only, from each record's own detail page — `src/shared/ui/DangerZone.tsx`,
+a deliberately unstyled/muted text control set off by a hairline, never a
+prominent button. It always confirms via `window.confirm()` with a message
+the caller builds server-side naming exactly what else goes, with real
+counts (`getOrganizationDeletePreview`/`getOpportunityDeletePreview` in
+each module's `data.ts`; assessments only need `getAnswerCount` since
+answers/scores cascade 1:1). The actual delete is always a single
+`admin.from(table).delete().eq("id", id)` — every org-scoped table's
+`org_id` FK is `ON DELETE CASCADE` (an assessment's `opportunity_id`,
+by contrast, is `ON DELETE SET NULL` — deleting an opportunity unlinks
+assessments/build packages/meetings/communication log from it, never
+deletes them), so the DB does the cascade; the API route never has to
+hand-delete children. Contacts already had delete (`ContactsPanel.tsx`,
+plain `window.confirm`) — copy its route pattern, not its confirm-message
+shape, for anything new.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

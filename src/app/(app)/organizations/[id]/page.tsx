@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
-import { getOrganizationOverview } from "@/modules/organizations/data";
+import { getSessionUser, getMyProfile } from "@/shared/session";
+import { isVerusStaff } from "@/shared/roles";
+import { getOrganizationOverview, getOrganizationDeletePreview } from "@/modules/organizations/data";
 import { ORG_TYPE_LABELS, ORG_STATUS_LABELS, HEALTH_LABELS } from "@/modules/organizations/labels";
 import { Card } from "@/shared/ui/Card";
 import { Stat } from "@/shared/ui/Stat";
+import { DangerZone } from "@/shared/ui/DangerZone";
 import { formatCurrency, formatDate, formatNumber } from "@/shared/format";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -22,6 +25,24 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
   if (!overview) notFound();
 
   const { org } = overview;
+
+  const user = await getSessionUser();
+  const profileResult = user ? await getMyProfile(user.id) : ({ status: "not_configured" } as const);
+  const canEdit = profileResult.status === "ok" && isVerusStaff(profileResult.profile.role);
+
+  let deleteConfirmMessage = "";
+  if (canEdit) {
+    const preview = await getOrganizationDeletePreview(supabase, id);
+    const lines = [`Delete ${org.name}? This cannot be undone.`];
+    if (preview.items.length > 0) {
+      lines.push("This will also permanently delete:");
+      lines.push(...preview.items.map((i) => `• ${i.count} ${i.label}`));
+    }
+    if (preview.linkedProfileCount > 0) {
+      lines.push(`Note: ${preview.linkedProfileCount} user login(s) tied to this org will lose their org access (not deleted).`);
+    }
+    deleteConfirmMessage = lines.join("\n");
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -63,6 +84,15 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
         <p className="mb-2 section-label">Notes</p>
         <p className="whitespace-pre-wrap text-[13px] text-[var(--cream)]">{org.notes ?? "No notes yet."}</p>
       </Card>
+
+      {canEdit ? (
+        <DangerZone
+          itemLabel="this organization"
+          confirmMessage={deleteConfirmMessage}
+          deleteUrl={`/api/organizations/${org.id}`}
+          redirectUrl="/organizations"
+        />
+      ) : null}
     </div>
   );
 }

@@ -163,6 +163,38 @@ export async function getPipelineStats(supabase: SupabaseClient): Promise<Pipeli
   };
 }
 
+// ===========================================================
+// Delete preview — stage history is cascade-deleted with the opportunity;
+// assessments/build packages/communication log/meetings that reference it
+// are only ever unlinked (opportunity_id -> null), never deleted, so
+// they're surfaced separately.
+// ===========================================================
+
+export type OpportunityDeletePreview = { stageHistoryCount: number; linkedItems: { label: string; count: number }[] };
+
+const OPPORTUNITY_LINKED_TABLES = [
+  { table: "assessments", label: "assessments" },
+  { table: "build_packages", label: "build packages" },
+  { table: "communication_log", label: "communication log entries" },
+  { table: "meetings", label: "meetings" },
+];
+
+export async function getOpportunityDeletePreview(supabase: SupabaseClient, opportunityId: string): Promise<OpportunityDeletePreview> {
+  const [stageHistoryResult, linked] = await Promise.all([
+    supabase.from("opportunity_stage_history").select("*", { count: "exact", head: true }).eq("opportunity_id", opportunityId),
+    Promise.all(
+      OPPORTUNITY_LINKED_TABLES.map(async ({ table, label }) => {
+        const { count, error } = await supabase.from(table).select("*", { count: "exact", head: true }).eq("opportunity_id", opportunityId);
+        if (error) throw error;
+        return { label, count: count ?? 0 };
+      })
+    ),
+  ]);
+  if (stageHistoryResult.error) throw stageHistoryResult.error;
+
+  return { stageHistoryCount: stageHistoryResult.count ?? 0, linkedItems: linked.filter((l) => l.count > 0) };
+}
+
 /** Opportunities with a next action due today or earlier — excludes Lost, which has nothing left to act on. */
 export async function listDueNextActions(supabase: SupabaseClient, todayIso: string): Promise<OpportunityListRow[]> {
   const { data, error } = await supabase
