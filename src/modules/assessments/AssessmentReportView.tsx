@@ -5,11 +5,12 @@ import { PrintButton } from "@/shared/ui/PrintButton";
 import { formatDate } from "@/shared/format";
 import { ASSESSMENT_TYPE_LABELS } from "./labels";
 import { categoryScoreTone } from "./scoreTone";
+import { BuildRecommendationPanel } from "./BuildRecommendationPanel";
 import type { AssessmentReport } from "./types";
 
-/** The completed-assessment view — every category, weighted score, band, and the ranked bottleneck list. Printable via window.print(); .no-print / aside / header are hidden in the print stylesheet. */
-export function AssessmentReportView({ report }: { report: AssessmentReport }) {
-  const { assessment, orgName, bandLabel, categoryScores } = report;
+/** The completed-assessment view — every category, weighted score, band, and the ranked bottleneck list, plus the Stage 8 build recommendation. Never rendered for a quick_scan assessment (its callers branch to QuickScanResult instead) — that's what keeps pricing off the free scan. Printable via window.print(); .no-print / aside / header are hidden in the print stylesheet. */
+export function AssessmentReportView({ report, canEdit = false }: { report: AssessmentReport; canEdit?: boolean }) {
+  const { assessment, orgName, bandLabel, categoryScores, buildTierOverrideByName, supportTierOverrideByName } = report;
   const byWeight = [...categoryScores].sort((a, b) => b.weight - a.weight);
   const bottlenecks = [...categoryScores].sort((a, b) => a.bottleneckRank - b.bottleneckRank);
 
@@ -64,6 +65,21 @@ export function AssessmentReportView({ report }: { report: AssessmentReport }) {
           ))}
         </div>
       </Card>
+
+      <BuildRecommendationPanel
+        assessmentId={assessment.id}
+        recommendedBuildTier={assessment.recommended_build_tier}
+        buildReasoning={assessment.build_recommendation_reasoning}
+        recommendedSupportTier={assessment.recommended_support_tier}
+        supportReasoning={assessment.support_recommendation_reasoning}
+        buildTierOverride={assessment.build_tier_override}
+        buildTierOverrideByName={buildTierOverrideByName}
+        buildTierOverrideAt={assessment.build_tier_override_at}
+        supportTierOverride={assessment.support_tier_override}
+        supportTierOverrideByName={supportTierOverrideByName}
+        supportTierOverrideAt={assessment.support_tier_override_at}
+        canEdit={canEdit}
+      />
     </div>
   );
 }

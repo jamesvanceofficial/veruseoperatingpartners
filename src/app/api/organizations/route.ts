@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       primary_address: emptyToNull(body.primary_address),
       employee_count_estimate: numberOrNull(body.employee_count_estimate),
       annual_revenue_estimate: numberOrNull(body.annual_revenue_estimate),
+      location_count: numberOrNull(body.location_count),
       source: emptyToNull(body.source),
       referred_by_org_id: emptyToNull(body.referred_by_org_id),
       assigned_owner: emptyToNull(body.assigned_owner),

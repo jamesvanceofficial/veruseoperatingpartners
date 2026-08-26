@@ -56,7 +56,7 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
         assessment.assessment_type === "quick_scan" ? (
           <QuickScanReport supabase={supabase} assessmentId={id} />
         ) : (
-          <FullReport supabase={supabase} assessmentId={id} />
+          <FullReport supabase={supabase} assessmentId={id} canEdit={canEdit} />
         )
       ) : !canEdit ? (
         <Card>
@@ -69,10 +69,10 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
   );
 }
 
-async function FullReport({ supabase, assessmentId }: { supabase: SupabaseClient; assessmentId: string }) {
+async function FullReport({ supabase, assessmentId, canEdit }: { supabase: SupabaseClient; assessmentId: string; canEdit: boolean }) {
   const report = await getAssessmentReport(supabase, assessmentId);
   if (!report) return null;
-  return <AssessmentReportView report={report} />;
+  return <AssessmentReportView report={report} canEdit={canEdit} />;
 }
 
 async function QuickScanReport({ supabase, assessmentId }: { supabase: SupabaseClient; assessmentId: string }) {

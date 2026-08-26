@@ -51,6 +51,7 @@ export default async function OrganizationOverviewPage({ params }: { params: Pro
         <Field label="Primary address" value={org.primary_address} />
         <Field label="Employees (est.)" value={formatNumber(org.employee_count_estimate)} />
         <Field label="Annual revenue (est.)" value={formatCurrency(org.annual_revenue_estimate)} />
+        <Field label="Locations" value={formatNumber(org.location_count)} />
         <Field label="Source" value={org.source} />
         <Field label="Referred by" value={overview.referredByName} />
         <Field label="Assigned owner" value={overview.ownerName} />

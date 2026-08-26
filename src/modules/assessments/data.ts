@@ -1,7 +1,9 @@
 import { randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeScores, findBandId } from "./scoring";
+import { computeBuildRecommendation } from "./buildRecommendation";
 import type { AssessmentType } from "./labels";
+import type { BuildTier, SupportTier } from "./buildTiers";
 import type { Assessment, AssessmentListRow, AssessmentReport, Category, Band, Question, AnswerOption, CategoryScoreDetail } from "./types";
 
 // ===========================================================
@@ -142,12 +144,25 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
 
   const band = bandResult.data as { label: string; description: string | null } | null;
 
+  const overrideByIds = [assessment.build_tier_override_by, assessment.support_tier_override_by].filter((v): v is string => Boolean(v));
+  let buildTierOverrideByName: string | null = null;
+  let supportTierOverrideByName: string | null = null;
+  if (overrideByIds.length > 0) {
+    const { data: profiles, error: profilesError } = await supabase.from("profiles").select("id, full_name, email").in("id", overrideByIds);
+    if (profilesError) throw profilesError;
+    const nameMap = new Map((profiles ?? []).map((p) => [p.id as string, (p.full_name as string | null) ?? (p.email as string | null) ?? "Unnamed"]));
+    buildTierOverrideByName = assessment.build_tier_override_by ? (nameMap.get(assessment.build_tier_override_by) ?? null) : null;
+    supportTierOverrideByName = assessment.support_tier_override_by ? (nameMap.get(assessment.support_tier_override_by) ?? null) : null;
+  }
+
   return {
     assessment,
     orgName: (orgResult.data as { name: string } | null)?.name ?? "Unknown organization",
     bandLabel: band?.label ?? null,
     bandDescription: band?.description ?? null,
     categoryScores,
+    buildTierOverrideByName,
+    supportTierOverrideByName,
   };
 }
 
@@ -285,7 +300,87 @@ export async function completeAssessment(admin: SupabaseClient, assessmentId: st
   await recomputeAndSaveScores(admin, assessmentId);
   const { error } = await admin.from("assessments").update({ status: "completed", completed_at: new Date().toISOString() }).eq("id", assessmentId);
   if (error) throw error;
+
+  if (assessment.assessment_type === "full") {
+    await computeAndSaveBuildRecommendation(admin, assessmentId);
+  }
+
   return { ok: true };
+}
+
+// ===========================================================
+// Build recommendation — Stage 8. Computed once, at completion, for Full
+// Assessments only (never Quick Scan — that stays a hook with no pricing
+// shown). A snapshot, like the score itself: not recomputed later even if
+// the org record changes afterward.
+// ===========================================================
+
+/** Full Assessment only — the caller (completeAssessment) is responsible for that check. */
+async function computeAndSaveBuildRecommendation(admin: SupabaseClient, assessmentId: string): Promise<void> {
+  const assessment = await getAssessmentById(admin, assessmentId);
+  if (!assessment) return;
+
+  const [orgResult, categories, scoresResult] = await Promise.all([
+    admin.from("organizations").select("name, annual_revenue_estimate, employee_count_estimate, location_count").eq("id", assessment.org_id).maybeSingle(),
+    getCategories(admin),
+    admin.from("assessment_category_scores").select("category_id, raw_score, bottleneck_rank").eq("assessment_id", assessmentId),
+  ]);
+  if (orgResult.error) throw orgResult.error;
+  if (scoresResult.error) throw scoresResult.error;
+
+  const org = orgResult.data as { name: string; annual_revenue_estimate: number | null; employee_count_estimate: number | null; location_count: number | null } | null;
+  const categoryNameMap = new Map(categories.map((c) => [c.id, c.name]));
+  const rows = (scoresResult.data ?? []) as { category_id: string | null; raw_score: number; bottleneck_rank: number | null }[];
+  const categoryScores = rows
+    .filter((r): r is typeof r & { category_id: string } => Boolean(r.category_id))
+    .map((r) => ({ categoryName: categoryNameMap.get(r.category_id) ?? "Unknown", rawScore: r.raw_score, bottleneckRank: r.bottleneck_rank ?? 0 }));
+
+  const recommendation = computeBuildRecommendation({
+    orgName: org?.name ?? "This organization",
+    enterpriseScore: assessment.enterprise_score ?? 0,
+    categoryScores,
+    annualRevenueEstimate: org?.annual_revenue_estimate ?? null,
+    employeeCountEstimate: org?.employee_count_estimate ?? null,
+    locationCount: org?.location_count ?? null,
+  });
+
+  const { error } = await admin
+    .from("assessments")
+    .update({
+      recommended_build_tier: recommendation.buildTier,
+      recommended_build_price: recommendation.buildPrice,
+      build_recommendation_reasoning: recommendation.buildReasoning,
+      recommended_support_tier: recommendation.supportTier,
+      recommended_support_price: recommendation.supportPrice,
+      support_recommendation_reasoning: recommendation.supportReasoning,
+    })
+    .eq("id", assessmentId);
+  if (error) throw error;
+}
+
+/** Staff override for the recommended build and/or support tier. Passing null for either clears that override, reverting to the recommendation. Both are recorded independently with who/when. */
+export async function setRecommendationOverride(
+  admin: SupabaseClient,
+  assessmentId: string,
+  input: { buildTierOverride?: BuildTier | null; supportTierOverride?: SupportTier | null; overriddenBy: string }
+): Promise<void> {
+  const patch: Record<string, unknown> = {};
+  const now = new Date().toISOString();
+
+  if (input.buildTierOverride !== undefined) {
+    patch.build_tier_override = input.buildTierOverride;
+    patch.build_tier_override_by = input.buildTierOverride ? input.overriddenBy : null;
+    patch.build_tier_override_at = input.buildTierOverride ? now : null;
+  }
+  if (input.supportTierOverride !== undefined) {
+    patch.support_tier_override = input.supportTierOverride;
+    patch.support_tier_override_by = input.supportTierOverride ? input.overriddenBy : null;
+    patch.support_tier_override_at = input.supportTierOverride ? now : null;
+  }
+  if (Object.keys(patch).length === 0) return;
+
+  const { error } = await admin.from("assessments").update(patch).eq("id", assessmentId);
+  if (error) throw error;
 }
 
 // ===========================================================

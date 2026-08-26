@@ -1,4 +1,5 @@
 import type { AssessmentType, AssessmentStatus } from "./labels";
+import type { BuildTier, SupportTier } from "./buildTiers";
 
 export type AnswerOption = { value: number; label: string };
 
@@ -28,7 +29,18 @@ export type Assessment = {
   completed_at: string | null;
   enterprise_score: number | null;
   band_id: string | null;
-  recommended_build_tier: string | null;
+  recommended_build_tier: BuildTier | null;
+  recommended_build_price: number | null;
+  build_recommendation_reasoning: string | null;
+  recommended_support_tier: SupportTier | null;
+  recommended_support_price: number | null;
+  support_recommendation_reasoning: string | null;
+  build_tier_override: BuildTier | null;
+  build_tier_override_by: string | null;
+  build_tier_override_at: string | null;
+  support_tier_override: SupportTier | null;
+  support_tier_override_by: string | null;
+  support_tier_override_at: string | null;
   price_paid: number | null;
   notes: string | null;
   share_token: string | null;
@@ -67,4 +79,6 @@ export type AssessmentReport = {
   bandLabel: string | null;
   bandDescription: string | null;
   categoryScores: CategoryScoreDetail[];
+  buildTierOverrideByName: string | null;
+  supportTierOverrideByName: string | null;
 };

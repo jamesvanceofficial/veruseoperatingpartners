@@ -39,6 +39,7 @@ export function OrganizationForm({
       primary_address: String(form.get("primary_address") ?? ""),
       employee_count_estimate: String(form.get("employee_count_estimate") ?? ""),
       annual_revenue_estimate: String(form.get("annual_revenue_estimate") ?? ""),
+      location_count: String(form.get("location_count") ?? ""),
       source: String(form.get("source") ?? ""),
       referred_by_org_id: String(form.get("referred_by_org_id") ?? ""),
       assigned_owner: String(form.get("assigned_owner") ?? ""),
@@ -122,6 +123,9 @@ export function OrganizationForm({
               min={0}
               defaultValue={organization?.annual_revenue_estimate ?? ""}
             />
+          </FormField>
+          <FormField label="Locations" htmlFor="location_count" hint="How many physical locations this org operates.">
+            <Input id="location_count" name="location_count" type="number" min={0} defaultValue={organization?.location_count ?? ""} />
           </FormField>
           <FormField label="Assigned owner" htmlFor="assigned_owner">
             <Select id="assigned_owner" name="assigned_owner" defaultValue={organization?.assigned_owner ?? ""}>

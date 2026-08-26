@@ -33,6 +33,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       primary_address: emptyToNull(body.primary_address),
       employee_count_estimate: numberOrNull(body.employee_count_estimate),
       annual_revenue_estimate: numberOrNull(body.annual_revenue_estimate),
+      location_count: numberOrNull(body.location_count),
       source: emptyToNull(body.source),
       referred_by_org_id: referredByOrgId,
       assigned_owner: emptyToNull(body.assigned_owner),

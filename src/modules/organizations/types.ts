@@ -11,6 +11,7 @@ export type Organization = {
   primary_address: string | null;
   employee_count_estimate: number | null;
   annual_revenue_estimate: number | null;
+  location_count: number | null;
   source: string | null;
   referred_by_org_id: string | null;
   assigned_owner: string | null;

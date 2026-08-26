@@ -194,9 +194,10 @@ today, no exceptions.
   active_client / former_client / referral_partner / vendor /
   strategic_opportunity), status, industry, website, phone,
   primary_address, employee_count_estimate, annual_revenue_estimate,
-  source, `referred_by_org_id` (self-FK), `assigned_owner` (FK profiles),
-  notes, created_at, updated_at. Read = default (was already staff-only
-  write until Stage 3 added write policies).
+  `location_count` (Stage 8 — input to the build recommendation
+  algorithm), source, `referred_by_org_id` (self-FK), `assigned_owner` (FK
+  profiles), notes, created_at, updated_at. Read = default (was already
+  staff-only write until Stage 3 added write policies).
 - `profiles` — id (= `auth.users.id`), full_name, email, role, org_id,
   created_at. `client_owner`/`client_user` require a non-null `org_id`.
   Write: staff can insert/update any profile; a user can update their own
@@ -228,10 +229,25 @@ today, no exceptions.
   Quick Scan uses. Read = all authenticated.
 - `assessments` — one row per assessment sitting: org_id, opportunity_id,
   conducted_by, status, `assessment_type` (quick_scan/full, Stage 7),
-  started_at/completed_at, enterprise_score, band_id,
-  recommended_build_tier, price_paid, notes, `share_token`/
-  `share_token_expires_at`/`share_token_revoked_at` (Stage 7 — the public
-  `/assessment/[token]` runner's only credential).
+  started_at/completed_at, enterprise_score, band_id, price_paid, notes,
+  `share_token`/`share_token_expires_at`/`share_token_revoked_at` (Stage 7
+  — the public `/assessment/[token]` runner's only credential). Stage 8
+  (Build Recommendation Engine — Full Assessment only, computed once at
+  completion, never for quick_scan): `recommended_build_tier` (foundation/
+  growth/enterprise/custom), `recommended_build_price`,
+  `build_recommendation_reasoning`, `recommended_support_tier` (base/
+  growth/pro/enterprise/custom), `recommended_support_price`,
+  `support_recommendation_reasoning`; staff override, recorded
+  independently for build and support: `build_tier_override`/
+  `build_tier_override_by` (FK profiles)/`build_tier_override_at`,
+  `support_tier_override`/`support_tier_override_by` (FK profiles)/
+  `support_tier_override_at` — effective tier is always `override ??
+  recommended`, computed at read time, never stored redundantly. Fixed
+  scope-per-tier (included/excluded) and pricing live as static config in
+  `src/modules/assessments/buildTiers.ts`, not in the database. The
+  monthly support product is always labeled "Software, Systems & Support
+  Subscription" (`SUPPORT_SUBSCRIPTION_NAME` in that same file) — never a
+  "Compass subscription".
 - `assessment_answers` — one row per question answered per assessment.
   Snapshots `question_text_snapshot`/`category_id_snapshot`/`weight_snapshot`/
   `answer_options_snapshot` (Stage 7) at answer time — re-captured from the
