@@ -71,12 +71,86 @@ export type SupportTierInfo = {
   label: string;
   price: number | null;
   priceLabel: string;
+  included: string[];
+  excluded: string[];
 };
 
+// Each tier's included scope is "everything in the tier below, plus its
+// own additions" — built from these increments so the cumulative lists
+// can't drift out of sync with each other. Concrete numbers throughout
+// (seats, response times, change-request/hour blocks), not vague words —
+// James can adjust the actual figures, but the panel should never show a
+// number-shaped promise as a word.
+const BASE_ITEMS = [
+  "Hosting and uptime for their system",
+  "Security updates and patching",
+  "Daily data backups",
+  "Up to 3 user seats",
+  "Email support — 2 business day response",
+  "Minor content and settings changes (up to 2 hours/month)",
+  "Monthly system health check",
+];
+const GROWTH_ITEMS = [
+  "Up to 10 user seats",
+  "Priority email support — next business day response",
+  "5 change requests per month",
+  "Dashboard and report adjustments",
+  "Automation maintenance and fixes",
+  "Quarterly system review",
+];
+const PRO_ITEMS = [
+  "Up to 25 user seats",
+  "Phone and scheduled call support — same business day response",
+  "12 change requests per month",
+  "New automation builds, up to 5 hours/month",
+  "Client portal access for their customers",
+  "Monthly reporting review",
+  "Integration maintenance",
+];
+const ENTERPRISE_ITEMS = [
+  "Unlimited user seats",
+  "Dedicated support contact",
+  "Same-day response",
+  "10 development hours per month",
+  "Multiple integrations maintained",
+  "Advanced dashboards and reporting",
+  "Quarterly strategic review",
+];
+
 export const SUPPORT_TIER_INFO: Record<SupportTier, SupportTierInfo> = {
-  base: { label: "Base", price: 350, priceLabel: "$350/mo" },
-  growth: { label: "Growth", price: 750, priceLabel: "$750/mo" },
-  pro: { label: "Pro", price: 1500, priceLabel: "$1,500/mo" },
-  enterprise: { label: "Enterprise", price: 2500, priceLabel: "$2,500+/mo" },
-  custom: { label: "Custom", price: null, priceLabel: "Quoted" },
+  base: {
+    label: "Base",
+    price: 350,
+    priceLabel: "$350/mo",
+    included: BASE_ITEMS,
+    excluded: ["New feature development", "New automations", "Additional modules", "Dashboard changes", "Priority response", "Phone support"],
+  },
+  growth: {
+    label: "Growth",
+    price: 750,
+    priceLabel: "$750/mo",
+    included: [...BASE_ITEMS, ...GROWTH_ITEMS],
+    excluded: ["New modules", "Custom development", "A dedicated support line"],
+  },
+  pro: {
+    label: "Pro",
+    price: 1500,
+    priceLabel: "$1,500/mo",
+    included: [...BASE_ITEMS, ...GROWTH_ITEMS, ...PRO_ITEMS],
+    excluded: ["Major new modules", "Unlimited development"],
+  },
+  enterprise: {
+    label: "Enterprise",
+    price: 2500,
+    priceLabel: "$2,500+/mo",
+    included: [...BASE_ITEMS, ...GROWTH_ITEMS, ...PRO_ITEMS, ...ENTERPRISE_ITEMS],
+    excluded: ["Work beyond this scope — moves to Custom, quoted separately"],
+  },
+  custom: {
+    label: "Custom",
+    price: null,
+    priceLabel: "Quoted",
+    included: ["Scope defined per client"],
+    excluded: ["No fixed inclusions or exclusions — scoped and quoted per engagement"],
+  },
 };

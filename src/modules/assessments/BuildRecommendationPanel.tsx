@@ -201,6 +201,11 @@ export function BuildRecommendationPanel({
 
         <p className="text-[13px] leading-relaxed text-[var(--cream)]">{supportReasoning}</p>
 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <ScopeList title="Included in scope" items={supportInfo.included} tone="green" />
+          <ScopeList title="Explicitly excluded" items={supportInfo.excluded} tone="red" />
+        </div>
+
         {canEdit ? (
           <div className="flex flex-wrap items-center gap-2 border-t border-[var(--hairline)] pt-4">
             <span className="text-[11.5px] text-[var(--muted)]">Override tier:</span>

@@ -262,11 +262,16 @@ today, no exceptions.
   `support_tier_override`/`support_tier_override_by` (FK profiles)/
   `support_tier_override_at` — effective tier is always `override ??
   recommended`, computed at read time, never stored redundantly. Fixed
-  scope-per-tier (included/excluded) and pricing live as static config in
-  `src/modules/assessments/buildTiers.ts`, not in the database. The
-  monthly support product is always labeled "Software, Systems & Support
-  Subscription" (`SUPPORT_SUBSCRIPTION_NAME` in that same file) — never a
-  "Compass subscription".
+  scope-per-tier (included/excluded, concrete seat/response-time/change-
+  request numbers) and pricing live as static config in
+  `src/modules/assessments/buildTiers.ts`, not in the database — support
+  tiers are cumulative (`SUPPORT_TIER_INFO[tier].included` for Growth/Pro/
+  Enterprise literally contains every item from the tier(s) below it, via
+  `BASE_ITEMS`/`GROWTH_ITEMS`/`PRO_ITEMS`/`ENTERPRISE_ITEMS` in that file,
+  never restated by hand) the way build tiers aren't. The monthly support
+  product is always labeled "Software, Systems & Support Subscription"
+  (`SUPPORT_SUBSCRIPTION_NAME` in that same file) — never a "Compass
+  subscription".
 - `assessment_answers` — one row per question answered per assessment.
   Snapshots `question_text_snapshot`/`category_id_snapshot`/`weight_snapshot`/
   `answer_options_snapshot` (Stage 7) at answer time — re-captured from the

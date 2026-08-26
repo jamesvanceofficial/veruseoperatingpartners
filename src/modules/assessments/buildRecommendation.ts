@@ -180,17 +180,35 @@ function buildReasoningText(
   return sentences.join(" ");
 }
 
-function supportReasoningText(buildTier: BuildTier, supportTier: SupportTier, bumped: boolean): string {
+function supportReasoningText(input: BuildRecommendationInput, buildTier: BuildTier, supportTier: SupportTier, bumped: boolean): string {
   if (buildTier === "custom") {
     return "Support is quoted alongside the Custom Build once scope is finalized.";
   }
-  const buildLabel = BUILD_TIER_INFO[buildTier].label;
+
   const supportLabel = SUPPORT_TIER_INFO[supportTier].label;
-  const base = `${withArticle(buildLabel, true)} is typically paired with ${supportLabel} support.`;
-  if (bumped) {
-    return `${base} Given the organization's size, this is recommended one tier up from the default, to cover the higher ongoing support load.`;
+  const headcount = input.realHeadcount ?? input.employeeCountEstimate;
+  const isRealHeadcount = input.realHeadcount !== null;
+  const systemsScore = input.categoryScores.find((c) => c.categoryName === "Systems")?.rawScore ?? null;
+
+  const sentences: string[] = [];
+
+  if (headcount !== null) {
+    sentences.push(
+      `With ${formatNumber(headcount)} ${isRealHeadcount ? "on the team" : "employees"}, ${supportLabel} support's seat allowance and response times are sized for the day-to-day support load a team this size actually generates.`
+    );
+  } else {
+    sentences.push(`${supportLabel} support is sized to the scope of ${withArticle(BUILD_TIER_INFO[buildTier].label)}.`);
   }
-  return base;
+
+  if (systemsScore !== null && systemsScore < 5) {
+    sentences.push(
+      `Systems scored ${systemsScore.toFixed(1)}/10 on this assessment — with that much still undocumented or manual, ongoing hands-on support matters more here than it would for a more systemized operation.`
+    );
+  } else if (bumped) {
+    sentences.push("Given the organization's scale, this is recommended one tier up from the build's default, to cover the higher ongoing support load.");
+  }
+
+  return sentences.join(" ");
 }
 
 export function computeBuildRecommendation(input: BuildRecommendationInput): BuildRecommendationResult {
@@ -236,6 +254,6 @@ export function computeBuildRecommendation(input: BuildRecommendationInput): Bui
     buildReasoning: buildReasoningText(input, { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3, weakMargin, noWebPresence }),
     supportTier,
     supportPrice: supportInfo.price,
-    supportReasoning: supportReasoningText(buildTier, supportTier, bumped),
+    supportReasoning: supportReasoningText(input, buildTier, supportTier, bumped),
   };
 }
