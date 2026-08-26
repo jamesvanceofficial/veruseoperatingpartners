@@ -115,31 +115,55 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
   const assessment = await getAssessmentById(supabase, id);
   if (!assessment) return null;
 
-  const [orgResult, bandResult, categories, scoresResult] = await Promise.all([
+  const [orgResult, bandResult, categories, questions, scoresResult, naTotalResult] = await Promise.all([
     supabase.from("organizations").select("name").eq("id", assessment.org_id).maybeSingle(),
     assessment.band_id
       ? supabase.from("assessment_bands").select("label, description").eq("id", assessment.band_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     getCategories(supabase),
-    supabase.from("assessment_category_scores").select("category_id, raw_score, weighted_score, bottleneck_rank").eq("assessment_id", id),
+    getQuestionsForType(supabase, assessment.assessment_type),
+    supabase.from("assessment_category_scores").select("category_id, raw_score, weighted_score, bottleneck_rank, not_applicable_count").eq("assessment_id", id),
+    // A category with EVERY question marked not applicable gets no score
+    // row at all (same as one with zero answers) — so the assessment-wide
+    // total is counted independently here, not derived from summing
+    // categoryScores, or that category's not-applicable answers would
+    // silently vanish from the count.
+    supabase.from("assessment_answers").select("*", { count: "exact", head: true }).eq("assessment_id", id).eq("is_not_applicable", true),
   ]);
   if (orgResult.error) throw orgResult.error;
   if (scoresResult.error) throw scoresResult.error;
+  if (naTotalResult.error) throw naTotalResult.error;
 
   const categoryNameMap = new Map(categories.map((c) => [c.id, c.name]));
-  const rows = (scoresResult.data ?? []) as { category_id: string | null; raw_score: number; weighted_score: number; bottleneck_rank: number | null }[];
+  const totalQuestionsByCategory = new Map<string, number>();
+  for (const q of questions) totalQuestionsByCategory.set(q.category_id, (totalQuestionsByCategory.get(q.category_id) ?? 0) + 1);
+
+  const rows = (scoresResult.data ?? []) as {
+    category_id: string | null;
+    raw_score: number;
+    weighted_score: number;
+    bottleneck_rank: number | null;
+    not_applicable_count: number | null;
+  }[];
 
   const categoryScores = rows
     .filter((r): r is typeof r & { category_id: string } => Boolean(r.category_id))
-    .map((r) => ({
-      categoryId: r.category_id,
-      categoryName: categoryNameMap.get(r.category_id) ?? "Unknown",
-      rawScore: r.raw_score,
-      weightedScore: r.weighted_score,
-      weight: categories.find((c) => c.id === r.category_id)?.weight ?? 0,
-      answeredCount: 0,
-      bottleneckRank: r.bottleneck_rank ?? 0,
-    }))
+    .map((r) => {
+      const notApplicableCount = r.not_applicable_count ?? 0;
+      const totalQuestionCount = totalQuestionsByCategory.get(r.category_id) ?? 0;
+      return {
+        categoryId: r.category_id,
+        categoryName: categoryNameMap.get(r.category_id) ?? "Unknown",
+        rawScore: r.raw_score,
+        weightedScore: r.weighted_score,
+        weight: categories.find((c) => c.id === r.category_id)?.weight ?? 0,
+        answeredCount: 0,
+        bottleneckRank: r.bottleneck_rank ?? 0,
+        notApplicableCount,
+        totalQuestionCount,
+        lowConfidence: totalQuestionCount > 0 && notApplicableCount / totalQuestionCount > 1 / 3,
+      };
+    })
     .sort((a, b) => a.bottleneckRank - b.bottleneckRank === 0 ? 0 : a.bottleneckRank - b.bottleneckRank);
 
   const band = bandResult.data as { label: string; description: string | null } | null;
@@ -161,6 +185,7 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
     bandLabel: band?.label ?? null,
     bandDescription: band?.description ?? null,
     categoryScores,
+    notApplicableCount: naTotalResult.count ?? 0,
     buildTierOverrideByName,
     supportTierOverrideByName,
   };
@@ -216,12 +241,13 @@ async function copyForwardFromQuickScan(admin: SupabaseClient, orgId: string, ta
 
   const { data: sourceAnswers, error: answersError } = await admin
     .from("assessment_answers")
-    .select("question_id, answer_value")
+    .select("question_id, answer_value, is_not_applicable")
     .eq("assessment_id", source.id);
   if (answersError) throw answersError;
 
   const answered = (sourceAnswers ?? []).filter(
-    (r): r is { question_id: string; answer_value: string } => Boolean(r.question_id) && r.answer_value !== null
+    (r): r is { question_id: string; answer_value: string | null; is_not_applicable: boolean } =>
+      Boolean(r.question_id) && (r.answer_value !== null || r.is_not_applicable)
   );
   if (answered.length === 0) return;
 
@@ -229,23 +255,39 @@ async function copyForwardFromQuickScan(admin: SupabaseClient, orgId: string, ta
   const questionMap = new Map(questions.map((q) => [q.id, q]));
   const categoryWeightMap = new Map(categories.map((c) => [c.id, c.weight]));
 
-  const rowsToInsert = answered.flatMap((a) => {
+  type InsertRow = {
+    assessment_id: string;
+    question_id: string;
+    question_text_snapshot: string;
+    category_id_snapshot: string;
+    weight_snapshot: number;
+    answer_options_snapshot: AnswerOption[];
+    carried_forward_at: string | null;
+    answer_value: string | null;
+    is_not_applicable: boolean;
+  };
+
+  const rowsToInsert = answered.flatMap((a): InsertRow[] => {
     const question = questionMap.get(a.question_id);
     if (!question) return [];
+    const base = {
+      assessment_id: targetAssessmentId,
+      question_id: question.id,
+      question_text_snapshot: question.question_text,
+      category_id_snapshot: question.category_id,
+      weight_snapshot: categoryWeightMap.get(question.category_id) ?? 0,
+      answer_options_snapshot: question.answer_options,
+      carried_forward_at: source.completed_at,
+    };
+    // A question genuinely not applicable to this business doesn't stop
+    // being not applicable between the scan and the full assessment —
+    // carry that forward as-is, same as a real answer.
+    if (a.is_not_applicable) {
+      return [{ ...base, answer_value: null, is_not_applicable: true }];
+    }
     const value = Number(a.answer_value);
     if (!question.answer_options.some((o) => o.value === value)) return [];
-    return [
-      {
-        assessment_id: targetAssessmentId,
-        question_id: question.id,
-        answer_value: String(value),
-        question_text_snapshot: question.question_text,
-        category_id_snapshot: question.category_id,
-        weight_snapshot: categoryWeightMap.get(question.category_id) ?? 0,
-        answer_options_snapshot: question.answer_options,
-        carried_forward_at: source.completed_at,
-      },
-    ];
+    return [{ ...base, answer_value: String(value), is_not_applicable: false }];
   });
   if (rowsToInsert.length === 0) return;
 
@@ -286,17 +328,29 @@ export async function clearCarriedForwardAnswers(admin: SupabaseClient, assessme
 type LiveScore = { enterpriseScore: number; categories: { categoryId: string; categoryName: string; rawScore: number; weight: number; answeredCount: number }[] };
 
 async function recomputeAndSaveScores(admin: SupabaseClient, assessmentId: string): Promise<LiveScore> {
-  const [answersResult, categories, bands] = await Promise.all([
-    admin.from("assessment_answers").select("category_id_snapshot, weight_snapshot, answer_value").eq("assessment_id", assessmentId),
+  const [assessmentResult, answersResult, categories, bands] = await Promise.all([
+    admin.from("assessments").select("assessment_type").eq("id", assessmentId).single(),
+    admin.from("assessment_answers").select("category_id_snapshot, weight_snapshot, answer_value, is_not_applicable").eq("assessment_id", assessmentId),
     getCategories(admin),
     getBands(admin),
   ]);
+  if (assessmentResult.error) throw assessmentResult.error;
   if (answersResult.error) throw answersResult.error;
 
-  const rows = (answersResult.data ?? []) as { category_id_snapshot: string | null; weight_snapshot: number; answer_value: string | null }[];
+  const rows = (answersResult.data ?? []) as { category_id_snapshot: string | null; weight_snapshot: number; answer_value: string | null; is_not_applicable: boolean }[];
+  // Not-applicable rows have answer_value = null, so they're excluded from
+  // scoring here the same way an unanswered question already is — never
+  // counted as a zero, just left out of both the numerator and denominator.
   const scored = rows
     .filter((r): r is typeof r & { category_id_snapshot: string } => Boolean(r.category_id_snapshot) && r.answer_value !== null)
     .map((r) => ({ categoryId: r.category_id_snapshot, weight: Number(r.weight_snapshot), value: Number(r.answer_value) }));
+
+  const naCountByCategory = new Map<string, number>();
+  for (const r of rows) {
+    if (r.is_not_applicable && r.category_id_snapshot) {
+      naCountByCategory.set(r.category_id_snapshot, (naCountByCategory.get(r.category_id_snapshot) ?? 0) + 1);
+    }
+  }
 
   const { enterpriseScore, categories: computed } = computeScores(scored);
   const bandId = findBandId(bands, enterpriseScore);
@@ -315,6 +369,7 @@ async function recomputeAndSaveScores(admin: SupabaseClient, assessmentId: strin
         raw_score: c.rawScore,
         weighted_score: c.weightedScore,
         bottleneck_rank: c.bottleneckRank,
+        not_applicable_count: naCountByCategory.get(c.categoryId) ?? 0,
       }))
     );
     if (insertError) throw insertError;
@@ -329,8 +384,13 @@ async function recomputeAndSaveScores(admin: SupabaseClient, assessmentId: strin
   };
 }
 
-/** Upserts one answer (re-snapshotting from the live question every time — safe while the assessment is still active) and rescoring the whole assessment. Flips draft → in_progress and stamps started_at on the first answer. */
-export async function saveAnswer(admin: SupabaseClient, assessmentId: string, questionId: string, value: number): Promise<LiveScore> {
+/** Upserts one answer (re-snapshotting from the live question every time — safe while the assessment is still active) and rescoring the whole assessment. Flips draft → in_progress and stamps started_at on the first answer. Pass {notApplicable:true} instead of a value when the question genuinely doesn't apply — it's stored distinctly (answer_value stays null, is_not_applicable=true) and excluded from scoring entirely, never counted as a zero. */
+export async function saveAnswer(
+  admin: SupabaseClient,
+  assessmentId: string,
+  questionId: string,
+  input: { value: number } | { notApplicable: true }
+): Promise<LiveScore> {
   const { data: question, error: questionError } = await admin
     .from("assessment_questions")
     .select("question_text, category_id, answer_options")
@@ -339,8 +399,16 @@ export async function saveAnswer(admin: SupabaseClient, assessmentId: string, qu
   if (questionError) throw questionError;
 
   const options = question.answer_options as AnswerOption[];
-  const chosen = options.find((o) => o.value === value);
-  if (!chosen) throw new Error("That answer isn't one of this question's choices.");
+
+  let answerValue: string | null = null;
+  let isNotApplicable = false;
+  if ("notApplicable" in input) {
+    isNotApplicable = true;
+  } else {
+    const chosen = options.find((o) => o.value === input.value);
+    if (!chosen) throw new Error("That answer isn't one of this question's choices.");
+    answerValue = String(input.value);
+  }
 
   const { data: category, error: categoryError } = await admin.from("assessment_categories").select("weight").eq("id", question.category_id).single();
   if (categoryError) throw categoryError;
@@ -349,7 +417,8 @@ export async function saveAnswer(admin: SupabaseClient, assessmentId: string, qu
     {
       assessment_id: assessmentId,
       question_id: questionId,
-      answer_value: String(value),
+      answer_value: answerValue,
+      is_not_applicable: isNotApplicable,
       question_text_snapshot: question.question_text,
       category_id_snapshot: question.category_id,
       weight_snapshot: category.weight,
@@ -522,6 +591,17 @@ export async function getAnswersMap(supabase: SupabaseClient, assessmentId: stri
   return map;
 }
 
+/** question_ids marked not applicable on this assessment — for resuming the runner with the toggle already set. */
+export async function getNotApplicableIds(supabase: SupabaseClient, assessmentId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("assessment_answers")
+    .select("question_id")
+    .eq("assessment_id", assessmentId)
+    .eq("is_not_applicable", true);
+  if (error) throw error;
+  return (data ?? []).map((r) => r.question_id as string).filter(Boolean);
+}
+
 // ===========================================================
 // Public Quick Scan — the /scan intake flow. Creates the org/contact/
 // opportunity/assessment in one submission and scores it immediately
@@ -535,7 +615,7 @@ export type QuickScanInput = {
   companyName: string;
   industry: string;
   revenueRange: string;
-  answers: { questionId: string; value: number }[];
+  answers: { questionId: string; value: number | null; notApplicable: boolean }[];
 };
 
 // Named distinctly from the QuickScanResult *component* (modules/assessments/QuickScanResult.tsx) — this is the data shape the API returns, not UI.
@@ -545,6 +625,7 @@ export type QuickScanSubmissionResult = {
   bandLabel: string | null;
   bandDescription: string | null;
   categoryScores: CategoryScoreDetail[];
+  notApplicableCount: number;
 };
 
 export async function submitQuickScan(admin: SupabaseClient, input: QuickScanInput): Promise<QuickScanSubmissionResult> {
@@ -587,7 +668,7 @@ export async function submitQuickScan(admin: SupabaseClient, input: QuickScanInp
   });
 
   for (const a of input.answers) {
-    await saveAnswer(admin, assessmentId, a.questionId, a.value);
+    await saveAnswer(admin, assessmentId, a.questionId, a.notApplicable ? { notApplicable: true } : { value: a.value as number });
   }
 
   const completed = await completeAssessment(admin, assessmentId);
@@ -601,5 +682,6 @@ export async function submitQuickScan(admin: SupabaseClient, input: QuickScanInp
     bandLabel: report?.bandLabel ?? null,
     bandDescription: report?.bandDescription ?? null,
     categoryScores: report?.categoryScores ?? [],
+    notApplicableCount: report?.notApplicableCount ?? 0,
   };
 }

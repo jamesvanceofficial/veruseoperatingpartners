@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { BrandMark } from "@/shared/ui/BrandMark";
 import { Badge } from "@/shared/ui/Badge";
 import { createAdminClient } from "@/shared/supabase/admin";
-import { getAssessmentByToken, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap } from "@/modules/assessments/data";
+import { getAssessmentByToken, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getNotApplicableIds } from "@/modules/assessments/data";
 import { ASSESSMENT_TYPE_LABELS } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -66,6 +66,7 @@ async function QuickScanCompleted({ admin, assessmentId }: { admin: ReturnType<t
       bandLabel={report.bandLabel}
       bandDescription={report.bandDescription}
       categoryScores={report.categoryScores}
+      notApplicableCount={report.notApplicableCount}
     />
   );
 }
@@ -81,11 +82,12 @@ async function PublicRunner({
   assessmentType: "quick_scan" | "full";
   token: string;
 }) {
-  const [categories, questions, answersMap, carriedForwardMap] = await Promise.all([
+  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds] = await Promise.all([
     getCategories(admin),
     getQuestionsForType(admin, assessmentType),
     getAnswersMap(admin, assessmentId),
     getCarriedForwardMap(admin, assessmentId),
+    getNotApplicableIds(admin, assessmentId),
   ]);
 
   return (
@@ -93,6 +95,7 @@ async function PublicRunner({
       categories={categories}
       questions={questions}
       initialAnswers={Object.fromEntries(answersMap)}
+      initialNotApplicable={notApplicableIds}
       carriedForward={Object.fromEntries(carriedForwardMap)}
       clearCarriedForwardUrl={`/api/public/assessment/${token}/clear-carried-forward`}
       saveUrl={`/api/public/assessment/${token}/answer`}

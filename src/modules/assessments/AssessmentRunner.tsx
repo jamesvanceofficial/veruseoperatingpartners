@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/Button";
 import { formatDate } from "@/shared/format";
 import { computeScores } from "./scoring";
 import { AnswerOptionButton } from "./AnswerOptionButton";
+import { NotApplicableToggle } from "./NotApplicableToggle";
 import type { Category, Question } from "./types";
 
 /**
@@ -30,6 +31,7 @@ export function AssessmentRunner({
   categories,
   questions,
   initialAnswers,
+  initialNotApplicable = [],
   carriedForward = {},
   clearCarriedForwardUrl,
   saveUrl,
@@ -38,6 +40,8 @@ export function AssessmentRunner({
   categories: Category[];
   questions: Question[];
   initialAnswers: Record<string, number>;
+  /** question_ids already marked not applicable — excluded from scoring, but count as "answered" for progress/completion. */
+  initialNotApplicable?: string[];
   /** question_id -> the source quick scan's completed_at, for answers still carried forward and untouched. */
   carriedForward?: Record<string, string>;
   clearCarriedForwardUrl?: string;
@@ -46,6 +50,7 @@ export function AssessmentRunner({
 }) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, number>>(initialAnswers);
+  const [notApplicable, setNotApplicable] = useState<Set<string>>(() => new Set(initialNotApplicable));
   const [carriedIds, setCarriedIds] = useState<Set<string>>(() => new Set(Object.keys(carriedForward)));
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,11 +62,14 @@ export function AssessmentRunner({
     return categories.filter((c) => categoryIdsInUse.includes(c.id)).map((c) => ({ category: c, questions: questions.filter((q) => q.category_id === c.id) }));
   }, [categories, questions]);
 
+  const initialNotApplicableSet = useMemo(() => new Set(initialNotApplicable), [initialNotApplicable]);
+
   // Opens on the first section with a genuinely unanswered question — not
   // always section 0 — so carried-forward (or any other pre-filled)
-  // answers don't make the runner look like it's starting from scratch.
+  // answers, real or not-applicable, don't make the runner look like it's
+  // starting from scratch.
   const [sectionIndex, setSectionIndex] = useState(() => {
-    const idx = sections.findIndex((s) => s.questions.some((q) => initialAnswers[q.id] === undefined));
+    const idx = sections.findIndex((s) => s.questions.some((q) => initialAnswers[q.id] === undefined && !initialNotApplicableSet.has(q.id)));
     return idx === -1 ? 0 : idx;
   });
 
@@ -69,6 +77,9 @@ export function AssessmentRunner({
   const carriedDate = carriedCount > 0 ? Object.values(carriedForward)[0] : null;
 
   const { enterpriseScore } = useMemo(() => {
+    // notApplicable is a separate state container, never mixed into
+    // answers, so this already excludes it from the live score with no
+    // extra filtering needed.
     const weightByCategory = new Map(categories.map((c) => [c.id, c.weight]));
     const scored = Object.entries(answers).map(([questionId, value]) => {
       const q = questions.find((qq) => qq.id === questionId);
@@ -77,21 +88,31 @@ export function AssessmentRunner({
     return computeScores(scored);
   }, [answers, categories, questions]);
 
-  const answeredCount = Object.keys(answers).length;
+  const answeredCount = Object.keys(answers).length + notApplicable.size;
   const totalCount = questions.length;
   const complete = answeredCount === totalCount;
   const halfway = totalCount > 0 && answeredCount / totalCount >= 0.5;
+
+  function clearCarried(questionId: string) {
+    setCarriedIds((prev) => {
+      if (!prev.has(questionId)) return prev;
+      const next = new Set(prev);
+      next.delete(questionId);
+      return next;
+    });
+  }
 
   async function handleAnswer(question: Question, value: number) {
     setError(null);
     setSavingId(question.id);
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
-    setCarriedIds((prev) => {
+    setNotApplicable((prev) => {
       if (!prev.has(question.id)) return prev;
       const next = new Set(prev);
       next.delete(question.id);
       return next;
     });
+    clearCarried(question.id);
     try {
       const res = await fetch(saveUrl, {
         method: "POST",
@@ -104,6 +125,34 @@ export function AssessmentRunner({
       }
     } catch {
       setError("Could not save that answer — check your connection.");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleNotApplicable(question: Question) {
+    setError(null);
+    setSavingId(question.id);
+    setNotApplicable((prev) => new Set(prev).add(question.id));
+    setAnswers((prev) => {
+      if (!(question.id in prev)) return prev;
+      const next = { ...prev };
+      delete next[question.id];
+      return next;
+    });
+    clearCarried(question.id);
+    try {
+      const res = await fetch(saveUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question_id: question.id, not_applicable: true }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        setError(payload.error ?? "Could not save that — try again.");
+      }
+    } catch {
+      setError("Could not save that — check your connection.");
     } finally {
       setSavingId(null);
     }
@@ -211,7 +260,7 @@ export function AssessmentRunner({
 
           <Card className="flex flex-col gap-1 p-2">
             {sections.map((s, i) => {
-              const sectionAnswered = s.questions.filter((q) => answers[q.id] !== undefined).length;
+              const sectionAnswered = s.questions.filter((q) => answers[q.id] !== undefined || notApplicable.has(q.id)).length;
               const done = sectionAnswered === s.questions.length;
               return (
                 <button
@@ -266,6 +315,7 @@ export function AssessmentRunner({
                           />
                         ))}
                     </div>
+                    <NotApplicableToggle selected={notApplicable.has(q.id)} disabled={savingId === q.id} onSelect={() => handleNotApplicable(q)} />
                   </div>
                 ))}
               </div>

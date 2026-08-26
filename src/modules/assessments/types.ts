@@ -71,6 +71,12 @@ export type CategoryScoreDetail = {
   weight: number;
   answeredCount: number;
   bottleneckRank: number;
+  /** Answered "not applicable" — excluded from rawScore/weightedScore entirely, never counted as a zero. */
+  notApplicableCount: number;
+  /** This category's full question bank size for the assessment's type (12 for full, 2 for quick scan) — the denominator behind lowConfidence. */
+  totalQuestionCount: number;
+  /** notApplicableCount / totalQuestionCount > 1/3 — too much of this category's score is missing to trust it. */
+  lowConfidence: boolean;
 };
 
 export type AssessmentReport = {
@@ -79,6 +85,8 @@ export type AssessmentReport = {
   bandLabel: string | null;
   bandDescription: string | null;
   categoryScores: CategoryScoreDetail[];
+  /** Total across the WHOLE assessment, including categories excluded entirely because every question in them was marked not applicable. */
+  notApplicableCount: number;
   buildTierOverrideByName: string | null;
   supportTierOverrideByName: string | null;
 };

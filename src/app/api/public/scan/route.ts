@@ -16,10 +16,14 @@ export async function POST(request: Request) {
   }
 
   const rawAnswers: unknown[] = Array.isArray(body?.answers) ? body.answers : [];
-  const answers: { questionId: string; value: number }[] = rawAnswers
+  const answers: { questionId: string; value: number | null; notApplicable: boolean }[] = rawAnswers
     .map((a: unknown) => (a && typeof a === "object" ? (a as Record<string, unknown>) : null))
     .filter((a: Record<string, unknown> | null): a is Record<string, unknown> => a !== null)
-    .map((a: Record<string, unknown>) => ({ questionId: String(a.question_id ?? ""), value: Number(a.value) }));
+    .map((a: Record<string, unknown>) => ({
+      questionId: String(a.question_id ?? ""),
+      value: a.not_applicable === true ? null : Number(a.value),
+      notApplicable: a.not_applicable === true,
+    }));
 
   const admin = createAdminClient();
   const quickScanQuestions = await getQuestionsForType(admin, "quick_scan");
@@ -27,7 +31,9 @@ export async function POST(request: Request) {
 
   if (
     answers.length !== quickScanQuestions.length ||
-    answers.some((a: { questionId: string; value: number }) => !validIds.has(a.questionId) || !Number.isInteger(a.value) || a.value < 0 || a.value > 3)
+    answers.some(
+      (a) => !validIds.has(a.questionId) || (!a.notApplicable && (!Number.isInteger(a.value) || (a.value as number) < 0 || (a.value as number) > 3))
+    )
   ) {
     return NextResponse.json({ error: "All questions must be answered." }, { status: 400 });
   }

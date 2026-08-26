@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
-import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getAnswerCount } from "@/modules/assessments/data";
+import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getNotApplicableIds, getAnswerCount } from "@/modules/assessments/data";
 import { ASSESSMENT_TYPE_LABELS, ASSESSMENT_STATUS_LABELS, ASSESSMENT_STATUS_TONE } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -100,6 +100,7 @@ async function QuickScanReport({ supabase, assessmentId }: { supabase: SupabaseC
       bandLabel={report.bandLabel}
       bandDescription={report.bandDescription}
       categoryScores={report.categoryScores}
+      notApplicableCount={report.notApplicableCount}
     />
   );
 }
@@ -113,11 +114,12 @@ async function Runner({
   assessmentId: string;
   assessmentType: "quick_scan" | "full";
 }) {
-  const [categories, questions, answersMap, carriedForwardMap] = await Promise.all([
+  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds] = await Promise.all([
     getCategories(supabase),
     getQuestionsForType(supabase, assessmentType),
     getAnswersMap(supabase, assessmentId),
     getCarriedForwardMap(supabase, assessmentId),
+    getNotApplicableIds(supabase, assessmentId),
   ]);
 
   return (
@@ -125,6 +127,7 @@ async function Runner({
       categories={categories}
       questions={questions}
       initialAnswers={Object.fromEntries(answersMap)}
+      initialNotApplicable={notApplicableIds}
       carriedForward={Object.fromEntries(carriedForwardMap)}
       clearCarriedForwardUrl={`/api/assessments/${assessmentId}/clear-carried-forward`}
       saveUrl={`/api/assessments/${assessmentId}/answer`}

@@ -10,7 +10,7 @@ import type { AssessmentReport } from "./types";
 
 /** The completed-assessment view — every category, weighted score, band, and the ranked bottleneck list, plus the Stage 8 build recommendation. Never rendered for a quick_scan assessment (its callers branch to QuickScanResult instead) — that's what keeps pricing off the free scan. Printable via window.print(); .no-print / aside / header are hidden in the print stylesheet. */
 export function AssessmentReportView({ report, canEdit = false }: { report: AssessmentReport; canEdit?: boolean }) {
-  const { assessment, orgName, bandLabel, categoryScores, buildTierOverrideByName, supportTierOverrideByName } = report;
+  const { assessment, orgName, bandLabel, categoryScores, notApplicableCount, buildTierOverrideByName, supportTierOverrideByName } = report;
   const byWeight = [...categoryScores].sort((a, b) => b.weight - a.weight);
   const bottlenecks = [...categoryScores].sort((a, b) => a.bottleneckRank - b.bottleneckRank);
 
@@ -29,12 +29,21 @@ export function AssessmentReportView({ report, canEdit = false }: { report: Asse
         <Stat label="Band" value={bandLabel ?? "—"} tone="gold" />
       </div>
 
+      {notApplicableCount > 0 ? (
+        <p className="text-[11.5px] text-[var(--muted)]">
+          {notApplicableCount} question{notApplicableCount === 1 ? "" : "s"} marked not applicable — excluded from scoring, not counted as a zero.
+        </p>
+      ) : null}
+
       <Card className="flex flex-col gap-1">
         <p className="mb-1 section-label">All Categories</p>
         <div className="flex flex-col divide-y divide-[var(--hairline)]">
           {byWeight.map((c) => (
             <div key={c.categoryId} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="text-[12.5px] text-[var(--cream)]">{c.categoryName}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[12.5px] text-[var(--cream)]">{c.categoryName}</span>
+                {c.lowConfidence ? <Badge tone="yellow">Low confidence</Badge> : null}
+              </div>
               <span className="text-[11px] text-[var(--muted)]">weight {c.weight}</span>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-24 overflow-hidden rounded-full bg-[var(--navy)]">
@@ -59,6 +68,7 @@ export function AssessmentReportView({ report, canEdit = false }: { report: Asse
               <div className="flex items-center gap-2.5">
                 <span className="font-tabular text-[12px] text-[var(--muted)]">#{c.bottleneckRank}</span>
                 <span className="text-[12.5px] text-[var(--cream)]">{c.categoryName}</span>
+                {c.lowConfidence ? <Badge tone="yellow">Low confidence</Badge> : null}
               </div>
               <Badge tone={categoryScoreTone(c.rawScore)}>{c.rawScore.toFixed(1)} / 10</Badge>
             </div>

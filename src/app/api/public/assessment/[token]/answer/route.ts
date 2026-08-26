@@ -21,13 +21,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
 
   const body = await request.json().catch(() => null);
   const questionId = typeof body?.question_id === "string" ? body.question_id : null;
+  const notApplicable = body?.not_applicable === true;
   const value = Number(body?.value);
-  if (!questionId || !Number.isInteger(value) || value < 0 || value > 3) {
+  if (!questionId) return NextResponse.json({ error: "Invalid answer." }, { status: 400 });
+  if (!notApplicable && (!Number.isInteger(value) || value < 0 || value > 3)) {
     return NextResponse.json({ error: "Invalid answer." }, { status: 400 });
   }
 
   try {
-    const live = await saveAnswer(admin, assessment.id, questionId, value);
+    const live = await saveAnswer(admin, assessment.id, questionId, notApplicable ? { notApplicable: true } : { value });
     return NextResponse.json({ data: live });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to save that answer.";

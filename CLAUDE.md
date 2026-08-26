@@ -277,14 +277,31 @@ today, no exceptions.
   upsert in `saveAnswer()` (Postgres requires the predicate to match
   exactly), and it was never needed since Postgres already treats every
   NULL as distinct from every other NULL in a unique index.
+  `is_not_applicable` (Stage 11) marks a question as genuinely not
+  applying to this business — `answer_value` stays null, distinct from a
+  question with no row at all (never answered yet). `saveAnswer()` always
+  writes `carried_forward_at: null` AND `is_not_applicable` on every save,
+  so re-answering a not-applicable question (or a carried-forward one)
+  always clears both flags in the same write.
 - `assessment_category_scores` — per-assessment, per-category rollup:
-  raw_score, weighted_score, bottleneck_rank. Scoring engine (Stage 7,
-  `src/modules/assessments/scoring.ts`, pure functions, no DB access):
-  category score = sum(answers) / (questions answered × 3) × 10;
-  enterprise score = sum over categories of (category score / 10 × weight);
-  bottleneck rank = (10 − category score) × weight, highest first. Same
-  formulas for Quick Scan and Full — they're answered-count-relative, not
-  fixed to a bank size.
+  raw_score, weighted_score, bottleneck_rank, `not_applicable_count`
+  (Stage 11). Scoring engine (Stage 7, `src/modules/assessments/scoring.ts`,
+  pure functions, no DB access): category score = sum(answers) / (questions
+  answered × 3) × 10; enterprise score = sum over categories of (category
+  score / 10 × weight); bottleneck rank = (10 − category score) × weight,
+  highest first. Same formulas for Quick Scan and Full — they're
+  answered-count-relative, not fixed to a bank size. Not-applicable answers
+  are excluded from `computeScores()`'s input entirely (same as
+  never-answered — answer_value is null either way), never counted as a
+  zero. `CategoryScoreDetail.lowConfidence` (computed at read time in
+  `getAssessmentReport()`, not stored) is true when
+  `not_applicable_count / totalQuestionCount > 1/3` for that category —
+  shown as a "Low confidence" badge on both the Full report and the Quick
+  Scan result. `AssessmentReport.notApplicableCount` is the assessment-wide
+  total, queried independently (not summed from categoryScores) so a
+  category with EVERY question marked not applicable — which then has no
+  score row at all, same as one with zero real answers — still counts
+  toward it.
 - `build_packages` — org_id, opportunity_id, tier (foundation/growth/
   enterprise/custom), status, price, deposit/balance amounts + paid_at,
   timeline dates, notes.

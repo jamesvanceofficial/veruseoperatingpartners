@@ -22,7 +22,10 @@ function CategoryBars({ categoryScores }: { categoryScores: CategoryScoreDetail[
         return (
           <div key={c.categoryId} className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[12.5px] font-medium text-[var(--cream)]">{c.categoryName}</span>
+              <span className="flex items-center gap-2 text-[12.5px] font-medium text-[var(--cream)]">
+                {c.categoryName}
+                {c.lowConfidence ? <Badge tone="yellow">Low confidence</Badge> : null}
+              </span>
               <Badge tone={tone}>{c.rawScore.toFixed(1)} / 10</Badge>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--navy)]">
@@ -69,11 +72,13 @@ export function QuickScanResult({
   bandLabel,
   bandDescription,
   categoryScores,
+  notApplicableCount = 0,
 }: {
   score: number;
   bandLabel: string | null;
   bandDescription: string | null;
   categoryScores: CategoryScoreDetail[];
+  notApplicableCount?: number;
 }) {
   return (
     <div className="flex flex-col gap-6">
@@ -85,6 +90,12 @@ export function QuickScanResult({
           {bandDescription ? <p className="mx-auto max-w-md text-[13px] leading-relaxed text-[var(--muted)]">{bandDescription}</p> : null}
         </div>
       </Card>
+
+      {notApplicableCount > 0 ? (
+        <p className="text-center text-[11.5px] text-[var(--muted)]">
+          {notApplicableCount} question{notApplicableCount === 1 ? "" : "s"} marked not applicable to your business — excluded from your score, not counted as a zero.
+        </p>
+      ) : null}
 
       <Card className="flex flex-col gap-4">
         <div>

@@ -7,24 +7,52 @@ import { FormField, Input, Select } from "@/shared/ui/FormField";
 import { REVENUE_RANGES } from "./labels";
 import { QuickScanResult } from "./QuickScanResult";
 import { AnswerOptionButton } from "./AnswerOptionButton";
+import { NotApplicableToggle } from "./NotApplicableToggle";
 import type { Question, CategoryScoreDetail } from "./types";
 
 type Step = "intake" | "questions" | "result";
 
 type Intake = { fullName: string; email: string; phone: string; companyName: string; industry: string; revenueRange: string };
 
-type ScanResultData = { enterpriseScore: number; bandLabel: string | null; bandDescription: string | null; categoryScores: CategoryScoreDetail[] };
+type ScanResultData = {
+  enterpriseScore: number;
+  bandLabel: string | null;
+  bandDescription: string | null;
+  categoryScores: CategoryScoreDetail[];
+  notApplicableCount: number;
+};
 
 export function QuickScanWizard({ questions }: { questions: Question[] }) {
   const [step, setStep] = useState<Step>("intake");
   const [intake, setIntake] = useState<Intake>({ fullName: "", email: "", phone: "", companyName: "", industry: "", revenueRange: "" });
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [notApplicable, setNotApplicable] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResultData | null>(null);
 
-  const answeredCount = Object.keys(answers).length;
+  const answeredCount = Object.keys(answers).length + notApplicable.size;
   const allAnswered = answeredCount === questions.length;
+
+  function selectAnswer(questionId: string, value: number) {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    setNotApplicable((prev) => {
+      if (!prev.has(questionId)) return prev;
+      const next = new Set(prev);
+      next.delete(questionId);
+      return next;
+    });
+  }
+
+  function selectNotApplicable(questionId: string) {
+    setNotApplicable((prev) => new Set(prev).add(questionId));
+    setAnswers((prev) => {
+      if (!(questionId in prev)) return prev;
+      const next = { ...prev };
+      delete next[questionId];
+      return next;
+    });
+  }
 
   function handleIntakeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,7 +74,11 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
           company_name: intake.companyName,
           industry: intake.industry,
           revenue_range: intake.revenueRange,
-          answers: Object.entries(answers).map(([question_id, value]) => ({ question_id, value })),
+          answers: questions.map((q) =>
+            notApplicable.has(q.id)
+              ? { question_id: q.id, value: null, not_applicable: true }
+              : { question_id: q.id, value: answers[q.id], not_applicable: false }
+          ),
         }),
       });
       const payload = await res.json().catch(() => ({}));
@@ -60,6 +92,7 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
         bandLabel: payload.data.bandLabel,
         bandDescription: payload.data.bandDescription,
         categoryScores: payload.data.categoryScores ?? [],
+        notApplicableCount: payload.data.notApplicableCount ?? 0,
       });
       setStep("result");
     } catch {
@@ -75,6 +108,7 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
         bandLabel={result.bandLabel}
         bandDescription={result.bandDescription}
         categoryScores={result.categoryScores}
+        notApplicableCount={result.notApplicableCount}
       />
     );
   }
@@ -146,10 +180,11 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
                     key={opt.value}
                     option={opt}
                     selected={answers[q.id] === opt.value}
-                    onSelect={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.value }))}
+                    onSelect={() => selectAnswer(q.id, opt.value)}
                   />
                 ))}
             </div>
+            <NotApplicableToggle selected={notApplicable.has(q.id)} onSelect={() => selectNotApplicable(q.id)} />
           </Card>
         ))}
       </div>
