@@ -182,7 +182,100 @@ export async function createAssessment(
     .select("id")
     .single();
   if (error) throw error;
-  return data.id as string;
+  const assessmentId = data.id as string;
+
+  if (input.assessmentType === "full") {
+    await copyForwardFromQuickScan(admin, input.orgId, assessmentId);
+  }
+
+  return assessmentId;
+}
+
+/**
+ * A prospect who already took the free Quick Scan shouldn't be asked the
+ * same 20 questions again in the paid Full Assessment. Copies answers for
+ * any question the org's most recent COMPLETED quick scan already
+ * answered — never a draft/in-progress one, never another org's — into
+ * the new full assessment as real answers in their own right (snapshotted
+ * from the CURRENT live question, same as any other save, in case the
+ * question bank changed since the scan). Marked via carried_forward_at so
+ * the runner can show them as carried and offer to clear them.
+ */
+async function copyForwardFromQuickScan(admin: SupabaseClient, orgId: string, targetAssessmentId: string): Promise<void> {
+  const { data: sourceRows, error: sourceError } = await admin
+    .from("assessments")
+    .select("id, completed_at")
+    .eq("org_id", orgId)
+    .eq("assessment_type", "quick_scan")
+    .eq("status", "completed")
+    .order("completed_at", { ascending: false })
+    .limit(1);
+  if (sourceError) throw sourceError;
+  const source = sourceRows?.[0] as { id: string; completed_at: string | null } | undefined;
+  if (!source) return;
+
+  const { data: sourceAnswers, error: answersError } = await admin
+    .from("assessment_answers")
+    .select("question_id, answer_value")
+    .eq("assessment_id", source.id);
+  if (answersError) throw answersError;
+
+  const answered = (sourceAnswers ?? []).filter(
+    (r): r is { question_id: string; answer_value: string } => Boolean(r.question_id) && r.answer_value !== null
+  );
+  if (answered.length === 0) return;
+
+  const [categories, questions] = await Promise.all([getCategories(admin), getQuestionsForType(admin, "full")]);
+  const questionMap = new Map(questions.map((q) => [q.id, q]));
+  const categoryWeightMap = new Map(categories.map((c) => [c.id, c.weight]));
+
+  const rowsToInsert = answered.flatMap((a) => {
+    const question = questionMap.get(a.question_id);
+    if (!question) return [];
+    const value = Number(a.answer_value);
+    if (!question.answer_options.some((o) => o.value === value)) return [];
+    return [
+      {
+        assessment_id: targetAssessmentId,
+        question_id: question.id,
+        answer_value: String(value),
+        question_text_snapshot: question.question_text,
+        category_id_snapshot: question.category_id,
+        weight_snapshot: categoryWeightMap.get(question.category_id) ?? 0,
+        answer_options_snapshot: question.answer_options,
+        carried_forward_at: source.completed_at,
+      },
+    ];
+  });
+  if (rowsToInsert.length === 0) return;
+
+  const { error: insertError } = await admin.from("assessment_answers").insert(rowsToInsert);
+  if (insertError) throw insertError;
+
+  await admin.from("assessments").update({ status: "in_progress", started_at: new Date().toISOString() }).eq("id", targetAssessmentId);
+  await recomputeAndSaveScores(admin, targetAssessmentId);
+}
+
+/** question_id -> the source quick scan's completed_at, for every answer on this assessment still carried forward and untouched since. */
+export async function getCarriedForwardMap(supabase: SupabaseClient, assessmentId: string): Promise<Map<string, string>> {
+  const { data, error } = await supabase
+    .from("assessment_answers")
+    .select("question_id, carried_forward_at")
+    .eq("assessment_id", assessmentId)
+    .not("carried_forward_at", "is", null);
+  if (error) throw error;
+  const map = new Map<string, string>();
+  for (const row of data ?? []) {
+    if (row.question_id && row.carried_forward_at) map.set(row.question_id as string, row.carried_forward_at as string);
+  }
+  return map;
+}
+
+/** "Clear and start fresh" — removes only the still-untouched carried-forward answers, leaving anything the user already re-confirmed or changed (which cleared its own carried_forward_at the moment it was saved) alone. */
+export async function clearCarriedForwardAnswers(admin: SupabaseClient, assessmentId: string): Promise<void> {
+  const { error } = await admin.from("assessment_answers").delete().eq("assessment_id", assessmentId).not("carried_forward_at", "is", null);
+  if (error) throw error;
+  await recomputeAndSaveScores(admin, assessmentId);
 }
 
 // ===========================================================
@@ -261,6 +354,11 @@ export async function saveAnswer(admin: SupabaseClient, assessmentId: string, qu
       category_id_snapshot: question.category_id,
       weight_snapshot: category.weight,
       answer_options_snapshot: options,
+      // Any answer saved through this path — first time or re-answering a
+      // carried-forward one — is a current, deliberate answer, not merely
+      // carried. Always clears the flag, which is what makes the carried
+      // marker disappear the moment someone touches the question.
+      carried_forward_at: null,
     },
     { onConflict: "assessment_id,question_id" }
   );

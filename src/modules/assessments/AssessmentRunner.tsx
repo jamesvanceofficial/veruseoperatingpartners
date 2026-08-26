@@ -6,6 +6,7 @@ import { cn } from "@/shared/ui/cn";
 import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
+import { formatDate } from "@/shared/format";
 import { computeScores } from "./scoring";
 import { AnswerOptionButton } from "./AnswerOptionButton";
 import type { Category, Question } from "./types";
@@ -29,26 +30,43 @@ export function AssessmentRunner({
   categories,
   questions,
   initialAnswers,
+  carriedForward = {},
+  clearCarriedForwardUrl,
   saveUrl,
   completeUrl,
 }: {
   categories: Category[];
   questions: Question[];
   initialAnswers: Record<string, number>;
+  /** question_id -> the source quick scan's completed_at, for answers still carried forward and untouched. */
+  carriedForward?: Record<string, string>;
+  clearCarriedForwardUrl?: string;
   saveUrl: string;
   completeUrl: string;
 }) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, number>>(initialAnswers);
+  const [carriedIds, setCarriedIds] = useState<Set<string>>(() => new Set(Object.keys(carriedForward)));
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [sectionIndex, setSectionIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const sections = useMemo(() => {
     const categoryIdsInUse = [...new Set(questions.map((q) => q.category_id))];
     return categories.filter((c) => categoryIdsInUse.includes(c.id)).map((c) => ({ category: c, questions: questions.filter((q) => q.category_id === c.id) }));
   }, [categories, questions]);
+
+  // Opens on the first section with a genuinely unanswered question — not
+  // always section 0 — so carried-forward (or any other pre-filled)
+  // answers don't make the runner look like it's starting from scratch.
+  const [sectionIndex, setSectionIndex] = useState(() => {
+    const idx = sections.findIndex((s) => s.questions.some((q) => initialAnswers[q.id] === undefined));
+    return idx === -1 ? 0 : idx;
+  });
+
+  const carriedCount = carriedIds.size;
+  const carriedDate = carriedCount > 0 ? Object.values(carriedForward)[0] : null;
 
   const { enterpriseScore } = useMemo(() => {
     const weightByCategory = new Map(categories.map((c) => [c.id, c.weight]));
@@ -68,6 +86,12 @@ export function AssessmentRunner({
     setError(null);
     setSavingId(question.id);
     setAnswers((prev) => ({ ...prev, [question.id]: value }));
+    setCarriedIds((prev) => {
+      if (!prev.has(question.id)) return prev;
+      const next = new Set(prev);
+      next.delete(question.id);
+      return next;
+    });
     try {
       const res = await fetch(saveUrl, {
         method: "POST",
@@ -103,10 +127,48 @@ export function AssessmentRunner({
     }
   }
 
+  async function handleClearCarriedForward() {
+    if (!clearCarriedForwardUrl) return;
+    setClearing(true);
+    setError(null);
+    try {
+      const res = await fetch(clearCarriedForwardUrl, { method: "POST" });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        setError(payload.error ?? "Could not clear the carried-forward answers.");
+        setClearing(false);
+        return;
+      }
+      // A full reload, not router.refresh() — this component's own
+      // answers/carriedIds state needs to reset from scratch, not just
+      // the server data it was seeded from.
+      window.location.reload();
+    } catch {
+      setError("Could not clear the carried-forward answers — check your connection.");
+      setClearing(false);
+    }
+  }
+
   const activeSection = sections[sectionIndex];
 
   return (
     <div className="flex flex-col gap-4">
+      {carriedCount > 0 ? (
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[12.5px] font-medium text-[var(--cream)]">
+              {carriedCount} answer{carriedCount === 1 ? "" : "s"} carried forward from the Quick Scan completed {formatDate(carriedDate)}.
+            </p>
+            <p className="text-[11.5px] text-[var(--muted)]">Marked below — still fully editable.</p>
+          </div>
+          {clearCarriedForwardUrl ? (
+            <Button type="button" variant="ghost" loading={clearing} onClick={handleClearCarriedForward}>
+              Clear and start fresh
+            </Button>
+          ) : null}
+        </Card>
+      ) : null}
+
       {/* Mobile-only: the full sidebar below collapses to this one compact
           bar so the questions start near the top of the screen instead of
           below three stacked cards. */}
@@ -186,7 +248,10 @@ export function AssessmentRunner({
               <div className="flex flex-col gap-6">
                 {activeSection.questions.map((q) => (
                   <div key={q.id} className="flex flex-col gap-2.5">
-                    <p className="text-[13.5px] font-medium text-[var(--cream)]">{q.question_text}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[13.5px] font-medium text-[var(--cream)]">{q.question_text}</p>
+                      {carriedIds.has(q.id) ? <Badge tone="gold">Carried from your scan · {formatDate(carriedForward[q.id])}</Badge> : null}
+                    </div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {q.answer_options
                         .slice()

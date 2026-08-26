@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
-import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap } from "@/modules/assessments/data";
+import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap } from "@/modules/assessments/data";
 import { ASSESSMENT_TYPE_LABELS, ASSESSMENT_STATUS_LABELS, ASSESSMENT_STATUS_TONE } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -97,10 +97,11 @@ async function Runner({
   assessmentId: string;
   assessmentType: "quick_scan" | "full";
 }) {
-  const [categories, questions, answersMap] = await Promise.all([
+  const [categories, questions, answersMap, carriedForwardMap] = await Promise.all([
     getCategories(supabase),
     getQuestionsForType(supabase, assessmentType),
     getAnswersMap(supabase, assessmentId),
+    getCarriedForwardMap(supabase, assessmentId),
   ]);
 
   return (
@@ -108,6 +109,8 @@ async function Runner({
       categories={categories}
       questions={questions}
       initialAnswers={Object.fromEntries(answersMap)}
+      carriedForward={Object.fromEntries(carriedForwardMap)}
+      clearCarriedForwardUrl={`/api/assessments/${assessmentId}/clear-carried-forward`}
       saveUrl={`/api/assessments/${assessmentId}/answer`}
       completeUrl={`/api/assessments/${assessmentId}/complete`}
     />
