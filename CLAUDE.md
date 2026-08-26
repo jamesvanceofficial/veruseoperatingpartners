@@ -213,6 +213,27 @@ phone/email on file anywhere in this app, so none is fabricated. Replace
 `VERUS_CONTACT` with real contact details before this goes to an actual
 client.
 
+**Scope of Work (Stage 17)**, between Recommended Path and What Happens
+Next: build phases generated from THIS assessment's own bottleneck
+ranking, not a template — `computeScopeOfWork()` in `scopeOfWork.ts`
+(pure function). A fixed 1-week Foundation & Scope Lock phase, then one
+phase per top-ranked bottleneck category (however many `TIER_PHASE_PLAN`
+says that tier's scope and budget actually cover — foundation: 1,
+growth: 2, enterprise: 4; Custom returns `null` and the section falls
+back to a one-line "scoped individually" note instead of the phase
+table), then a fixed Training & Handover phase. Week ranges always sum
+to exactly the tier's planned `totalWeeks` (`splitWeeks()` distributes
+any remainder week to the earlier — i.e. higher-ranked — phases, so the
+biggest constraint gets the most time) — kept inside the human `timeline`
+range string on the same tier in `buildTiers.ts` by construction, not
+independently. Per-category phase name/deliverables/artifact/dependency
+copy lives in `reportCopy.ts` alongside the other per-category report
+content. Verified by computing the plan directly for every tier
+(including the fewer-real-bottlenecks-than-tier-capacity edge case) and
+confirming the weeks always sum correctly and the phase order always
+matches the assessment's actual ranking, plus a full component-tree
+render confirming the section lands between the other two by name.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

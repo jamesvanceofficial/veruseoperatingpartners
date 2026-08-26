@@ -8,6 +8,7 @@ import { CATEGORY_BOTTLENECK_COPY } from "./bottleneckCopy";
 import { WEIGHTING_RATIONALE, CATEGORY_SCORE_MEANING, CATEGORY_TYPICAL_COST, CATEGORY_FIX_INVOLVES, NEXT_STEPS, VERUS_CONTACT } from "./reportCopy";
 import { BUILD_TIER_INFO, SUPPORT_TIER_INFO, SUPPORT_SUBSCRIPTION_NAME, STABILIZATION_PERIOD_DAYS } from "./buildTiers";
 import { BusinessProfilePanels } from "./BusinessProfilePanels";
+import { computeScopeOfWork } from "./scopeOfWork";
 import type { AssessmentReport, Band } from "./types";
 
 const TONE_CLASS: Record<"green" | "yellow" | "red", string> = {
@@ -70,6 +71,11 @@ export function ClientReportView({
   const buildInfo = effectiveBuildTier ? BUILD_TIER_INFO[effectiveBuildTier] : null;
   const supportInfo = effectiveSupportTier ? SUPPORT_TIER_INFO[effectiveSupportTier] : null;
   const firstYearValue = buildInfo?.price != null && supportInfo?.price != null ? buildInfo.price + supportInfo.price * 9 : null;
+
+  const rankedBottlenecks = [...categoryScores]
+    .sort((a, b) => a.bottleneckRank - b.bottleneckRank)
+    .map((c) => ({ categoryName: c.categoryName, rawScore: c.rawScore }));
+  const scopePlan = computeScopeOfWork(effectiveBuildTier, rankedBottlenecks);
 
   const score = assessment.enterprise_score ?? 0;
   const preparedDate = assessment.completed_at ?? assessment.created_at;
@@ -331,6 +337,106 @@ export function ClientReportView({
               </p>
             </Card>
           ) : null}
+        </section>
+      ) : null}
+
+      {/* SCOPE OF WORK — generated from this assessment's own bottleneck order, capped by what the recommended tier actually covers. */}
+      {scopePlan ? (
+        <section className="cr-page-break flex flex-col gap-5 py-10">
+          <SectionHeading eyebrow="Generated From Your Assessment" title="Scope of work" />
+          <p className="text-[13px] leading-relaxed text-[var(--cream)]">
+            The order below isn&apos;t generic — it follows your own bottleneck ranking from this assessment, so what gets built first is
+            whatever is actually holding {orgName} back the most, capped by what {buildInfo?.label} covers.
+          </p>
+
+          <div className="cr-avoid-break flex flex-col gap-2">
+            <p className="section-label">The shape of it — {scopePlan.totalWeeks} weeks</p>
+            <div className="flex h-8 w-full overflow-hidden rounded-[var(--radius-sm)] border border-[var(--hairline-strong)]">
+              {scopePlan.phases.map((p) => {
+                const weeks = p.weekEnd - p.weekStart + 1;
+                const width = (weeks / scopePlan.totalWeeks) * 100;
+                return (
+                  <div
+                    key={p.phaseNumber}
+                    className={cn(
+                      "flex items-center justify-center border-r border-[var(--hairline)] px-1 text-center text-[9px] font-medium leading-tight last:border-r-0",
+                      p.kind === "scope-lock" && "bg-[var(--muted)] text-[var(--black)]",
+                      p.kind === "bottleneck" && "bg-[var(--gold)] text-[var(--black)]",
+                      p.kind === "handover" && "bg-[var(--green)] text-[var(--cream)]"
+                    )}
+                    style={{ width: `${width}%` }}
+                  >
+                    {weeks >= 2 ? `W${p.weekStart}-${p.weekEnd}` : `W${p.weekStart}`}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex w-full text-[9.5px] text-[var(--muted)]">
+              {scopePlan.phases.map((p) => {
+                const weeks = p.weekEnd - p.weekStart + 1;
+                const width = (weeks / scopePlan.totalWeeks) * 100;
+                return (
+                  <div key={p.phaseNumber} className="px-0.5 text-center leading-tight" style={{ width: `${width}%` }}>
+                    {p.name}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {scopePlan.phases.map((p) => (
+              <Card key={p.phaseNumber} className="cr-avoid-break flex flex-col gap-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[14.5px] font-semibold text-[var(--cream)]">
+                    Phase {p.phaseNumber} — {p.name}
+                  </p>
+                  <Badge tone="neutral">{p.weekStart === p.weekEnd ? `Week ${p.weekStart}` : `Weeks ${p.weekStart}-${p.weekEnd}`}</Badge>
+                </div>
+                {p.kind === "bottleneck" && p.categoryScore !== undefined ? (
+                  <p className="text-[11.5px] text-[var(--muted)]">
+                    Your #{p.phaseNumber - 1} ranked constraint — {p.categoryName} scored {p.categoryScore.toFixed(1)}/10 on this assessment.
+                  </p>
+                ) : null}
+                <div>
+                  <p className="section-label">{p.kind === "bottleneck" ? "What we build" : "What we do"}</p>
+                  <ul className="mt-1 flex flex-col gap-1">
+                    {p.whatWeDo.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-[12.5px] leading-relaxed text-[var(--cream)]">
+                        <span className="cr-tone-gold">—</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="section-label">What you get at the end of this phase</p>
+                  <p className="text-[12.5px] leading-relaxed text-[var(--cream)]">{p.whatYouGet}</p>
+                </div>
+                {p.whatWeNeed ? (
+                  <div>
+                    <p className="section-label">What we need from you</p>
+                    <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{p.whatWeNeed}</p>
+                  </div>
+                ) : null}
+              </Card>
+            ))}
+          </div>
+
+          {buildInfo ? (
+            <p className="cr-avoid-break text-[13px] font-medium leading-relaxed text-[var(--cream)]">
+              This is what your {buildInfo.priceLabel} build covers — {scopePlan.totalWeeks} weeks from kickoff to handover, addressing your
+              constraints in the order they&apos;re actually holding {orgName} back.
+            </p>
+          ) : null}
+        </section>
+      ) : buildInfo?.label === "Custom Build" ? (
+        <section className="cr-page-break flex flex-col gap-3 py-10">
+          <SectionHeading eyebrow="Generated From Your Assessment" title="Scope of work" />
+          <p className="text-[13px] leading-relaxed text-[var(--cream)]">
+            A Custom Build is scoped and quoted individually rather than following the fixed-tier phase structure above — the specific phases,
+            timeline, and deliverables will be defined once scope is finalized with you directly.
+          </p>
         </section>
       ) : null}
 

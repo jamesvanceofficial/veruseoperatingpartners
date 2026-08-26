@@ -118,3 +118,115 @@ export const VERUS_CONTACT = {
   website: "verusoperatingpartners.com",
   cta: "Schedule a call at verusoperatingpartners.com",
 };
+
+// ===========================================================
+// Scope of Work (Stage 17) — per-category content for the build phase
+// generated from THIS client's own bottleneck order (see scopeOfWork.ts).
+// ===========================================================
+
+/** Phase name for a category's build phase — e.g. "Operations Build". */
+export const CATEGORY_PHASE_NAME: Record<string, string> = {
+  Operations: "Operations Build",
+  Systems: "Systems Build",
+  People: "People Systems Build",
+  Leadership: "Leadership Systems Build",
+  Sales: "Sales Systems Build",
+  Finance: "Finance Systems Build",
+  Technology: "Technology & Security Build",
+  Marketing: "Marketing Systems Build",
+  Vision: "Vision & Strategy Build",
+  "Enterprise Readiness": "Enterprise Readiness Build",
+};
+
+/** "What we build" — 3-6 concrete deliverables specific to the category. */
+export const CATEGORY_BUILD_DELIVERABLES: Record<string, string[]> = {
+  Operations: [
+    "Workflow mapping across core operations",
+    "Documented, step-by-step core processes",
+    "Quality checkpoints built into the workflow",
+    "The system those processes run inside",
+  ],
+  Systems: [
+    "Centralized customer and job tracking system",
+    "Connected data flow between core tools — no duplicate entry",
+    "Automated alerts for what needs attention",
+    "Documented backup and data-recovery process",
+    "Single system of record for financials",
+  ],
+  People: ["Written job descriptions for every role", "A repeatable hiring pipeline", "A structured onboarding track for new hires", "A regular performance review cadence"],
+  Leadership: [
+    "Written vision and core values",
+    "A regular leadership meeting cadence with a standing agenda",
+    "A documented decision-making process",
+    "A leadership scorecard to track what matters",
+    "A communication process for company updates",
+  ],
+  Sales: [
+    "Documented sales process, first contact to close",
+    "Pipeline tracked in one system",
+    "Standard pricing and proposal templates",
+    "Lead follow-up sequences",
+    "A sales-to-fulfillment handoff process",
+  ],
+  Finance: [
+    "Monthly P&L review rhythm",
+    "Margin visibility by product or service line",
+    "Documented invoicing and collections process",
+    "A working budget tracked against actuals",
+    "A documented pricing process",
+  ],
+  Technology: [
+    "Documented technology and software inventory",
+    "Cybersecurity and access-control policy",
+    "Employee access provisioning and deprovisioning process",
+    "Update and patching schedule",
+    "Data backup and disaster-recovery plan",
+  ],
+  Marketing: [
+    "Documented marketing plan",
+    "Lead-source tracking tied to actual customers",
+    "Consistent brand applied across channels",
+    "A content and posting calendar",
+    "A follow-up sequence for leads who aren't ready to buy",
+  ],
+  Vision: [
+    "A written 3-5 year vision",
+    "Annual goals tied to that vision",
+    "A plan for what the business looks like without the owner day to day",
+    "A regular cadence to revisit and update the plan",
+  ],
+  "Enterprise Readiness": [
+    "Documented SOPs for critical functions",
+    "An org structure that doesn't route every decision through the owner",
+    "Clean, organized records a buyer or investor could review",
+    "A documented plan to reduce owner dependency",
+  ],
+};
+
+/** "What you get at the end of this phase" — the tangible artifact. */
+export const CATEGORY_PHASE_ARTIFACT: Record<string, string> = {
+  Operations: "A documented, repeatable operating system your team can run without you re-explaining it.",
+  Systems: "One connected system of record — no more scattered spreadsheets.",
+  People: "A real hiring, onboarding, and review system anyone on your team could run.",
+  Leadership: "A leadership rhythm and a written vision the whole team can see.",
+  Sales: "A sales process that can be taught, tracked, and scaled beyond one person.",
+  Finance: "Real margin visibility and a financial review you can trust.",
+  Technology: "A documented, secured technology environment.",
+  Marketing: "A marketing system that shows what's actually producing customers.",
+  Vision: "A written long-term plan the business is actually building toward.",
+  "Enterprise Readiness": "A business that's easier to sell, scale, and step away from.",
+};
+
+/** "What we need from you" — their side, so the timeline is honest about dependencies. */
+export const CATEGORY_PHASE_DEPENDENCY: Record<string, string> = {
+  Operations: "Time with your team to map how work actually happens today, and a decision-maker to approve the final process.",
+  Systems: "Access to your current tools and data, and a point of contact who knows where everything lives today.",
+  People: "Copies of any existing job descriptions or policies, and time with whoever currently handles hiring.",
+  Leadership: "Time with your leadership team for working sessions, and honesty about how decisions actually get made today.",
+  Sales: "Access to your current pipeline or CRM (or lack of one), and time with whoever's closing deals today.",
+  Finance: "Access to your financial records and your bookkeeper or accountant's cooperation.",
+  Technology: "A list of the tools and logins currently in use, and access to set up policies and permissions.",
+  Marketing: "Access to your current marketing accounts and brand assets, and a decision-maker on messaging.",
+  Vision: "Time with ownership and leadership for a strategic planning session.",
+  "Enterprise Readiness": "Access to existing records and documentation, and honesty about what currently depends on you personally.",
+};
