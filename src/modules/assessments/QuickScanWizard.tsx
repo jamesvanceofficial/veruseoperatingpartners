@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
 import { FormField, Input, Select } from "@/shared/ui/FormField";
@@ -33,6 +33,13 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
 
   const answeredCount = Object.keys(answers).length + notApplicable.size;
   const allAnswered = answeredCount === questions.length;
+
+  // Each step (intake -> questions -> result) swaps the whole view, same
+  // as a section change in the full runner — without this, submitting
+  // from the bottom of the question list opened the result mid-scroll.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   function selectAnswer(questionId: string, value: number) {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));

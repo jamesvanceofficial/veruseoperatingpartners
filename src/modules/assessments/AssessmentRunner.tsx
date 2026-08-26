@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/shared/ui/cn";
 import { Card } from "@/shared/ui/Card";
@@ -72,6 +72,15 @@ export function AssessmentRunner({
     const idx = sections.findIndex((s) => s.questions.some((q) => initialAnswers[q.id] === undefined && !initialNotApplicableSet.has(q.id)));
     return idx === -1 ? 0 : idx;
   });
+
+  // Section changes swap the whole question list — from a "Next section"/
+  // "Previous section" click or a sidebar category click — and without
+  // this, the page stayed at whatever scroll position the previous
+  // section left it at, opening mid-way down with the new section's first
+  // question off-screen above.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [sectionIndex]);
 
   const carriedCount = carriedIds.size;
   const carriedDate = carriedCount > 0 ? Object.values(carriedForward)[0] : null;
