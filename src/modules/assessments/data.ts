@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeScores, findBandId } from "./scoring";
 import { computeBuildRecommendation } from "./buildRecommendation";
+import { getFinancialProfile, getBusinessPresence, getWorkforce, realHeadcountFrom, revenuePerEmployeeFrom } from "./profileData";
 import type { AssessmentType } from "./labels";
 import type { BuildTier, SupportTier } from "./buildTiers";
 import type { Assessment, AssessmentListRow, AssessmentReport, Category, Band, Question, AnswerOption, CategoryScoreDetail } from "./types";
@@ -179,6 +180,19 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
     supportTierOverrideByName = assessment.support_tier_override_by ? (nameMap.get(assessment.support_tier_override_by) ?? null) : null;
   }
 
+  // Full Assessment only — never captured for a quick_scan.
+  let financialProfile = null;
+  let businessPresence = null;
+  let workforce = null;
+  if (assessment.assessment_type === "full") {
+    [financialProfile, businessPresence, workforce] = await Promise.all([
+      getFinancialProfile(supabase, id),
+      getBusinessPresence(supabase, id),
+      getWorkforce(supabase, id),
+    ]);
+  }
+  const realHeadcount = realHeadcountFrom(workforce);
+
   return {
     assessment,
     orgName: (orgResult.data as { name: string } | null)?.name ?? "Unknown organization",
@@ -188,6 +202,11 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
     notApplicableCount: naTotalResult.count ?? 0,
     buildTierOverrideByName,
     supportTierOverrideByName,
+    financialProfile,
+    businessPresence,
+    workforce,
+    revenuePerEmployee: revenuePerEmployeeFrom(financialProfile, realHeadcount),
+    realHeadcount,
   };
 }
 
@@ -487,10 +506,13 @@ async function computeAndSaveBuildRecommendation(admin: SupabaseClient, assessme
   const assessment = await getAssessmentById(admin, assessmentId);
   if (!assessment) return;
 
-  const [orgResult, categories, scoresResult] = await Promise.all([
+  const [orgResult, categories, scoresResult, financialProfile, businessPresence, workforce] = await Promise.all([
     admin.from("organizations").select("name, annual_revenue_estimate, employee_count_estimate, location_count").eq("id", assessment.org_id).maybeSingle(),
     getCategories(admin),
     admin.from("assessment_category_scores").select("category_id, raw_score, bottleneck_rank").eq("assessment_id", assessmentId),
+    getFinancialProfile(admin, assessmentId),
+    getBusinessPresence(admin, assessmentId),
+    getWorkforce(admin, assessmentId),
   ]);
   if (orgResult.error) throw orgResult.error;
   if (scoresResult.error) throw scoresResult.error;
@@ -502,6 +524,8 @@ async function computeAndSaveBuildRecommendation(admin: SupabaseClient, assessme
     .filter((r): r is typeof r & { category_id: string } => Boolean(r.category_id))
     .map((r) => ({ categoryName: categoryNameMap.get(r.category_id) ?? "Unknown", rawScore: r.raw_score, bottleneckRank: r.bottleneck_rank ?? 0 }));
 
+  const realHeadcount = realHeadcountFrom(workforce);
+
   const recommendation = computeBuildRecommendation({
     orgName: org?.name ?? "This organization",
     enterpriseScore: assessment.enterprise_score ?? 0,
@@ -509,6 +533,11 @@ async function computeAndSaveBuildRecommendation(admin: SupabaseClient, assessme
     annualRevenueEstimate: org?.annual_revenue_estimate ?? null,
     employeeCountEstimate: org?.employee_count_estimate ?? null,
     locationCount: org?.location_count ?? null,
+    realRevenue: financialProfile?.currentYearRevenue ?? financialProfile?.lastFullYearRevenue ?? null,
+    netProfitMarginPct: financialProfile?.netProfitMarginPct ?? null,
+    realHeadcount,
+    hasWebsite: businessPresence?.hasWebsite ?? null,
+    hasGoogleBusinessProfile: businessPresence?.socialChannels.includes("google_business") ?? false,
   });
 
   const { error } = await admin

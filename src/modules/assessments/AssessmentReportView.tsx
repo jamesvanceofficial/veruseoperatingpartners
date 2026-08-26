@@ -6,11 +6,25 @@ import { formatDate } from "@/shared/format";
 import { ASSESSMENT_TYPE_LABELS } from "./labels";
 import { categoryScoreTone } from "./scoreTone";
 import { BuildRecommendationPanel } from "./BuildRecommendationPanel";
+import { BusinessProfilePanels } from "./BusinessProfilePanels";
 import type { AssessmentReport } from "./types";
 
-/** The completed-assessment view — every category, weighted score, band, and the ranked bottleneck list, plus the Stage 8 build recommendation. Never rendered for a quick_scan assessment (its callers branch to QuickScanResult instead) — that's what keeps pricing off the free scan. Printable via window.print(); .no-print / aside / header are hidden in the print stylesheet. */
+/** The completed-assessment view — every category, weighted score, band, and the ranked bottleneck list, plus the Stage 8 build recommendation and Stage 12 financial/presence/workforce profile. Never rendered for a quick_scan assessment (its callers branch to QuickScanResult instead) — that's what keeps pricing (and the profile) off the free scan. Printable via window.print(); .no-print / aside / header are hidden in the print stylesheet. */
 export function AssessmentReportView({ report, canEdit = false }: { report: AssessmentReport; canEdit?: boolean }) {
-  const { assessment, orgName, bandLabel, categoryScores, notApplicableCount, buildTierOverrideByName, supportTierOverrideByName } = report;
+  const {
+    assessment,
+    orgName,
+    bandLabel,
+    categoryScores,
+    notApplicableCount,
+    buildTierOverrideByName,
+    supportTierOverrideByName,
+    financialProfile,
+    businessPresence,
+    workforce,
+    revenuePerEmployee,
+    realHeadcount,
+  } = report;
   const byWeight = [...categoryScores].sort((a, b) => b.weight - a.weight);
   const bottlenecks = [...categoryScores].sort((a, b) => a.bottleneckRank - b.bottleneckRank);
 
@@ -34,6 +48,14 @@ export function AssessmentReportView({ report, canEdit = false }: { report: Asse
           {notApplicableCount} question{notApplicableCount === 1 ? "" : "s"} marked not applicable — excluded from scoring, not counted as a zero.
         </p>
       ) : null}
+
+      <BusinessProfilePanels
+        financialProfile={financialProfile}
+        businessPresence={businessPresence}
+        workforce={workforce}
+        revenuePerEmployee={revenuePerEmployee}
+        realHeadcount={realHeadcount}
+      />
 
       <Card className="flex flex-col gap-1">
         <p className="mb-1 section-label">All Categories</p>

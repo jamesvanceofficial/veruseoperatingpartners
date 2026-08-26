@@ -3,6 +3,7 @@ import { BrandMark } from "@/shared/ui/BrandMark";
 import { Badge } from "@/shared/ui/Badge";
 import { createAdminClient } from "@/shared/supabase/admin";
 import { getAssessmentByToken, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getNotApplicableIds } from "@/modules/assessments/data";
+import { getFinancialProfile, getBusinessPresence, getWorkforce } from "@/modules/assessments/profileData";
 import { ASSESSMENT_TYPE_LABELS } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -82,12 +83,16 @@ async function PublicRunner({
   assessmentType: "quick_scan" | "full";
   token: string;
 }) {
-  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds] = await Promise.all([
+  const collectProfile = assessmentType === "full";
+  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds, financial, presence, workforce] = await Promise.all([
     getCategories(admin),
     getQuestionsForType(admin, assessmentType),
     getAnswersMap(admin, assessmentId),
     getCarriedForwardMap(admin, assessmentId),
     getNotApplicableIds(admin, assessmentId),
+    collectProfile ? getFinancialProfile(admin, assessmentId) : Promise.resolve(null),
+    collectProfile ? getBusinessPresence(admin, assessmentId) : Promise.resolve(null),
+    collectProfile ? getWorkforce(admin, assessmentId) : Promise.resolve(null),
   ]);
 
   return (
@@ -100,6 +105,11 @@ async function PublicRunner({
       clearCarriedForwardUrl={`/api/public/assessment/${token}/clear-carried-forward`}
       saveUrl={`/api/public/assessment/${token}/answer`}
       completeUrl={`/api/public/assessment/${token}/complete`}
+      collectProfile={collectProfile}
+      profileSaveUrl={`/api/public/assessment/${token}/profile`}
+      initialFinancial={financial}
+      initialPresence={presence}
+      initialWorkforce={workforce}
     />
   );
 }

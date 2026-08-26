@@ -1,15 +1,23 @@
-// Stage 8 recommendation logic. Pure function, no DB access — driven by
-// the org's scale (revenue, employees, locations) and the assessment's
-// results (enterprise score, bottleneck categories).
+// Stage 8 recommendation logic, extended in Stage 12 with the financial
+// profile / business presence / workforce sections. Pure function, no DB
+// access — driven by the org's scale (revenue, employees, locations) and
+// the assessment's results (enterprise score, bottleneck categories).
 //
 // Two independent factors decide the build tier, and the higher one wins:
-//   - "size" — how much complexity the org's scale alone implies.
+//   - "size" — how much complexity the org's scale alone implies. Real,
+//     confirmed numbers (financial profile revenue, workforce headcount)
+//     carry more weight here than organizations.annual_revenue_estimate /
+//     employee_count_estimate, which are rough self-reported guesses —
+//     see revenuePoints/headcountPoints below.
 //   - "need" — how severe the org's bottlenecks are in the categories a
 //     build package actually fixes (Operations, Systems, Technology —
-//     website/software/dashboards/automations). A company whose only weak
-//     spot is Vision doesn't need more build scope to fix it; a company
-//     whose Systems and Technology scores are near zero does — that's the
-//     explicit example in the Stage 8 brief.
+//     website/software/dashboards/automations), PLUS two Stage 12
+//     signals: weak margins (more build/systems work needed to fix
+//     profitability) and no website + no Google Business Profile (needs
+//     foundational website/marketing scope beyond what a light build
+//     assumes). A company whose only weak spot is Vision doesn't need
+//     more build scope to fix it; a company whose Systems and Technology
+//     scores are near zero does — that's the original Stage 8 example.
 // Custom overrides both when the org's scale is genuinely outside what a
 // fixed-scope package covers.
 
@@ -17,6 +25,7 @@ import { formatCurrency, formatNumber } from "@/shared/format";
 import { BUILD_TIER_INFO, SUPPORT_TIER_INFO, type BuildTier, type SupportTier } from "./buildTiers";
 
 const BUILD_RELEVANT_CATEGORIES = new Set(["Operations", "Systems", "Technology"]);
+const WEAK_MARGIN_THRESHOLD_PCT = 5;
 
 export type BuildRecommendationInput = {
   orgName: string;
@@ -25,6 +34,13 @@ export type BuildRecommendationInput = {
   annualRevenueEstimate: number | null;
   employeeCountEstimate: number | null;
   locationCount: number | null;
+  /** Financial profile's current/last-year revenue — a real, confirmed number, weighted more heavily than annualRevenueEstimate. */
+  realRevenue: number | null;
+  netProfitMarginPct: number | null;
+  /** Workforce W2 + contractors + VAs — a real, confirmed headcount, weighted more heavily than employeeCountEstimate. */
+  realHeadcount: number | null;
+  hasWebsite: boolean | null;
+  hasGoogleBusinessProfile: boolean;
 };
 
 export type BuildRecommendationResult = {
@@ -36,32 +52,47 @@ export type BuildRecommendationResult = {
   supportReasoning: string;
 };
 
-function sizePoints(input: BuildRecommendationInput): number {
-  let points = 0;
-  const revenue = input.annualRevenueEstimate;
-  if (revenue !== null) {
-    if (revenue >= 10_000_000) points += 2;
-    else if (revenue >= 3_000_000) points += 1;
+function revenuePoints(input: BuildRecommendationInput): number {
+  const isReal = input.realRevenue !== null;
+  const revenue = input.realRevenue ?? input.annualRevenueEstimate;
+  if (revenue === null) return 0;
+  if (isReal) {
+    if (revenue >= 10_000_000) return 3;
+    if (revenue >= 5_000_000) return 2;
+    if (revenue >= 1_500_000) return 1;
+    return 0;
   }
-  const employees = input.employeeCountEstimate;
-  if (employees !== null) {
-    if (employees >= 50) points += 2;
-    else if (employees >= 10) points += 1;
+  if (revenue >= 10_000_000) return 2;
+  if (revenue >= 3_000_000) return 1;
+  return 0;
+}
+
+function headcountPoints(input: BuildRecommendationInput): number {
+  const isReal = input.realHeadcount !== null;
+  const count = input.realHeadcount ?? input.employeeCountEstimate;
+  if (count === null) return 0;
+  if (isReal) {
+    if (count >= 40) return 3;
+    if (count >= 15) return 2;
+    if (count >= 5) return 1;
+    return 0;
   }
-  const locations = input.locationCount;
-  if (locations !== null) {
-    if (locations >= 4) points += 2;
-    else if (locations >= 2) points += 1;
-  }
-  return points; // 0-6
+  if (count >= 50) return 2;
+  if (count >= 10) return 1;
+  return 0;
+}
+
+function locationPoints(locationCount: number | null): number {
+  if (locationCount === null) return 0;
+  if (locationCount >= 4) return 2;
+  if (locationCount >= 2) return 1;
+  return 0;
 }
 
 function isCustomScale(input: BuildRecommendationInput): boolean {
-  return (
-    (input.annualRevenueEstimate ?? 0) >= 20_000_000 ||
-    (input.employeeCountEstimate ?? 0) >= 150 ||
-    (input.locationCount ?? 0) >= 8
-  );
+  const revenue = input.realRevenue ?? input.annualRevenueEstimate ?? 0;
+  const headcount = input.realHeadcount ?? input.employeeCountEstimate ?? 0;
+  return revenue >= 20_000_000 || headcount >= 150 || (input.locationCount ?? 0) >= 8;
 }
 
 function withArticle(label: string, capitalize = false): string {
@@ -71,8 +102,10 @@ function withArticle(label: string, capitalize = false): string {
 
 function describeScale(input: BuildRecommendationInput): string | null {
   const parts: string[] = [];
-  if (input.annualRevenueEstimate !== null) parts.push(`${formatCurrency(input.annualRevenueEstimate)} in estimated annual revenue`);
-  if (input.employeeCountEstimate !== null) parts.push(`${formatNumber(input.employeeCountEstimate)} employee${input.employeeCountEstimate === 1 ? "" : "s"}`);
+  if (input.realRevenue !== null) parts.push(`${formatCurrency(input.realRevenue)} in confirmed revenue`);
+  else if (input.annualRevenueEstimate !== null) parts.push(`${formatCurrency(input.annualRevenueEstimate)} in estimated annual revenue`);
+  if (input.realHeadcount !== null) parts.push(`${formatNumber(input.realHeadcount)} on the team (employees and contractors)`);
+  else if (input.employeeCountEstimate !== null) parts.push(`${formatNumber(input.employeeCountEstimate)} employee${input.employeeCountEstimate === 1 ? "" : "s"}`);
   if (input.locationCount !== null) parts.push(`${formatNumber(input.locationCount)} location${input.locationCount === 1 ? "" : "s"}`);
   if (parts.length === 0) return null;
   if (parts.length === 1) return parts[0];
@@ -89,9 +122,11 @@ function buildReasoningText(
     buildTier: BuildTier;
     relevantBottlenecks: { categoryName: string; rawScore: number }[];
     top3: { categoryName: string; rawScore: number }[];
+    weakMargin: boolean;
+    noWebPresence: boolean;
   }
 ): string {
-  const { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3 } = factors;
+  const { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3, weakMargin, noWebPresence } = factors;
   const scaleDesc = describeScale(input);
   const sentences: string[] = [];
 
@@ -130,6 +165,16 @@ function buildReasoningText(
     );
   }
 
+  if (weakMargin) {
+    sentences.push(
+      `Your net margin is under ${WEAK_MARGIN_THRESHOLD_PCT}% — that's usually a systems problem more than a market problem, which pushes toward more build, not less.`
+    );
+  }
+
+  if (noWebPresence) {
+    sentences.push("You currently have no website and no Google Business Profile — that's foundational visibility work this build needs to include.");
+  }
+
   sentences.push(`Enterprise score: ${input.enterpriseScore}/100.`);
 
   return sentences.join(" ");
@@ -153,13 +198,18 @@ export function computeBuildRecommendation(input: BuildRecommendationInput): Bui
   const relevantBottlenecks = top3.filter((c) => BUILD_RELEVANT_CATEGORIES.has(c.categoryName));
   const severeRelevant = relevantBottlenecks.filter((c) => c.rawScore <= 3);
 
-  const size = sizePoints(input);
-  const sizeTier = size >= 5 ? 2 : size >= 2 ? 1 : 0;
+  const size = revenuePoints(input) + headcountPoints(input) + locationPoints(input.locationCount); // 0-8
+  const sizeTier = size >= 6 ? 2 : size >= 2 ? 1 : 0;
 
   let needTier: number;
   if (relevantBottlenecks.length >= 2 && severeRelevant.length >= 1) needTier = 2;
   else if (relevantBottlenecks.length >= 1 || input.enterpriseScore < 40) needTier = 1;
   else needTier = 0;
+
+  const weakMargin = input.netProfitMarginPct !== null && input.netProfitMarginPct < WEAK_MARGIN_THRESHOLD_PCT;
+  const noWebPresence = input.hasWebsite === false && !input.hasGoogleBusinessProfile;
+  if (weakMargin) needTier = Math.max(needTier, 1);
+  if (noWebPresence) needTier = Math.max(needTier, 1);
 
   const tierIndex = Math.max(sizeTier, needTier);
   const custom = isCustomScale(input);
@@ -170,7 +220,7 @@ export function computeBuildRecommendation(input: BuildRecommendationInput): Bui
   const baseSupportMap: Record<BuildTier, SupportTier> = { foundation: "base", growth: "growth", enterprise: "pro", custom: "custom" };
   let supportTier = baseSupportMap[buildTier];
   let bumped = false;
-  if (!custom && size >= 5) {
+  if (!custom && size >= 6) {
     const order: SupportTier[] = ["base", "growth", "pro", "enterprise"];
     const idx = order.indexOf(supportTier);
     if (idx >= 0 && idx < order.length - 1) {
@@ -183,7 +233,7 @@ export function computeBuildRecommendation(input: BuildRecommendationInput): Bui
   return {
     buildTier,
     buildPrice: buildInfo.price,
-    buildReasoning: buildReasoningText(input, { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3 }),
+    buildReasoning: buildReasoningText(input, { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3, weakMargin, noWebPresence }),
     supportTier,
     supportPrice: supportInfo.price,
     supportReasoning: supportReasoningText(buildTier, supportTier, bumped),

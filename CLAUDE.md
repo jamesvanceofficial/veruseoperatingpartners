@@ -302,6 +302,36 @@ today, no exceptions.
   category with EVERY question marked not applicable — which then has no
   score row at all, same as one with zero real answers — still counts
   toward it.
+- `assessment_financial_profiles` / `assessment_business_presence` /
+  `assessment_workforce` (Stage 12) — one row per assessment
+  (`assessment_id` unique FK), every column nullable, captured as a
+  point-in-time snapshot on a FULL assessment only (never quick_scan,
+  never on the organization record — the whole point is comparing them
+  across reassessments). RLS mirrors `assessment_answers`: no denormalized
+  `org_id`, an EXISTS join through the parent assessment instead, staff
+  write-only. Financial: last/current year revenue, gross/net margin,
+  net profit last year, monthly overhead, payroll % of revenue, cash on
+  hand, AR outstanding, largest customer % of revenue, owner's comp.
+  Average revenue per employee is never stored — always computed
+  (`revenuePerEmployeeFrom()` in `profileData.ts`) from revenue ÷ real
+  headcount. Presence: physical location (yes/no/home_based) + address,
+  website + URL, `social_channels` (text[] — linkedin/facebook/instagram/
+  tiktok/youtube/twitter/google_business/none), reviews status, email
+  domain status. Workforce: W2/1099/VA/management counts, staffing
+  feeling, hiring status + roles + time-to-fill, 12-month turnover %.
+  `realHeadcountFrom()` (W2 + contractors + VAs) is used instead of
+  `organizations.employee_count_estimate` wherever it's available, both
+  for revenue-per-employee and for build recommendation sizing — see
+  `buildRecommendation.ts`, where confirmed real revenue/headcount from
+  these tables outweighs the organization's self-reported estimates, and
+  a weak net margin or no website + no Google Business Profile pushes the
+  recommendation up a tier the same way a severe bottleneck does. The
+  runner shows this as a "before the questions begin" step
+  (`BusinessProfileForm.tsx`) that only appears on a truly fresh session
+  (nothing answered yet) — otherwise reachable via "Edit business profile"
+  in the sidebar — and the report shows it via `BusinessProfilePanels.tsx`,
+  which renders each of the three panels only if something was actually
+  saved for it.
 - `build_packages` — org_id, opportunity_id, tier (foundation/growth/
   enterprise/custom), status, price, deposit/balance amounts + paid_at,
   timeline dates, notes.

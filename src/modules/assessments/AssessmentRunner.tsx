@@ -10,7 +10,8 @@ import { formatDate } from "@/shared/format";
 import { computeScores } from "./scoring";
 import { AnswerOptionButton } from "./AnswerOptionButton";
 import { NotApplicableToggle } from "./NotApplicableToggle";
-import type { Category, Question } from "./types";
+import { BusinessProfileForm } from "./BusinessProfileForm";
+import type { Category, Question, FinancialProfile, BusinessPresence, Workforce } from "./types";
 
 /**
  * Shared by both the staff-authenticated runner (/business-assessments/[id])
@@ -36,6 +37,11 @@ export function AssessmentRunner({
   clearCarriedForwardUrl,
   saveUrl,
   completeUrl,
+  collectProfile = false,
+  profileSaveUrl,
+  initialFinancial = null,
+  initialPresence = null,
+  initialWorkforce = null,
 }: {
   categories: Category[];
   questions: Question[];
@@ -47,8 +53,20 @@ export function AssessmentRunner({
   clearCarriedForwardUrl?: string;
   saveUrl: string;
   completeUrl: string;
+  /** Full Assessment only — shows the financial/presence/workforce step before the questions. */
+  collectProfile?: boolean;
+  profileSaveUrl?: string;
+  initialFinancial?: FinancialProfile | null;
+  initialPresence?: BusinessPresence | null;
+  initialWorkforce?: Workforce | null;
 }) {
   const router = useRouter();
+  // Only on a truly fresh session — resuming an assessment that already
+  // has progress skips straight to where it left off, and "Edit business
+  // profile" in the sidebar is how you get back to it later.
+  const [profileStep, setProfileStep] = useState(
+    () => collectProfile && Object.keys(initialAnswers).length === 0 && initialNotApplicable.length === 0
+  );
   const [answers, setAnswers] = useState<Record<string, number>>(initialAnswers);
   const [notApplicable, setNotApplicable] = useState<Set<string>>(() => new Set(initialNotApplicable));
   const [carriedIds, setCarriedIds] = useState<Set<string>>(() => new Set(Object.keys(carriedForward)));
@@ -207,6 +225,18 @@ export function AssessmentRunner({
     }
   }
 
+  if (profileStep && profileSaveUrl) {
+    return (
+      <BusinessProfileForm
+        saveUrl={profileSaveUrl}
+        initialFinancial={initialFinancial}
+        initialPresence={initialPresence}
+        initialWorkforce={initialWorkforce}
+        onContinue={() => setProfileStep(false)}
+      />
+    );
+  }
+
   const activeSection = sections[sectionIndex];
 
   return (
@@ -266,6 +296,16 @@ export function AssessmentRunner({
               {answeredCount} of {totalCount} answered
             </span>
           </Card>
+
+          {collectProfile && profileSaveUrl ? (
+            <button
+              type="button"
+              onClick={() => setProfileStep(true)}
+              className="self-start text-[11.5px] text-[var(--muted)] transition-colors hover:text-[var(--gold-light)]"
+            >
+              Edit business profile
+            </button>
+          ) : null}
 
           <Card className="flex flex-col gap-1 p-2">
             {sections.map((s, i) => {

@@ -70,8 +70,15 @@ export function BuildRecommendationPanel({
 
   const effectiveBuildTier = buildTierOverride ?? recommendedBuildTier;
   const effectiveSupportTier = supportTierOverride ?? recommendedSupportTier;
-  const buildInfo = BUILD_TIER_INFO[effectiveBuildTier];
-  const supportInfo = SUPPORT_TIER_INFO[effectiveSupportTier];
+  // Driven by the LIVE select value, not the persisted override — so
+  // picking a different tier updates the price/scope/exclusions
+  // immediately, before (and regardless of whether) it's saved.
+  const displayedBuildTier = buildSelect || effectiveBuildTier;
+  const displayedSupportTier = supportSelect || effectiveSupportTier;
+  const buildInfo = BUILD_TIER_INFO[displayedBuildTier];
+  const supportInfo = SUPPORT_TIER_INFO[displayedSupportTier];
+  const buildSelectDirty = displayedBuildTier !== effectiveBuildTier;
+  const supportSelectDirty = displayedSupportTier !== effectiveSupportTier;
 
   async function saveOverride(kind: "build" | "support", value: string) {
     setSaving(kind);
@@ -108,10 +115,21 @@ export function BuildRecommendationPanel({
               {buildInfo.label} <span className="text-[15px] font-normal text-[var(--cream)]">· {buildInfo.priceLabel}</span>
             </p>
           </div>
-          {buildTierOverride ? <Badge tone="yellow">Overridden</Badge> : <Badge tone="gold">Recommended</Badge>}
+          {buildSelectDirty ? (
+            <Badge tone="yellow">Unsaved selection</Badge>
+          ) : buildTierOverride ? (
+            <Badge tone="yellow">Overridden</Badge>
+          ) : (
+            <Badge tone="gold">Recommended</Badge>
+          )}
         </div>
 
-        {buildTierOverride ? (
+        {buildSelectDirty ? (
+          <p className="text-[11.5px] text-[var(--yellow)]">
+            Previewing {BUILD_TIER_INFO[displayedBuildTier].label} — not saved yet. Recommended: {BUILD_TIER_INFO[recommendedBuildTier].label} (
+            {BUILD_TIER_INFO[recommendedBuildTier].priceLabel}).
+          </p>
+        ) : buildTierOverride ? (
           <p className="text-[11.5px] text-[var(--muted)]">
             Recommended: {BUILD_TIER_INFO[recommendedBuildTier].label} ({BUILD_TIER_INFO[recommendedBuildTier].priceLabel}) — overridden to{" "}
             {BUILD_TIER_INFO[buildTierOverride].label}
@@ -141,7 +159,7 @@ export function BuildRecommendationPanel({
               type="button"
               variant="secondary"
               loading={saving === "build"}
-              disabled={!buildSelect}
+              disabled={!buildSelectDirty}
               onClick={() => buildSelect && saveOverride("build", buildSelect)}
             >
               Save
@@ -158,10 +176,21 @@ export function BuildRecommendationPanel({
               {supportInfo.label} <span className="text-[13px] font-normal text-[var(--cream)]">· {supportInfo.priceLabel}</span>
             </p>
           </div>
-          {supportTierOverride ? <Badge tone="yellow">Overridden</Badge> : <Badge tone="gold">Recommended</Badge>}
+          {supportSelectDirty ? (
+            <Badge tone="yellow">Unsaved selection</Badge>
+          ) : supportTierOverride ? (
+            <Badge tone="yellow">Overridden</Badge>
+          ) : (
+            <Badge tone="gold">Recommended</Badge>
+          )}
         </div>
 
-        {supportTierOverride ? (
+        {supportSelectDirty ? (
+          <p className="text-[11.5px] text-[var(--yellow)]">
+            Previewing {SUPPORT_TIER_INFO[displayedSupportTier].label} — not saved yet. Recommended: {SUPPORT_TIER_INFO[recommendedSupportTier].label} (
+            {SUPPORT_TIER_INFO[recommendedSupportTier].priceLabel}).
+          </p>
+        ) : supportTierOverride ? (
           <p className="text-[11.5px] text-[var(--muted)]">
             Recommended: {SUPPORT_TIER_INFO[recommendedSupportTier].label} ({SUPPORT_TIER_INFO[recommendedSupportTier].priceLabel}) — overridden to{" "}
             {SUPPORT_TIER_INFO[supportTierOverride].label}
@@ -186,7 +215,7 @@ export function BuildRecommendationPanel({
               type="button"
               variant="secondary"
               loading={saving === "support"}
-              disabled={!supportSelect}
+              disabled={!supportSelectDirty}
               onClick={() => supportSelect && saveOverride("support", supportSelect)}
             >
               Save

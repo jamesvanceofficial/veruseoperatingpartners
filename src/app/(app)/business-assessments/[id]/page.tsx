@@ -5,6 +5,7 @@ import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
 import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getNotApplicableIds, getAnswerCount } from "@/modules/assessments/data";
+import { getFinancialProfile, getBusinessPresence, getWorkforce } from "@/modules/assessments/profileData";
 import { ASSESSMENT_TYPE_LABELS, ASSESSMENT_STATUS_LABELS, ASSESSMENT_STATUS_TONE } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -114,12 +115,16 @@ async function Runner({
   assessmentId: string;
   assessmentType: "quick_scan" | "full";
 }) {
-  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds] = await Promise.all([
+  const collectProfile = assessmentType === "full";
+  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds, financial, presence, workforce] = await Promise.all([
     getCategories(supabase),
     getQuestionsForType(supabase, assessmentType),
     getAnswersMap(supabase, assessmentId),
     getCarriedForwardMap(supabase, assessmentId),
     getNotApplicableIds(supabase, assessmentId),
+    collectProfile ? getFinancialProfile(supabase, assessmentId) : Promise.resolve(null),
+    collectProfile ? getBusinessPresence(supabase, assessmentId) : Promise.resolve(null),
+    collectProfile ? getWorkforce(supabase, assessmentId) : Promise.resolve(null),
   ]);
 
   return (
@@ -132,6 +137,11 @@ async function Runner({
       clearCarriedForwardUrl={`/api/assessments/${assessmentId}/clear-carried-forward`}
       saveUrl={`/api/assessments/${assessmentId}/answer`}
       completeUrl={`/api/assessments/${assessmentId}/complete`}
+      collectProfile={collectProfile}
+      profileSaveUrl={`/api/assessments/${assessmentId}/profile`}
+      initialFinancial={financial}
+      initialPresence={presence}
+      initialWorkforce={workforce}
     />
   );
 }

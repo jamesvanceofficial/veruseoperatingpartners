@@ -1,4 +1,4 @@
-import type { AssessmentType, AssessmentStatus } from "./labels";
+import type { AssessmentType, AssessmentStatus, PhysicalLocation, SocialChannel, ReviewsStatus, EmailDomainStatus, StaffingFeeling, TimeToFill } from "./labels";
 import type { BuildTier, SupportTier } from "./buildTiers";
 
 export type AnswerOption = { value: number; label: string };
@@ -79,6 +79,45 @@ export type CategoryScoreDetail = {
   lowConfidence: boolean;
 };
 
+// Stage 12 — captured once per FULL assessment as a point-in-time
+// snapshot (never quick_scan), so it can be compared across
+// reassessments. Every field optional/nullable.
+export type FinancialProfile = {
+  lastFullYearRevenue: number | null;
+  currentYearRevenue: number | null;
+  grossProfitMarginPct: number | null;
+  netProfitMarginPct: number | null;
+  netProfitLastYear: number | null;
+  monthlyOverhead: number | null;
+  payrollPctOfRevenue: number | null;
+  cashOnHand: number | null;
+  accountsReceivableOutstanding: number | null;
+  largestCustomerPctOfRevenue: number | null;
+  ownersCompensation: number | null;
+};
+
+export type BusinessPresence = {
+  physicalLocation: PhysicalLocation | null;
+  physicalAddress: string | null;
+  hasWebsite: boolean | null;
+  websiteUrl: string | null;
+  socialChannels: SocialChannel[];
+  reviewsStatus: ReviewsStatus | null;
+  emailDomainStatus: EmailDomainStatus | null;
+};
+
+export type Workforce = {
+  w2EmployeeCount: number | null;
+  contractorCount: number | null;
+  vaCount: number | null;
+  managementCount: number | null;
+  staffingFeeling: StaffingFeeling | null;
+  activelyHiring: boolean | null;
+  hiringRoles: string | null;
+  timeToFill: TimeToFill | null;
+  turnoverPct: number | null;
+};
+
 export type AssessmentReport = {
   assessment: Assessment;
   orgName: string;
@@ -89,4 +128,12 @@ export type AssessmentReport = {
   notApplicableCount: number;
   buildTierOverrideByName: string | null;
   supportTierOverrideByName: string | null;
+  /** null for quick_scan (never captured) or a full assessment where the section was never saved. */
+  financialProfile: FinancialProfile | null;
+  businessPresence: BusinessPresence | null;
+  workforce: Workforce | null;
+  /** (currentYearRevenue ?? lastFullYearRevenue) / realHeadcount — null unless both a revenue figure and a nonzero headcount exist. */
+  revenuePerEmployee: number | null;
+  /** w2EmployeeCount + contractorCount + vaCount, if workforce was ever saved — the real headcount, not organizations.employee_count_estimate. */
+  realHeadcount: number | null;
 };
