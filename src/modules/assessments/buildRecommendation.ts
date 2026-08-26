@@ -22,7 +22,7 @@
 // fixed-scope package covers.
 
 import { formatCurrency, formatNumber } from "@/shared/format";
-import { BUILD_TIER_INFO, SUPPORT_TIER_INFO, type BuildTier, type SupportTier } from "./buildTiers";
+import { BUILD_TIER_INFO, SUPPORT_TIER_INFO, DEFAULT_SUPPORT_TIER_FOR_BUILD, STABILIZATION_PERIOD_DAYS, type BuildTier, type SupportTier } from "./buildTiers";
 
 const BUILD_RELEVANT_CATEGORIES = new Set(["Operations", "Systems", "Technology"]);
 const WEAK_MARGIN_THRESHOLD_PCT = 5;
@@ -181,23 +181,24 @@ function buildReasoningText(
 }
 
 function supportReasoningText(input: BuildRecommendationInput, buildTier: BuildTier, supportTier: SupportTier, bumped: boolean): string {
+  const supportLabel = SUPPORT_TIER_INFO[supportTier].label;
+
   if (buildTier === "custom") {
-    return "Support is quoted alongside the Custom Build once scope is finalized.";
+    return `Support is part of this engagement, not a separate purchase — scoped and quoted alongside the Custom Build, with the same structure as every tier: the first ${STABILIZATION_PERIOD_DAYS} days are included to stabilize the new systems, then it bills at the agreed rate.`;
   }
 
-  const supportLabel = SUPPORT_TIER_INFO[supportTier].label;
   const headcount = input.realHeadcount ?? input.employeeCountEstimate;
   const isRealHeadcount = input.realHeadcount !== null;
   const systemsScore = input.categoryScores.find((c) => c.categoryName === "Systems")?.rawScore ?? null;
 
-  const sentences: string[] = [];
+  const sentences: string[] = [
+    `This is included with the build, not a separate purchase — the first ${STABILIZATION_PERIOD_DAYS} days are covered in the build price to get the new systems stable, then it continues at ${supportLabel} (${SUPPORT_TIER_INFO[supportTier].priceLabel}).`,
+  ];
 
   if (headcount !== null) {
     sentences.push(
-      `With ${formatNumber(headcount)} ${isRealHeadcount ? "on the team" : "employees"}, ${supportLabel} support's seat allowance and response times are sized for the day-to-day support load a team this size actually generates.`
+      `With ${formatNumber(headcount)} ${isRealHeadcount ? "on the team" : "employees"}, ${supportLabel}'s seat allowance and response times match the day-to-day support load a team this size actually generates.`
     );
-  } else {
-    sentences.push(`${supportLabel} support is sized to the scope of ${withArticle(BUILD_TIER_INFO[buildTier].label)}.`);
   }
 
   if (systemsScore !== null && systemsScore < 5) {
@@ -205,7 +206,7 @@ function supportReasoningText(input: BuildRecommendationInput, buildTier: BuildT
       `Systems scored ${systemsScore.toFixed(1)}/10 on this assessment — with that much still undocumented or manual, ongoing hands-on support matters more here than it would for a more systemized operation.`
     );
   } else if (bumped) {
-    sentences.push("Given the organization's scale, this is recommended one tier up from the build's default, to cover the higher ongoing support load.");
+    sentences.push("Given the organization's scale, this continues one tier up from the build's default once the included period ends.");
   }
 
   return sentences.join(" ");
@@ -235,8 +236,7 @@ export function computeBuildRecommendation(input: BuildRecommendationInput): Bui
   const buildTier: BuildTier = custom ? "custom" : standardTiers[tierIndex];
   const buildInfo = BUILD_TIER_INFO[buildTier];
 
-  const baseSupportMap: Record<BuildTier, SupportTier> = { foundation: "base", growth: "growth", enterprise: "pro", custom: "custom" };
-  let supportTier = baseSupportMap[buildTier];
+  let supportTier = DEFAULT_SUPPORT_TIER_FOR_BUILD[buildTier];
   let bumped = false;
   if (!custom && size >= 6) {
     const order: SupportTier[] = ["base", "growth", "pro", "enterprise"];

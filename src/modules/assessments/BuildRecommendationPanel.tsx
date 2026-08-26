@@ -6,8 +6,17 @@ import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { Select } from "@/shared/ui/FormField";
-import { formatDate } from "@/shared/format";
-import { BUILD_TIERS, BUILD_TIER_INFO, SUPPORT_TIERS, SUPPORT_TIER_INFO, SUPPORT_SUBSCRIPTION_NAME, type BuildTier, type SupportTier } from "./buildTiers";
+import { formatDate, formatCurrency } from "@/shared/format";
+import {
+  BUILD_TIERS,
+  BUILD_TIER_INFO,
+  SUPPORT_TIERS,
+  SUPPORT_TIER_INFO,
+  SUPPORT_SUBSCRIPTION_NAME,
+  STABILIZATION_PERIOD_DAYS,
+  type BuildTier,
+  type SupportTier,
+} from "./buildTiers";
 
 function ScopeList({ title, items, tone }: { title: string; items: string[]; tone: "green" | "red" }) {
   return (
@@ -30,6 +39,10 @@ function ScopeList({ title, items, tone }: { title: string; items: string[]; ton
  * AssessmentReportView, which is itself never used for quick_scan). Shows
  * the recommended build + support tier with reasoning and scope, and, for
  * staff, a control to override either one — recorded with who/when.
+ *
+ * Stage 14: the subscription is bundled with every build, not an optional
+ * add-on — this panel frames it as "what keeps running and when it starts
+ * billing," never as a separate purchase decision.
  */
 export function BuildRecommendationPanel({
   assessmentId,
@@ -79,6 +92,9 @@ export function BuildRecommendationPanel({
   const supportInfo = SUPPORT_TIER_INFO[displayedSupportTier];
   const buildSelectDirty = displayedBuildTier !== effectiveBuildTier;
   const supportSelectDirty = displayedSupportTier !== effectiveSupportTier;
+  // Live off the same displayed tiers as the scope lists — updates
+  // immediately as either dropdown changes, saved or not.
+  const firstYearValue = buildInfo.price !== null && supportInfo.price !== null ? buildInfo.price + supportInfo.price * 9 : null;
 
   async function saveOverride(kind: "build" | "support", value: string) {
     setSaving(kind);
@@ -107,6 +123,21 @@ export function BuildRecommendationPanel({
 
   return (
     <div className="flex flex-col gap-4">
+      <Card strong className="flex flex-col gap-1">
+        <p className="section-label">First-Year Value</p>
+        {firstYearValue !== null ? (
+          <>
+            <p className="font-tabular text-[24px] font-semibold text-[var(--gold-light)]">{formatCurrency(firstYearValue)}</p>
+            <p className="text-[11.5px] text-[var(--muted)]">
+              {buildInfo.priceLabel} build + {formatCurrency((supportInfo.price ?? 0) * 9)} subscription (9 billed months, after the{" "}
+              {STABILIZATION_PERIOD_DAYS}-day included period)
+            </p>
+          </>
+        ) : (
+          <p className="text-[13px] text-[var(--muted)]">Quoted once the Custom scope is finalized.</p>
+        )}
+      </Card>
+
       <Card strong className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -172,7 +203,8 @@ export function BuildRecommendationPanel({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="section-label">{SUPPORT_SUBSCRIPTION_NAME}</p>
-            <p className="mt-1 text-[17px] font-semibold text-[var(--gold-light)]">
+            <p className="mt-1 text-[11.5px] text-[var(--muted)]">Included with every build — what keeps running once it's handed off, not a separate purchase.</p>
+            <p className="mt-2 text-[17px] font-semibold text-[var(--gold-light)]">
               {supportInfo.label} <span className="text-[13px] font-normal text-[var(--cream)]">· {supportInfo.priceLabel}</span>
             </p>
           </div>
@@ -181,8 +213,19 @@ export function BuildRecommendationPanel({
           ) : supportTierOverride ? (
             <Badge tone="yellow">Overridden</Badge>
           ) : (
-            <Badge tone="gold">Recommended</Badge>
+            <Badge tone="gold">Default tier</Badge>
           )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 border-y border-[var(--hairline)] py-3 sm:grid-cols-2">
+          <div>
+            <p className="section-label">Covered in the build price</p>
+            <p className="text-[13px] text-[var(--cream)]">First {STABILIZATION_PERIOD_DAYS} days — the stabilization period</p>
+          </div>
+          <div>
+            <p className="section-label">First billing</p>
+            <p className="text-[13px] text-[var(--cream)]">{STABILIZATION_PERIOD_DAYS} days after build handover</p>
+          </div>
         </div>
 
         {supportSelectDirty ? (

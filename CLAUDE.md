@@ -271,7 +271,24 @@ today, no exceptions.
   never restated by hand) the way build tiers aren't. The monthly support
   product is always labeled "Software, Systems & Support Subscription"
   (`SUPPORT_SUBSCRIPTION_NAME` in that same file) — never a "Compass
-  subscription".
+  subscription". Stage 14: the subscription is bundled with every build,
+  not an optional add-on — `DEFAULT_SUPPORT_TIER_FOR_BUILD` (also in
+  `buildTiers.ts`) pairs foundation→base/growth→growth/enterprise→pro/
+  custom→custom, and each `BUILD_TIER_INFO[tier].included` ends with a
+  line naming that pairing and its price, built from `SUPPORT_TIER_INFO`
+  rather than typed out by hand. `STABILIZATION_PERIOD_DAYS` (90) is
+  covered by the build price — the subscription starts billing that many
+  days after handover, which is why `BuildRecommendationPanel.tsx` shows
+  it as "what keeps running and when it starts billing," not a
+  recommendation to accept or decline. There's no build-package/handover
+  date tracked anywhere yet (Build Packages hasn't shipped as its own
+  stage), so the panel states the 90-day timing relative to handover
+  rather than showing a fabricated calendar date — once a real handover
+  date exists somewhere, that's where a literal first-billing date should
+  be computed from, not before. The panel also shows a live First-Year
+  Value (`buildInfo.price + supportInfo.price * 9`, the 9 months billed
+  after the included period) driven by the same live-selected tiers as
+  the scope lists.
 - `assessment_answers` — one row per question answered per assessment.
   Snapshots `question_text_snapshot`/`category_id_snapshot`/`weight_snapshot`/
   `answer_options_snapshot` (Stage 7) at answer time — re-captured from the

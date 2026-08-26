@@ -3,6 +3,15 @@
 // not computed per-org, so they live here as static config rather than
 // being stored per-assessment. What varies per-org is which tier gets
 // recommended and why — see buildRecommendation.ts.
+//
+// Stage 14: the subscription is bundled with every build, not an optional
+// add-on. The first STABILIZATION_PERIOD_DAYS after handover are covered
+// by the build price; after that it bills monthly at the paired tier
+// (DEFAULT_SUPPORT_TIER_FOR_BUILD), which can still be overridden
+// independently of the build tier. That's why each BUILD_TIER_INFO's
+// included list ends with a line naming its paired support tier and
+// price — SUPPORT_TIER_INFO has to exist first so that line can be built
+// from it, not typed out by hand and risk drifting from the real price.
 
 export const BUILD_TIERS = ["foundation", "growth", "enterprise", "custom"] as const;
 export type BuildTier = (typeof BUILD_TIERS)[number];
@@ -12,60 +21,8 @@ export type SupportTier = (typeof SUPPORT_TIERS)[number];
 
 export const SUPPORT_SUBSCRIPTION_NAME = "Software, Systems & Support Subscription";
 
-export type BuildTierInfo = {
-  label: string;
-  price: number | null;
-  priceLabel: string;
-  forCompanies: string;
-  included: string[];
-  excluded: string[];
-};
-
-export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
-  foundation: {
-    label: "Foundation Build",
-    price: 15000,
-    priceLabel: "$15,000",
-    forCompanies: "Smaller, simpler companies.",
-    included: ["Website", "Basic systems", "Basic SOPs", "Basic dashboard", "Setup", "Implementation"],
-    excluded: ["CRM", "Software workflows", "Automations", "Client/staff portals", "Multiple user roles", "Advanced dashboards"],
-  },
-  growth: {
-    label: "Growth Build",
-    price: 22500,
-    priceLabel: "$22,500",
-    forCompanies: "Most clients.",
-    included: ["Website", "Software workflows", "CRM", "Dashboards", "SOPs", "Documents", "Automations", "Support", "Implementation"],
-    excluded: ["Advanced/custom software", "Client or partner portals", "Multiple advanced user roles", "Enterprise-scale automations"],
-  },
-  enterprise: {
-    label: "Enterprise Build",
-    price: 30000,
-    priceLabel: "$30,000+",
-    forCompanies: "Larger, complex clients.",
-    included: [
-      "Advanced website and software",
-      "Portals",
-      "Advanced dashboards",
-      "Workflows",
-      "Automations",
-      "SOPs",
-      "Documents",
-      "Multiple users",
-      "Support",
-      "Implementation",
-    ],
-    excluded: ["Fully bespoke scope beyond a standard package — that's Custom"],
-  },
-  custom: {
-    label: "Custom Build",
-    price: null,
-    priceLabel: "Quoted separately",
-    forCompanies: "Anything beyond $30,000.",
-    included: ["Scope defined individually based on the client's needs"],
-    excluded: ["No fixed inclusions or exclusions — scoped and quoted per engagement"],
-  },
-};
+/** Days after build handover covered by the build price before the subscription starts billing. */
+export const STABILIZATION_PERIOD_DAYS = 90;
 
 export type SupportTierInfo = {
   label: string;
@@ -151,6 +108,86 @@ export const SUPPORT_TIER_INFO: Record<SupportTier, SupportTierInfo> = {
     price: null,
     priceLabel: "Quoted",
     included: ["Scope defined per client"],
+    excluded: ["No fixed inclusions or exclusions — scoped and quoted per engagement"],
+  },
+};
+
+/** The default support tier bundled with each build tier — computeBuildRecommendation() starts every recommendation here, then may bump it up one tier for scale (see buildRecommendation.ts); staff can override the support tier independently of the build tier at any point. */
+export const DEFAULT_SUPPORT_TIER_FOR_BUILD: Record<BuildTier, SupportTier> = {
+  foundation: "base",
+  growth: "growth",
+  enterprise: "pro",
+  custom: "custom",
+};
+
+function subscriptionScopeLine(buildTier: BuildTier): string {
+  const supportTier = DEFAULT_SUPPORT_TIER_FOR_BUILD[buildTier];
+  const info = SUPPORT_TIER_INFO[supportTier];
+  const billing = supportTier === "custom" ? `${info.label} support (${info.priceLabel})` : `${info.label} at ${info.priceLabel}`;
+  return `${SUPPORT_SUBSCRIPTION_NAME} — first ${STABILIZATION_PERIOD_DAYS} days included, then ${billing}`;
+}
+
+export type BuildTierInfo = {
+  label: string;
+  price: number | null;
+  priceLabel: string;
+  forCompanies: string;
+  included: string[];
+  excluded: string[];
+};
+
+export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
+  foundation: {
+    label: "Foundation Build",
+    price: 15000,
+    priceLabel: "$15,000",
+    forCompanies: "Smaller, simpler companies.",
+    included: ["Website", "Basic systems", "Basic SOPs", "Basic dashboard", "Setup", "Implementation", subscriptionScopeLine("foundation")],
+    excluded: ["CRM", "Software workflows", "Automations", "Client/staff portals", "Multiple user roles", "Advanced dashboards"],
+  },
+  growth: {
+    label: "Growth Build",
+    price: 22500,
+    priceLabel: "$22,500",
+    forCompanies: "Most clients.",
+    included: [
+      "Website",
+      "Software workflows",
+      "CRM",
+      "Dashboards",
+      "SOPs",
+      "Documents",
+      "Automations",
+      "Implementation",
+      subscriptionScopeLine("growth"),
+    ],
+    excluded: ["Advanced/custom software", "Client or partner portals", "Multiple advanced user roles", "Enterprise-scale automations"],
+  },
+  enterprise: {
+    label: "Enterprise Build",
+    price: 30000,
+    priceLabel: "$30,000+",
+    forCompanies: "Larger, complex clients.",
+    included: [
+      "Advanced website and software",
+      "Portals",
+      "Advanced dashboards",
+      "Workflows",
+      "Automations",
+      "SOPs",
+      "Documents",
+      "Multiple users",
+      "Implementation",
+      subscriptionScopeLine("enterprise"),
+    ],
+    excluded: ["Fully bespoke scope beyond a standard package — that's Custom"],
+  },
+  custom: {
+    label: "Custom Build",
+    price: null,
+    priceLabel: "Quoted separately",
+    forCompanies: "Anything beyond $30,000.",
+    included: ["Scope defined individually based on the client's needs", subscriptionScopeLine("custom")],
     excluded: ["No fixed inclusions or exclusions — scoped and quoted per engagement"],
   },
 };
