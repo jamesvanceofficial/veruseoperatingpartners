@@ -1,4 +1,4 @@
-import type { AssessmentType, AssessmentStatus, PhysicalLocation, SocialChannel, ReviewsStatus, EmailDomainStatus, StaffingFeeling, TimeToFill } from "./labels";
+import type { AssessmentType, AssessmentStatus, PhysicalLocation, SocialChannel, ReviewsStatus, EmailDomainStatus, StaffingFeeling, TimeToFill, PortalNeed, AutomationTask } from "./labels";
 import type { BuildTier, SupportTier } from "./buildTiers";
 
 export type AnswerOption = { value: number; label: string };
@@ -118,6 +118,14 @@ export type Workforce = {
   turnoverPct: number | null;
 };
 
+// Stage 18 — drives portal and automation scope from actual need, not tier.
+export type OperationalNeeds = {
+  portalNeed: PortalNeed | null;
+  portalDetails: string | null;
+  automationTasks: AutomationTask[];
+  automationTasksOther: string | null;
+};
+
 export type AssessmentReport = {
   assessment: Assessment;
   orgName: string;
@@ -132,6 +140,7 @@ export type AssessmentReport = {
   financialProfile: FinancialProfile | null;
   businessPresence: BusinessPresence | null;
   workforce: Workforce | null;
+  operationalNeeds: OperationalNeeds | null;
   /** (currentYearRevenue ?? lastFullYearRevenue) / realHeadcount — null unless both a revenue figure and a nonzero headcount exist. */
   revenuePerEmployee: number | null;
   /** w2EmployeeCount + contractorCount + vaCount, if workforce was ever saved — the real headcount, not organizations.employee_count_estimate. */

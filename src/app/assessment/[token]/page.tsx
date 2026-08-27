@@ -3,7 +3,7 @@ import { BrandMark } from "@/shared/ui/BrandMark";
 import { Badge } from "@/shared/ui/Badge";
 import { createAdminClient } from "@/shared/supabase/admin";
 import { getAssessmentByToken, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getNotApplicableIds } from "@/modules/assessments/data";
-import { getFinancialProfile, getBusinessPresence, getWorkforce } from "@/modules/assessments/profileData";
+import { getFinancialProfile, getBusinessPresence, getWorkforce, getOperationalNeeds } from "@/modules/assessments/profileData";
 import { ASSESSMENT_TYPE_LABELS } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -84,7 +84,7 @@ async function PublicRunner({
   token: string;
 }) {
   const collectProfile = assessmentType === "full";
-  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds, financial, presence, workforce] = await Promise.all([
+  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds, financial, presence, workforce, operationalNeeds] = await Promise.all([
     getCategories(admin),
     getQuestionsForType(admin, assessmentType),
     getAnswersMap(admin, assessmentId),
@@ -93,6 +93,7 @@ async function PublicRunner({
     collectProfile ? getFinancialProfile(admin, assessmentId) : Promise.resolve(null),
     collectProfile ? getBusinessPresence(admin, assessmentId) : Promise.resolve(null),
     collectProfile ? getWorkforce(admin, assessmentId) : Promise.resolve(null),
+    collectProfile ? getOperationalNeeds(admin, assessmentId) : Promise.resolve(null),
   ]);
 
   return (
@@ -110,6 +111,7 @@ async function PublicRunner({
       initialFinancial={financial}
       initialPresence={presence}
       initialWorkforce={workforce}
+      initialOperationalNeeds={operationalNeeds}
     />
   );
 }

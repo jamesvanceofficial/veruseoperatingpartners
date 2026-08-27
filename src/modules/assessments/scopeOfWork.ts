@@ -4,11 +4,16 @@
 //
 // Structure: a fixed 1-week Foundation & Scope Lock phase, then one phase
 // per top-ranked bottleneck category (however many the tier's budget
-// affords), then a fixed Training & Handover phase — week ranges always
-// sum to exactly the tier's planned timeline.
+// affords), then — Stage 18 — a dedicated portal phase if this business
+// actually needs one (extends the total timeline rather than eating into
+// bottleneck weeks, since it's real additional scope), then a fixed
+// Training & Handover phase. Week ranges always sum to exactly the plan's
+// total (base tier weeks, plus portal weeks when applicable).
 
 import { CATEGORY_PHASE_NAME, CATEGORY_BUILD_DELIVERABLES, CATEGORY_PHASE_ARTIFACT, CATEGORY_PHASE_DEPENDENCY } from "./reportCopy";
+import { needsPortal } from "./effectiveScope";
 import type { BuildTier } from "./buildTiers";
+import type { OperationalNeeds } from "./types";
 
 type TierPhasePlan = {
   /** Single canonical week total for phase math — always inside the tier's timeline range in buildTiers.ts. */
@@ -25,12 +30,19 @@ const TIER_PHASE_PLAN: Record<Exclude<BuildTier, "custom">, TierPhasePlan> = {
   enterprise: { totalWeeks: 12, maxBottleneckPhases: 4, scopeLockWeeks: 1, handoverWeeks: 2 },
 };
 
+/** Extra weeks added to the timeline when a portal is needed — scales with tier the same way portal scope itself does (see effectiveScope.ts). */
+const PORTAL_PHASE_WEEKS: Record<Exclude<BuildTier, "custom">, number> = {
+  foundation: 1,
+  growth: 2,
+  enterprise: 3,
+};
+
 export type ScopePhase = {
   phaseNumber: number;
   name: string;
   weekStart: number;
   weekEnd: number;
-  kind: "scope-lock" | "bottleneck" | "handover";
+  kind: "scope-lock" | "bottleneck" | "portal" | "handover";
   categoryName?: string;
   categoryScore?: number;
   whatWeDo: string[];
@@ -58,10 +70,14 @@ function splitWeeks(total: number, count: number): number[] {
  */
 export function computeScopeOfWork(
   buildTier: BuildTier | null,
-  rankedBottlenecks: { categoryName: string; rawScore: number }[]
+  rankedBottlenecks: { categoryName: string; rawScore: number }[],
+  operationalNeeds: OperationalNeeds | null = null
 ): ScopeOfWorkPlan | null {
   if (!buildTier || buildTier === "custom") return null;
   const plan = TIER_PHASE_PLAN[buildTier];
+  const wantsPortal = needsPortal(operationalNeeds);
+  const portalWeeks = wantsPortal ? PORTAL_PHASE_WEEKS[buildTier] : 0;
+  const totalWeeks = plan.totalWeeks + portalWeeks;
 
   const bottleneckCount = Math.min(plan.maxBottleneckPhases, rankedBottlenecks.length);
   const bottleneckBudget = plan.totalWeeks - plan.scopeLockWeeks - plan.handoverWeeks;
@@ -99,6 +115,25 @@ export function computeScopeOfWork(
     cursor += weeks;
   });
 
+  if (wantsPortal) {
+    phases.push({
+      phaseNumber: phaseNumber++,
+      name: "Client & Partner Portal",
+      weekStart: cursor,
+      weekEnd: cursor + portalWeeks - 1,
+      kind: "portal",
+      whatWeDo: [
+        "Portal access and permissions setup",
+        "Defining what each user type can see",
+        "Login and account management",
+        "Data walls that keep one customer's information separate from another's",
+      ],
+      whatYouGet: "A working client/partner portal, scoped to exactly what your customers and partners need to see.",
+      whatWeNeed: "A list of exactly what each user type should be able to see, and any existing account or login system to migrate from.",
+    });
+    cursor += portalWeeks;
+  }
+
   phases.push({
     phaseNumber: phaseNumber++,
     name: "Training & Handover",
@@ -110,5 +145,5 @@ export function computeScopeOfWork(
   });
   cursor += plan.handoverWeeks;
 
-  return { totalWeeks: plan.totalWeeks, phases };
+  return { totalWeeks, phases };
 }

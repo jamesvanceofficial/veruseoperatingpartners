@@ -5,7 +5,7 @@ import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
 import { getAssessmentById, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getNotApplicableIds, getAnswerCount } from "@/modules/assessments/data";
-import { getFinancialProfile, getBusinessPresence, getWorkforce } from "@/modules/assessments/profileData";
+import { getFinancialProfile, getBusinessPresence, getWorkforce, getOperationalNeeds } from "@/modules/assessments/profileData";
 import { ASSESSMENT_TYPE_LABELS, ASSESSMENT_STATUS_LABELS, ASSESSMENT_STATUS_TONE } from "@/modules/assessments/labels";
 import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView";
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
@@ -122,7 +122,7 @@ async function Runner({
   assessmentType: "quick_scan" | "full";
 }) {
   const collectProfile = assessmentType === "full";
-  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds, financial, presence, workforce] = await Promise.all([
+  const [categories, questions, answersMap, carriedForwardMap, notApplicableIds, financial, presence, workforce, operationalNeeds] = await Promise.all([
     getCategories(supabase),
     getQuestionsForType(supabase, assessmentType),
     getAnswersMap(supabase, assessmentId),
@@ -131,6 +131,7 @@ async function Runner({
     collectProfile ? getFinancialProfile(supabase, assessmentId) : Promise.resolve(null),
     collectProfile ? getBusinessPresence(supabase, assessmentId) : Promise.resolve(null),
     collectProfile ? getWorkforce(supabase, assessmentId) : Promise.resolve(null),
+    collectProfile ? getOperationalNeeds(supabase, assessmentId) : Promise.resolve(null),
   ]);
 
   return (
@@ -148,6 +149,7 @@ async function Runner({
       initialFinancial={financial}
       initialPresence={presence}
       initialWorkforce={workforce}
+      initialOperationalNeeds={operationalNeeds}
     />
   );
 }

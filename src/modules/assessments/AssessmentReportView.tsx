@@ -22,6 +22,7 @@ export function AssessmentReportView({ report, canEdit = false }: { report: Asse
     financialProfile,
     businessPresence,
     workforce,
+    operationalNeeds,
     revenuePerEmployee,
     realHeadcount,
   } = report;
@@ -110,6 +111,7 @@ export function AssessmentReportView({ report, canEdit = false }: { report: Asse
         supportTierOverride={assessment.support_tier_override}
         supportTierOverrideByName={supportTierOverrideByName}
         supportTierOverrideAt={assessment.support_tier_override_at}
+        operationalNeeds={operationalNeeds}
         canEdit={canEdit}
       />
     </div>

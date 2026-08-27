@@ -82,3 +82,44 @@ export const TIME_TO_FILL_LABELS: Record<TimeToFill, string> = {
   longer: "Longer",
   struggle: "We struggle to fill roles",
 };
+
+// ===========================================================
+// Operational needs — Stage 18, Full Assessment only. Drives whether a
+// portal is in scope (need, not tier, decides that) and which specific
+// automations get named as deliverables.
+// ===========================================================
+
+export const PORTAL_NEED_OPTIONS = ["customers", "partners", "both", "no"] as const;
+export type PortalNeed = (typeof PORTAL_NEED_OPTIONS)[number];
+export const PORTAL_NEED_LABELS: Record<PortalNeed, string> = {
+  customers: "Yes, customers need their own login",
+  partners: "Yes, partners or subcontractors need a login",
+  both: "Both",
+  no: "No",
+};
+
+export const AUTOMATION_TASKS = [
+  "quoting_estimates",
+  "scheduling_dispatch",
+  "invoicing_billing",
+  "payroll",
+  "reporting",
+  "customer_follow_up",
+  "document_generation",
+  "data_entry_between_systems",
+  "onboarding_customers",
+  "onboarding_staff",
+] as const;
+export type AutomationTask = (typeof AUTOMATION_TASKS)[number];
+export const AUTOMATION_TASK_LABELS: Record<AutomationTask, string> = {
+  quoting_estimates: "Quoting and estimates",
+  scheduling_dispatch: "Scheduling and dispatch",
+  invoicing_billing: "Invoicing and billing",
+  payroll: "Payroll",
+  reporting: "Reporting",
+  customer_follow_up: "Customer follow-up",
+  document_generation: "Document generation",
+  data_entry_between_systems: "Data entry between systems",
+  onboarding_customers: "Onboarding new customers",
+  onboarding_staff: "Onboarding new staff",
+};

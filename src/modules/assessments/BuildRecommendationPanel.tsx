@@ -17,6 +17,8 @@ import {
   type BuildTier,
   type SupportTier,
 } from "./buildTiers";
+import { getEffectiveBuildScope } from "./effectiveScope";
+import type { OperationalNeeds } from "./types";
 
 function ScopeList({ title, items, tone }: { title: string; items: string[]; tone: "green" | "red" }) {
   return (
@@ -56,6 +58,7 @@ export function BuildRecommendationPanel({
   supportTierOverride,
   supportTierOverrideByName,
   supportTierOverrideAt,
+  operationalNeeds,
   canEdit,
 }: {
   assessmentId: string;
@@ -69,6 +72,7 @@ export function BuildRecommendationPanel({
   supportTierOverride: SupportTier | null;
   supportTierOverrideByName: string | null;
   supportTierOverrideAt: string | null;
+  operationalNeeds: OperationalNeeds | null;
   canEdit: boolean;
 }) {
   const router = useRouter();
@@ -90,6 +94,11 @@ export function BuildRecommendationPanel({
   const displayedSupportTier = supportSelect || effectiveSupportTier;
   const buildInfo = BUILD_TIER_INFO[displayedBuildTier];
   const supportInfo = SUPPORT_TIER_INFO[displayedSupportTier];
+  // The actual scope for THIS client — the tier's static list plus a
+  // portal deliverable (if needed) and one named line per automation
+  // task they asked for. Live off displayedBuildTier, same as everything
+  // else in this panel.
+  const effectiveScope = getEffectiveBuildScope(displayedBuildTier, operationalNeeds);
   const buildSelectDirty = displayedBuildTier !== effectiveBuildTier;
   const supportSelectDirty = displayedSupportTier !== effectiveSupportTier;
   // Live off the same displayed tiers as the scope lists — updates
@@ -172,8 +181,8 @@ export function BuildRecommendationPanel({
         <p className="text-[13px] leading-relaxed text-[var(--cream)]">{buildReasoning}</p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ScopeList title="Included in scope" items={buildInfo.included} tone="green" />
-          <ScopeList title="Explicitly excluded" items={buildInfo.excluded} tone="red" />
+          <ScopeList title="Included in scope" items={effectiveScope.included} tone="green" />
+          <ScopeList title="Explicitly excluded" items={effectiveScope.excluded} tone="red" />
         </div>
 
         {canEdit ? (

@@ -234,6 +234,43 @@ confirming the weeks always sum correctly and the phase order always
 matches the assessment's actual ranking, plus a full component-tree
 render confirming the section lands between the other two by name.
 
+**Portal and automation scope (Stage 18)** — need-based, never tier-gated.
+`assessment_operational_needs` (same shape/RLS as the other three
+business-profile tables) captures `portal_need` (customers/partners/
+both/no) + `portal_details` free text, and `automation_tasks` (a
+multi-select of ten common ones, see `AUTOMATION_TASKS` in `labels.ts`) +
+`automation_tasks_other` free text — asked in the same pre-questions step
+as financial/presence/workforce. `BUILD_TIER_INFO` in `buildTiers.ts` no
+longer mentions portals at all (removed from Foundation's and Growth's
+`excluded`, and from Enterprise's unconditional `included` — a business
+either needs one or it doesn't, regardless of tier). The actual per-
+assessment scope is computed by `getEffectiveBuildScope()` in
+`effectiveScope.ts`: starts from `BUILD_TIER_INFO[tier].included`, pulls
+off the subscription line (always last), appends a tier-scaled portal
+line from `PORTAL_SCOPE_BY_TIER` when `needsPortal()` is true (view-only
+at Foundation, +document exchange at Growth, full multi-role at
+Enterprise), appends one named deliverable per selected automation task,
+then puts the subscription line back — so it's always last regardless of
+what got injected. Every consumer of "the build's scope"
+(`BuildRecommendationPanel.tsx`, `ClientReportView.tsx`'s Recommended
+Path) reads scope through this function now, never
+`BUILD_TIER_INFO[tier].included` directly, so a client's actual
+portal/automation needs show up consistently everywhere scope is
+displayed — and live-update with the override dropdown in
+`BuildRecommendationPanel.tsx`, same as before. `computeScopeOfWork()`
+also takes `operationalNeeds` now: when a portal's needed it inserts a
+dedicated "Client & Partner Portal" phase (real deliverables: access and
+permissions, per-user-type visibility, login/account management, and the
+data walls between customers) positioned after the bottleneck phases and
+before Training & Handover, and EXTENDS the plan's `totalWeeks` by a
+tier-scaled amount (`PORTAL_PHASE_WEEKS`) rather than eating into
+bottleneck-phase time, since it's real additional scope. `computeBuildRecommendation()`
+takes `hasPortalNeed`/`automationTaskCount` and pushes `needTier` up
+(capped at 2 when both apply together) the same way weak margin / no web
+presence already did, so a business needing a portal plus several
+automations lands on a higher tier than one needing neither — verified
+directly (same base inputs, tier jumped from foundation to enterprise).
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

@@ -5,9 +5,11 @@ import {
   saveFinancialProfile,
   saveBusinessPresence,
   saveWorkforce,
+  saveOperationalNeeds,
   parseFinancialProfileBody,
   parseBusinessPresenceBody,
   parseWorkforceBody,
+  parseOperationalNeedsBody,
 } from "@/modules/assessments/profileData";
 
 export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
@@ -29,6 +31,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
       saveFinancialProfile(admin, assessment.id, parseFinancialProfileBody(body?.financial)),
       saveBusinessPresence(admin, assessment.id, parseBusinessPresenceBody(body?.presence)),
       saveWorkforce(admin, assessment.id, parseWorkforceBody(body?.workforce)),
+      saveOperationalNeeds(admin, assessment.id, parseOperationalNeedsBody(body?.operationalNeeds)),
     ]);
     return NextResponse.json({ data: { ok: true } });
   } catch (err) {

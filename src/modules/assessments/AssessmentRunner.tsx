@@ -11,7 +11,7 @@ import { computeScores } from "./scoring";
 import { AnswerOptionButton } from "./AnswerOptionButton";
 import { NotApplicableToggle } from "./NotApplicableToggle";
 import { BusinessProfileForm } from "./BusinessProfileForm";
-import type { Category, Question, FinancialProfile, BusinessPresence, Workforce } from "./types";
+import type { Category, Question, FinancialProfile, BusinessPresence, Workforce, OperationalNeeds } from "./types";
 
 /**
  * Shared by both the staff-authenticated runner (/business-assessments/[id])
@@ -42,6 +42,7 @@ export function AssessmentRunner({
   initialFinancial = null,
   initialPresence = null,
   initialWorkforce = null,
+  initialOperationalNeeds = null,
 }: {
   categories: Category[];
   questions: Question[];
@@ -59,6 +60,7 @@ export function AssessmentRunner({
   initialFinancial?: FinancialProfile | null;
   initialPresence?: BusinessPresence | null;
   initialWorkforce?: Workforce | null;
+  initialOperationalNeeds?: OperationalNeeds | null;
 }) {
   const router = useRouter();
   // Only on a truly fresh session — resuming an assessment that already
@@ -232,6 +234,7 @@ export function AssessmentRunner({
         initialFinancial={initialFinancial}
         initialPresence={initialPresence}
         initialWorkforce={initialWorkforce}
+        initialOperationalNeeds={initialOperationalNeeds}
         onContinue={() => setProfileStep(false)}
       />
     );

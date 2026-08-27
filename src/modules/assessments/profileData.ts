@@ -1,8 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { numberOrNull, emptyToNull } from "@/shared/format";
-import { PHYSICAL_LOCATION_OPTIONS, SOCIAL_CHANNELS, REVIEWS_STATUS_OPTIONS, EMAIL_DOMAIN_STATUS_OPTIONS, STAFFING_FEELING_OPTIONS, TIME_TO_FILL_OPTIONS } from "./labels";
-import type { FinancialProfile, BusinessPresence, Workforce } from "./types";
-import type { PhysicalLocation, SocialChannel, ReviewsStatus, EmailDomainStatus, StaffingFeeling, TimeToFill } from "./labels";
+import {
+  PHYSICAL_LOCATION_OPTIONS,
+  SOCIAL_CHANNELS,
+  REVIEWS_STATUS_OPTIONS,
+  EMAIL_DOMAIN_STATUS_OPTIONS,
+  STAFFING_FEELING_OPTIONS,
+  TIME_TO_FILL_OPTIONS,
+  PORTAL_NEED_OPTIONS,
+  AUTOMATION_TASKS,
+} from "./labels";
+import type { FinancialProfile, BusinessPresence, Workforce, OperationalNeeds } from "./types";
+import type { PhysicalLocation, SocialChannel, ReviewsStatus, EmailDomainStatus, StaffingFeeling, TimeToFill, PortalNeed, AutomationTask } from "./labels";
 
 // ===========================================================
 // Financial profile, business presence, workforce — Stage 12. One row per
@@ -160,6 +169,40 @@ export function revenuePerEmployeeFrom(financial: FinancialProfile | null, headc
   return revenue / headcount;
 }
 
+type OperationalNeedsRow = {
+  portal_need: PortalNeed | null;
+  portal_details: string | null;
+  automation_tasks: AutomationTask[];
+  automation_tasks_other: string | null;
+};
+
+function toOperationalNeeds(row: OperationalNeedsRow): OperationalNeeds {
+  return {
+    portalNeed: row.portal_need,
+    portalDetails: row.portal_details,
+    automationTasks: row.automation_tasks ?? [],
+    automationTasksOther: row.automation_tasks_other,
+  };
+}
+
+export async function getOperationalNeeds(supabase: SupabaseClient, assessmentId: string): Promise<OperationalNeeds | null> {
+  const { data, error } = await supabase
+    .from("assessment_operational_needs")
+    .select("portal_need, portal_details, automation_tasks, automation_tasks_other")
+    .eq("assessment_id", assessmentId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toOperationalNeeds(data as OperationalNeedsRow) : null;
+}
+
+export async function saveOperationalNeeds(admin: SupabaseClient, assessmentId: string, input: OperationalNeedsRow): Promise<void> {
+  const { error } = await admin.from("assessment_operational_needs").upsert(
+    { assessment_id: assessmentId, ...input, updated_at: new Date().toISOString() },
+    { onConflict: "assessment_id" }
+  );
+  if (error) throw error;
+}
+
 // ===========================================================
 // Request body parsing — shared by the staff and public profile routes so
 // validation can't drift between the two.
@@ -221,5 +264,18 @@ export function parseWorkforceBody(body: unknown): WorkforceRow {
     hiring_roles: emptyToNull(b.hiringRoles),
     time_to_fill: timeToFill,
     turnover_pct: numberOrNull(b.turnoverPct),
+  };
+}
+
+export function parseOperationalNeedsBody(body: unknown): OperationalNeedsRow {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const portalNeed = PORTAL_NEED_OPTIONS.includes(b.portalNeed as PortalNeed) ? (b.portalNeed as PortalNeed) : null;
+  const rawTasks = Array.isArray(b.automationTasks) ? (b.automationTasks as unknown[]) : [];
+  const automationTasks = rawTasks.filter((t): t is AutomationTask => AUTOMATION_TASKS.includes(t as AutomationTask));
+  return {
+    portal_need: portalNeed,
+    portal_details: emptyToNull(b.portalDetails),
+    automation_tasks: automationTasks,
+    automation_tasks_other: emptyToNull(b.automationTasksOther),
   };
 }

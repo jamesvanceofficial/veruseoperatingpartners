@@ -6,9 +6,11 @@ import {
   saveFinancialProfile,
   saveBusinessPresence,
   saveWorkforce,
+  saveOperationalNeeds,
   parseFinancialProfileBody,
   parseBusinessPresenceBody,
   parseWorkforceBody,
+  parseOperationalNeedsBody,
 } from "@/modules/assessments/profileData";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +32,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       saveFinancialProfile(admin, id, parseFinancialProfileBody(body?.financial)),
       saveBusinessPresence(admin, id, parseBusinessPresenceBody(body?.presence)),
       saveWorkforce(admin, id, parseWorkforceBody(body?.workforce)),
+      saveOperationalNeeds(admin, id, parseOperationalNeedsBody(body?.operationalNeeds)),
     ]);
     return NextResponse.json({ data: { ok: true } });
   } catch (err) {

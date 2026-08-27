@@ -26,6 +26,8 @@ import { BUILD_TIER_INFO, SUPPORT_TIER_INFO, DEFAULT_SUPPORT_TIER_FOR_BUILD, STA
 
 const BUILD_RELEVANT_CATEGORIES = new Set(["Operations", "Systems", "Technology"]);
 const WEAK_MARGIN_THRESHOLD_PCT = 5;
+/** "Several automations" (requirement: portal + several automations => higher tier than neither). */
+const SEVERAL_AUTOMATIONS_THRESHOLD = 3;
 
 export type BuildRecommendationInput = {
   orgName: string;
@@ -41,6 +43,9 @@ export type BuildRecommendationInput = {
   realHeadcount: number | null;
   hasWebsite: boolean | null;
   hasGoogleBusinessProfile: boolean;
+  /** Stage 18 — whether the business needs a client/partner login, and how many distinct repetitive tasks it wants automated. Neither is tier-gated in scope (see effectiveScope.ts), but both push the recommendation up when real, since a portal and several automations are genuinely more build than a lighter tier assumes. */
+  hasPortalNeed: boolean;
+  automationTaskCount: number;
 };
 
 export type BuildRecommendationResult = {
@@ -124,9 +129,11 @@ function buildReasoningText(
     top3: { categoryName: string; rawScore: number }[];
     weakMargin: boolean;
     noWebPresence: boolean;
+    hasPortalNeed: boolean;
+    manyAutomations: boolean;
   }
 ): string {
-  const { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3, weakMargin, noWebPresence } = factors;
+  const { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3, weakMargin, noWebPresence, hasPortalNeed, manyAutomations } = factors;
   const scaleDesc = describeScale(input);
   const sentences: string[] = [];
 
@@ -173,6 +180,14 @@ function buildReasoningText(
 
   if (noWebPresence) {
     sentences.push("You currently have no website and no Google Business Profile — that's foundational visibility work this build needs to include.");
+  }
+
+  if (hasPortalNeed && manyAutomations) {
+    sentences.push("You also need a client/partner portal and several repetitive tasks automated — both are real build scope, not extras, and both push toward more build.");
+  } else if (hasPortalNeed) {
+    sentences.push("You also need a client/partner portal, scoped to this tier — that's real build scope, not an extra.");
+  } else if (manyAutomations) {
+    sentences.push("You also flagged several repetitive tasks to automate — that's real build scope, not an extra.");
   }
 
   sentences.push(`Enterprise score: ${input.enterpriseScore}/100.`);
@@ -227,8 +242,11 @@ export function computeBuildRecommendation(input: BuildRecommendationInput): Bui
 
   const weakMargin = input.netProfitMarginPct !== null && input.netProfitMarginPct < WEAK_MARGIN_THRESHOLD_PCT;
   const noWebPresence = input.hasWebsite === false && !input.hasGoogleBusinessProfile;
+  const manyAutomations = input.automationTaskCount >= SEVERAL_AUTOMATIONS_THRESHOLD;
   if (weakMargin) needTier = Math.max(needTier, 1);
   if (noWebPresence) needTier = Math.max(needTier, 1);
+  if (input.hasPortalNeed) needTier = Math.max(needTier, 1);
+  if (input.hasPortalNeed && manyAutomations) needTier = Math.max(needTier, 2);
 
   const tierIndex = Math.max(sizeTier, needTier);
   const custom = isCustomScale(input);
@@ -251,7 +269,18 @@ export function computeBuildRecommendation(input: BuildRecommendationInput): Bui
   return {
     buildTier,
     buildPrice: buildInfo.price,
-    buildReasoning: buildReasoningText(input, { sizeTier, needTier, custom, buildTier, relevantBottlenecks, top3, weakMargin, noWebPresence }),
+    buildReasoning: buildReasoningText(input, {
+      sizeTier,
+      needTier,
+      custom,
+      buildTier,
+      relevantBottlenecks,
+      top3,
+      weakMargin,
+      noWebPresence,
+      hasPortalNeed: input.hasPortalNeed,
+      manyAutomations,
+    }),
     supportTier,
     supportPrice: supportInfo.price,
     supportReasoning: supportReasoningText(input, buildTier, supportTier, bumped),

@@ -9,6 +9,7 @@ import { WEIGHTING_RATIONALE, CATEGORY_SCORE_MEANING, CATEGORY_TYPICAL_COST, CAT
 import { BUILD_TIER_INFO, SUPPORT_TIER_INFO, SUPPORT_SUBSCRIPTION_NAME, STABILIZATION_PERIOD_DAYS } from "./buildTiers";
 import { BusinessProfilePanels } from "./BusinessProfilePanels";
 import { computeScopeOfWork } from "./scopeOfWork";
+import { getEffectiveBuildScope } from "./effectiveScope";
 import type { AssessmentReport, Band } from "./types";
 
 const TONE_CLASS: Record<"green" | "yellow" | "red", string> = {
@@ -59,6 +60,7 @@ export function ClientReportView({
     financialProfile,
     businessPresence,
     workforce,
+    operationalNeeds,
     revenuePerEmployee,
     realHeadcount,
   } = report;
@@ -71,11 +73,15 @@ export function ClientReportView({
   const buildInfo = effectiveBuildTier ? BUILD_TIER_INFO[effectiveBuildTier] : null;
   const supportInfo = effectiveSupportTier ? SUPPORT_TIER_INFO[effectiveSupportTier] : null;
   const firstYearValue = buildInfo?.price != null && supportInfo?.price != null ? buildInfo.price + supportInfo.price * 9 : null;
+  // The actual scope for THIS client — the tier's list plus a portal
+  // deliverable (if needed) and one named line per automation task asked
+  // for, never a portal/automation exclusion baked into the tier itself.
+  const effectiveScope = effectiveBuildTier ? getEffectiveBuildScope(effectiveBuildTier, operationalNeeds) : null;
 
   const rankedBottlenecks = [...categoryScores]
     .sort((a, b) => a.bottleneckRank - b.bottleneckRank)
     .map((c) => ({ categoryName: c.categoryName, rawScore: c.rawScore }));
-  const scopePlan = computeScopeOfWork(effectiveBuildTier, rankedBottlenecks);
+  const scopePlan = computeScopeOfWork(effectiveBuildTier, rankedBottlenecks, operationalNeeds);
 
   const score = assessment.enterprise_score ?? 0;
   const preparedDate = assessment.completed_at ?? assessment.created_at;
@@ -283,7 +289,7 @@ export function ClientReportView({
       ) : null}
 
       {/* 8. RECOMMENDED PATH */}
-      {buildInfo && supportInfo ? (
+      {buildInfo && supportInfo && effectiveScope ? (
         <section className="cr-page-break flex flex-col gap-4 py-10">
           <SectionHeading eyebrow="The Plan" title="Recommended path" />
           <Card strong className="cr-avoid-break flex flex-col gap-3">
@@ -296,7 +302,7 @@ export function ClientReportView({
               <div>
                 <p className="section-label">Included</p>
                 <ul className="mt-1.5 flex flex-col gap-1">
-                  {buildInfo.included.map((item) => (
+                  {effectiveScope.included.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12.5px] leading-relaxed text-[var(--cream)]">
                       <span className="cr-tone-green">✓</span>
                       <span>{item}</span>
@@ -307,7 +313,7 @@ export function ClientReportView({
               <div>
                 <p className="section-label">Excluded</p>
                 <ul className="mt-1.5 flex flex-col gap-1">
-                  {buildInfo.excluded.map((item) => (
+                  {effectiveScope.excluded.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12.5px] leading-relaxed text-[var(--muted)]">
                       <span className="cr-tone-red">✕</span>
                       <span>{item}</span>
@@ -362,6 +368,7 @@ export function ClientReportView({
                       "flex items-center justify-center border-r border-[var(--hairline)] px-1 text-center text-[9px] font-medium leading-tight last:border-r-0",
                       p.kind === "scope-lock" && "bg-[var(--muted)] text-[var(--black)]",
                       p.kind === "bottleneck" && "bg-[var(--gold)] text-[var(--black)]",
+                      p.kind === "portal" && "bg-[var(--gold-light)] text-[var(--black)]",
                       p.kind === "handover" && "bg-[var(--green)] text-[var(--cream)]"
                     )}
                     style={{ width: `${width}%` }}
@@ -399,7 +406,7 @@ export function ClientReportView({
                   </p>
                 ) : null}
                 <div>
-                  <p className="section-label">{p.kind === "bottleneck" ? "What we build" : "What we do"}</p>
+                  <p className="section-label">{p.kind === "bottleneck" || p.kind === "portal" ? "What we build" : "What we do"}</p>
                   <ul className="mt-1 flex flex-col gap-1">
                     {p.whatWeDo.map((item) => (
                       <li key={item} className="flex items-start gap-2 text-[12.5px] leading-relaxed text-[var(--cream)]">

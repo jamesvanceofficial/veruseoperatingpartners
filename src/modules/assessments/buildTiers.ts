@@ -12,6 +12,15 @@
 // included list ends with a line naming its paired support tier and
 // price — SUPPORT_TIER_INFO has to exist first so that line can be built
 // from it, not typed out by hand and risk drifting from the real price.
+//
+// Stage 18: portals are deliberately NOT in any tier's included/excluded
+// list here — whether a business needs one depends on its business
+// model, not which tier it bought. Portal (and automation) scope is
+// computed per-assessment from the business profile's operational-needs
+// answers and injected at read time — see effectiveScope.ts, which is
+// what every consumer of "the build's scope" (the internal recommendation
+// panel, the client report) should call instead of reading
+// BUILD_TIER_INFO[tier].included directly.
 
 export const BUILD_TIERS = ["foundation", "growth", "enterprise", "custom"] as const;
 export type BuildTier = (typeof BUILD_TIERS)[number];
@@ -146,7 +155,7 @@ export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
     forCompanies: "Smaller, simpler companies.",
     timeline: "4-6 weeks from kickoff to handover",
     included: ["Website", "Basic systems", "Basic SOPs", "Basic dashboard", "Setup", "Implementation", subscriptionScopeLine("foundation")],
-    excluded: ["CRM", "Software workflows", "Automations", "Client/staff portals", "Multiple user roles", "Advanced dashboards"],
+    excluded: ["CRM", "Software workflows", "Automations", "Multiple user roles", "Advanced dashboards"],
   },
   growth: {
     label: "Growth Build",
@@ -165,7 +174,7 @@ export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
       "Implementation",
       subscriptionScopeLine("growth"),
     ],
-    excluded: ["Advanced/custom software", "Client or partner portals", "Multiple advanced user roles", "Enterprise-scale automations"],
+    excluded: ["Advanced/custom software", "Multiple advanced user roles", "Enterprise-scale automations"],
   },
   enterprise: {
     label: "Enterprise Build",
@@ -175,7 +184,6 @@ export const BUILD_TIER_INFO: Record<BuildTier, BuildTierInfo> = {
     timeline: "10-14 weeks from kickoff to handover",
     included: [
       "Advanced website and software",
-      "Portals",
       "Advanced dashboards",
       "Workflows",
       "Automations",

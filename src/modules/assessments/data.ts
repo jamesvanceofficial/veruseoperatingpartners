@@ -2,7 +2,8 @@ import { randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeScores, findBandId } from "./scoring";
 import { computeBuildRecommendation } from "./buildRecommendation";
-import { getFinancialProfile, getBusinessPresence, getWorkforce, realHeadcountFrom, revenuePerEmployeeFrom } from "./profileData";
+import { getFinancialProfile, getBusinessPresence, getWorkforce, getOperationalNeeds, realHeadcountFrom, revenuePerEmployeeFrom } from "./profileData";
+import { needsPortal } from "./effectiveScope";
 import type { AssessmentType } from "./labels";
 import type { BuildTier, SupportTier } from "./buildTiers";
 import type { Assessment, AssessmentListRow, AssessmentReport, Category, Band, Question, AnswerOption, CategoryScoreDetail } from "./types";
@@ -184,11 +185,13 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
   let financialProfile = null;
   let businessPresence = null;
   let workforce = null;
+  let operationalNeeds = null;
   if (assessment.assessment_type === "full") {
-    [financialProfile, businessPresence, workforce] = await Promise.all([
+    [financialProfile, businessPresence, workforce, operationalNeeds] = await Promise.all([
       getFinancialProfile(supabase, id),
       getBusinessPresence(supabase, id),
       getWorkforce(supabase, id),
+      getOperationalNeeds(supabase, id),
     ]);
   }
   const realHeadcount = realHeadcountFrom(workforce);
@@ -205,6 +208,7 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
     financialProfile,
     businessPresence,
     workforce,
+    operationalNeeds,
     revenuePerEmployee: revenuePerEmployeeFrom(financialProfile, realHeadcount),
     realHeadcount,
   };
@@ -506,13 +510,14 @@ async function computeAndSaveBuildRecommendation(admin: SupabaseClient, assessme
   const assessment = await getAssessmentById(admin, assessmentId);
   if (!assessment) return;
 
-  const [orgResult, categories, scoresResult, financialProfile, businessPresence, workforce] = await Promise.all([
+  const [orgResult, categories, scoresResult, financialProfile, businessPresence, workforce, operationalNeeds] = await Promise.all([
     admin.from("organizations").select("name, annual_revenue_estimate, employee_count_estimate, location_count").eq("id", assessment.org_id).maybeSingle(),
     getCategories(admin),
     admin.from("assessment_category_scores").select("category_id, raw_score, bottleneck_rank").eq("assessment_id", assessmentId),
     getFinancialProfile(admin, assessmentId),
     getBusinessPresence(admin, assessmentId),
     getWorkforce(admin, assessmentId),
+    getOperationalNeeds(admin, assessmentId),
   ]);
   if (orgResult.error) throw orgResult.error;
   if (scoresResult.error) throw scoresResult.error;
@@ -538,6 +543,8 @@ async function computeAndSaveBuildRecommendation(admin: SupabaseClient, assessme
     realHeadcount,
     hasWebsite: businessPresence?.hasWebsite ?? null,
     hasGoogleBusinessProfile: businessPresence?.socialChannels.includes("google_business") ?? false,
+    hasPortalNeed: needsPortal(operationalNeeds),
+    automationTaskCount: operationalNeeds?.automationTasks.length ?? 0,
   });
 
   const { error } = await admin

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
-import { FormField, Input, Select } from "@/shared/ui/FormField";
+import { FormField, Input, Select, Textarea } from "@/shared/ui/FormField";
 import {
   PHYSICAL_LOCATION_OPTIONS,
   PHYSICAL_LOCATION_LABELS,
@@ -17,10 +17,16 @@ import {
   STAFFING_FEELING_LABELS,
   TIME_TO_FILL_OPTIONS,
   TIME_TO_FILL_LABELS,
+  PORTAL_NEED_OPTIONS,
+  PORTAL_NEED_LABELS,
+  AUTOMATION_TASKS,
+  AUTOMATION_TASK_LABELS,
   type PhysicalLocation,
   type SocialChannel,
+  type PortalNeed,
+  type AutomationTask,
 } from "./labels";
-import type { FinancialProfile, BusinessPresence, Workforce } from "./types";
+import type { FinancialProfile, BusinessPresence, Workforce, OperationalNeeds } from "./types";
 
 function yesNo(value: boolean | null): string {
   if (value === true) return "yes";
@@ -41,18 +47,22 @@ export function BusinessProfileForm({
   initialFinancial,
   initialPresence,
   initialWorkforce,
+  initialOperationalNeeds,
   onContinue,
 }: {
   saveUrl: string;
   initialFinancial: FinancialProfile | null;
   initialPresence: BusinessPresence | null;
   initialWorkforce: Workforce | null;
+  initialOperationalNeeds: OperationalNeeds | null;
   onContinue: () => void;
 }) {
   const [physicalLocation, setPhysicalLocation] = useState<PhysicalLocation | "">(initialPresence?.physicalLocation ?? "");
   const [hasWebsite, setHasWebsite] = useState(yesNo(initialPresence?.hasWebsite ?? null));
   const [activelyHiring, setActivelyHiring] = useState(yesNo(initialWorkforce?.activelyHiring ?? null));
   const [socialChannels, setSocialChannels] = useState<SocialChannel[]>(initialPresence?.socialChannels ?? []);
+  const [portalNeed, setPortalNeed] = useState<PortalNeed | "">(initialOperationalNeeds?.portalNeed ?? "");
+  const [automationTasks, setAutomationTasks] = useState<AutomationTask[]>(initialOperationalNeeds?.automationTasks ?? []);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +72,10 @@ export function BusinessProfileForm({
       const withoutNone = prev.filter((c) => c !== "none");
       return withoutNone.includes(channel) ? withoutNone.filter((c) => c !== channel) : [...withoutNone, channel];
     });
+  }
+
+  function toggleAutomationTask(task: AutomationTask) {
+    setAutomationTasks((prev) => (prev.includes(task) ? prev.filter((t) => t !== task) : [...prev, task]));
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -104,6 +118,12 @@ export function BusinessProfileForm({
         hiringRoles: g("hiringRoles"),
         timeToFill: g("timeToFill") || null,
         turnoverPct: g("turnoverPct"),
+      },
+      operationalNeeds: {
+        portalNeed: portalNeed || null,
+        portalDetails: g("portalDetails"),
+        automationTasks,
+        automationTasksOther: g("automationTasksOther"),
       },
     };
 
@@ -292,6 +312,42 @@ export function BusinessProfileForm({
           <FormField label="% of your people who left in the last 12 months" htmlFor="turnoverPct">
             <Input id="turnoverPct" name="turnoverPct" type="number" min={0} max={100} defaultValue={initialWorkforce?.turnoverPct ?? ""} />
           </FormField>
+        </div>
+      </Card>
+
+      <Card className="flex flex-col gap-4">
+        <p className="section-label">Operational Needs</p>
+        <FormField label="Do your customers, clients, or partners need to log in and see their own information?" htmlFor="portalNeed">
+          <Select id="portalNeed" value={portalNeed} onChange={(e) => setPortalNeed(e.target.value as PortalNeed)}>
+            <option value="">Not answered</option>
+            {PORTAL_NEED_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {PORTAL_NEED_LABELS[v]}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        {portalNeed && portalNeed !== "no" ? (
+          <FormField label="What would they need to see?" htmlFor="portalDetails">
+            <Textarea id="portalDetails" name="portalDetails" rows={2} defaultValue={initialOperationalNeeds?.portalDetails ?? ""} />
+          </FormField>
+        ) : null}
+
+        <FormField label="What repetitive tasks eat the most time in your business right now?" htmlFor="automationTasksOther">
+          <Textarea id="automationTasksOther" name="automationTasksOther" rows={2} defaultValue={initialOperationalNeeds?.automationTasksOther ?? ""} />
+        </FormField>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {AUTOMATION_TASKS.map((task) => (
+            <label key={task} className="flex items-center gap-2 text-[12.5px] text-[var(--cream)]">
+              <input
+                type="checkbox"
+                checked={automationTasks.includes(task)}
+                onChange={() => toggleAutomationTask(task)}
+                className="h-4 w-4 rounded border-[var(--hairline-strong)] bg-[var(--navy)] accent-[var(--gold)]"
+              />
+              {AUTOMATION_TASK_LABELS[task]}
+            </label>
+          ))}
         </div>
       </Card>
 
