@@ -11,9 +11,10 @@ async function getLogoUrl(): Promise<string | null> {
   }
 }
 
-export async function BrandMark({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+/** "cover" is for a document cover page (the client report) — substantially larger than "lg", which every in-app header already uses. */
+export async function BrandMark({ size = "md" }: { size?: "sm" | "md" | "lg" | "cover" }) {
   const logoUrl = await getLogoUrl();
-  const dims = size === "lg" ? "h-10" : size === "sm" ? "h-6" : "h-8";
+  const dims = size === "cover" ? "h-20" : size === "lg" ? "h-10" : size === "sm" ? "h-6" : "h-8";
 
   if (logoUrl) {
     // eslint-disable-next-line @next/next/no-img-element
@@ -24,7 +25,7 @@ export async function BrandMark({ size = "md" }: { size?: "sm" | "md" | "lg" }) 
     <span
       className={cn(
         "font-semibold tracking-[0.18em] text-[var(--gold-light)]",
-        size === "lg" ? "text-[20px]" : size === "sm" ? "text-[12px]" : "text-[15px]"
+        size === "cover" ? "text-[34px]" : size === "lg" ? "text-[20px]" : size === "sm" ? "text-[12px]" : "text-[15px]"
       )}
     >
       VERUS

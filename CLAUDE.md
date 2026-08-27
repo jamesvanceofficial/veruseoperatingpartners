@@ -400,6 +400,32 @@ pass caught and fixed two real leaks the first implementation missed:
 $1,200/mo") and the stored `support_recommendation_reasoning` snapshot
 text — both were rendered unredacted before the fix.
 
+**Cover page (Stage 23)** — two changes to the front cover only (the back
+page is untouched). `BrandMark` (`src/shared/ui/BrandMark.tsx`) gained a
+`"cover"` size — `h-20` for the real uploaded logo, `text-[34px]` for the
+text-mark fallback — substantially bigger than `"lg"` (`h-10`/`text-[20px]`),
+which every in-app header still uses; the fallback-to-text-if-no-logo
+behavior already existed in `BrandMark` and needed no change, only a
+bigger variant. "Confidential" moved out of the centered title block to
+its own top-of-page line (`.section-label`, no `cr-tone-gold` — muted, not
+gold) — the cover section is now `flex flex-col` with that line first and
+a `flex-1` wrapper centering the logo/title/date block in the remaining
+space, so it reads as a document marking rather than a subtitle both on
+screen and under the existing `.cr-cover { height: 9.2in }` print rule.
+The running footer already said "{orgName} · Confidential" on every page
+before this stage — unchanged. Verified two ways: rendered the actual
+`ClientReportView` cover directly and confirmed "Confidential" precedes
+"Business Assessment" in the HTML with no `cr-tone-gold` nearby, and
+separately uploaded a real throwaway PNG to the `brand` storage bucket,
+pointed `app_settings.logo_url` at it, and confirmed the actual running
+container renders it via a real `<img>` tag on a live public page
+(`/scan`) — `BrandMark`'s `createServerSupabase()`/`cookies()` call only
+works inside a genuine Next.js request, so the image-rendering branch
+can't be exercised by a raw script render the way the text-fallback
+branch can; this is why that half of the check ran against the live
+container instead. Cleaned up the test logo and reset `app_settings` back
+to `null` (its real state — no logo has been uploaded yet) afterward.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

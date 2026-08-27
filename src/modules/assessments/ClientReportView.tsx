@@ -120,16 +120,18 @@ export function ClientReportView({
       </div>
 
       {/* 1. COVER */}
-      <section className="cr-cover cr-avoid-break flex flex-col items-center justify-center gap-8 py-24 text-center">
-        <BrandMark size="lg" />
-        <div className="flex flex-col items-center gap-3">
-          <span className="section-label cr-tone-gold">Confidential</span>
-          <h1 className="text-[38px] font-semibold leading-tight text-[var(--cream)]">Business Assessment</h1>
-          <p className="text-[22px] font-medium text-[var(--gold-light)] cr-tone-gold">{orgName}</p>
-        </div>
-        <div className="flex flex-col items-center gap-1 text-[13px] text-[var(--muted)]">
-          <p>Date prepared: {formatDate(preparedDate)}</p>
-          <p>Prepared by: {preparedByName}</p>
+      <section className="cr-cover cr-avoid-break flex min-h-[700px] flex-col text-center">
+        <p className="section-label pt-1">Confidential</p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-8">
+          <BrandMark size="cover" />
+          <div className="flex flex-col items-center gap-3">
+            <h1 className="text-[38px] font-semibold leading-tight text-[var(--cream)]">Business Assessment</h1>
+            <p className="text-[22px] font-medium text-[var(--gold-light)] cr-tone-gold">{orgName}</p>
+          </div>
+          <div className="flex flex-col items-center gap-1 text-[13px] text-[var(--muted)]">
+            <p>Date prepared: {formatDate(preparedDate)}</p>
+            <p>Prepared by: {preparedByName}</p>
+          </div>
         </div>
       </section>
 
