@@ -253,9 +253,32 @@ export function BuildRecommendationPanel({
 
         <p className="text-[13px] leading-relaxed text-[var(--cream)]">{supportReasoning}</p>
 
+        <div className="grid grid-cols-2 gap-3 border-y border-[var(--hairline)] py-3 sm:grid-cols-4">
+          <div>
+            <p className="section-label">Included seats</p>
+            <p className="text-[13px] text-[var(--cream)]">
+              {supportInfo.includedSeats !== null ? supportInfo.includedSeats : "Unlimited"}
+            </p>
+          </div>
+          <div>
+            <p className="section-label">Extra seat rate</p>
+            <p className="text-[13px] text-[var(--cream)]">{supportInfo.extraSeatRate !== null ? `$${supportInfo.extraSeatRate}/mo` : "—"}</p>
+          </div>
+          <div>
+            <p className="section-label">Included hours/mo</p>
+            <p className="text-[13px] text-[var(--cream)]">{supportInfo.includedHoursPerMonth !== null ? supportInfo.includedHoursPerMonth : "—"}</p>
+          </div>
+          <div>
+            <p className="section-label">Response time</p>
+            <p className="text-[13px] text-[var(--cream)]">{supportInfo.responseTime}</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ScopeList title="Included in scope" items={supportInfo.included} tone="green" />
-          <ScopeList title="Explicitly excluded" items={supportInfo.excluded} tone="red" />
+          <ScopeList title="Keeping it running" items={supportInfo.scope.keepingItRunning} tone="green" />
+          <ScopeList title="Keeping it current" items={supportInfo.scope.keepingItCurrent} tone="green" />
+          <ScopeList title="Keeping it used" items={supportInfo.scope.keepingItUsed} tone="green" />
+          <ScopeList title="Access" items={supportInfo.scope.access} tone="green" />
         </div>
 
         {canEdit ? (

@@ -295,6 +295,62 @@ requests per month" sat in the same cumulative included list as Growth's
 "5 change requests per month" with nothing distinguishing which applied
 — reworded to "12 change requests per month (up from 5)".
 
+**Support pricing model replaced (Stage 21)** — researched against market
+rates, this is the locked model; it fully supersedes Stage 20's numbers
+and architecture. `SUPPORT_TIER_INFO` in `buildTiers.ts` is now base fee
+plus per-seat overage, not flat: Base $500/mo (10 seats, $35/extra seat, 2
+included hrs/mo, 2-business-day response), Growth $1,200/mo (25 seats,
+$30/extra, 6 hrs, next-business-day), Pro $2,500/mo (50 seats, $25/extra,
+12 hrs, same-business-day), Enterprise $4,000+/mo (unlimited seats, 24
+hrs, same-day with a dedicated contact), Custom quoted. This ALSO fixed
+the Stage 20 stacking bug at its root: the old model built each tier's
+included-scope list by spreading cumulative increment arrays
+(`BASE_ITEMS`/`GROWTH_ITEMS`/`PRO_ITEMS`/`ENTERPRISE_ITEMS`, now deleted),
+which let a higher tier's line (e.g. "12 hours") sit alongside a lower
+tier's un-superseded line (e.g. "2 hours") in the same list. Every tier
+now states its seats/extra-seat-rate/included-hours/response-time as
+single explicit fields on `SupportTierInfo` — structurally impossible to
+duplicate — plus a hand-written `whatsNewFromPreviousTier: string[] |
+null` the ladder's delta line reads directly instead of diffing arrays.
+Scope itself is reorganized under four fixed headings per tier
+(`SupportTierScope`: `keepingItRunning`, `keepingItCurrent`,
+`keepingItUsed`, `access`) instead of a flat included/excluded list, shown
+both in the client report's Recommended Path subscription card (the
+client's own effective tier, in full) and in `BuildRecommendationPanel.tsx`
+(the internal admin view, same structure, plus the raw seats/rate/hours/
+response fields for staff). `supportTierValue.ts`'s
+`getSupportTierValueJustification()` now also computes `costPerUser`
+(price ÷ includedSeats, `null` for Enterprise's unlimited seats) and reads
+`includedHoursPerMonth` straight from `SUPPORT_TIER_INFO` instead of a
+separate hours table, so the displayed hours and the market-value math can
+never drift apart; the agency rate moved to `AGENCY_HOURLY_RATE` ($150/hr,
+was $125), and a new `MANAGED_IT_PER_USER_RANGE` ($100-250/user/mo)
+constant backs the report's "your cost per seat lands below market"
+sentence — verified for all four tiers (cost-per-user comes out to
+$48-50/seat, comfortably under $100). `supportAddOns.ts` (new) holds the
+flat-fee add-on list (additional seats at the tier rate, client/partner
+portal $400/mo, marketing $2,000/mo, SEO $1,200/mo, social $900/mo,
+bookkeeping $700/mo, additional automation builds $500 each, additional
+dev hours $175/hr) and the VA staffing program (a $1,000 one-time
+per-VA assignment fee covering sourcing/screening/training plus one free
+30-day replacement, then hourly billing at a $10-$17.50/hr rate card by
+role, 20 hrs/week minimum, plainly stated terms that VERUS trains the
+system but doesn't supervise the VA day-to-day) — both rendered in a new
+"Available Add-ons" section on the client report, positioned right after
+the Support Ladder. The Combined First-Year Investment figure needed no
+code change — it reads `SUPPORT_TIER_INFO[tier].price` live, so it picked
+up the new prices automatically; reverified directly rather than assumed.
+**Known limitation**: `Assessment.build_recommendation_reasoning` /
+`support_recommendation_reasoning` are one-time TEXT snapshots taken at
+assessment-completion time (see the Migrations rule's snapshot pattern) —
+they do NOT retroactively update when this static pricing config changes.
+Any already-completed assessment (as of this stage, RBL Safety LLC's real
+Full Assessment) will keep showing its OLD reasoning prose with the old
+prices, while the live tier-lookup-driven parts of its report (the ladder,
+value justification, add-ons) correctly show the new ones — a genuine,
+not-yet-resolved inconsistency for that one real record, left alone per
+the scope rule rather than silently recomputed.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

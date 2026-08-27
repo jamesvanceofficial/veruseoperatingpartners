@@ -21,6 +21,16 @@
 // what every consumer of "the build's scope" (the internal recommendation
 // panel, the client report) should call instead of reading
 // BUILD_TIER_INFO[tier].included directly.
+//
+// Stage 21: the support subscription pricing model was replaced entirely
+// (researched against market rates, now locked) — base fee plus per-seat
+// above an included count, not flat. Each tier states EXACTLY ONE value
+// for seats/response-time/included-hours (never built by concatenating
+// per-tier increment arrays the way build tiers' cumulative lists are —
+// that pattern is what caused the previous model's stacking bug, where a
+// higher tier's line sat next to the lower tier's un-superseded line in
+// the same list). Scope is organized under four fixed headings per tier
+// instead of a flat included/excluded list — see SupportTierScope.
 
 export const BUILD_TIERS = ["foundation", "growth", "enterprise", "custom"] as const;
 export type BuildTier = (typeof BUILD_TIERS)[number];
@@ -33,93 +43,157 @@ export const SUPPORT_SUBSCRIPTION_NAME = "Software, Systems & Support Subscripti
 /** Days after build handover covered by the build price before the subscription starts billing. */
 export const STABILIZATION_PERIOD_DAYS = 90;
 
+/** A support tier's scope, organized under four fixed headings — every tier gets all four, depth/cadence varies. */
+export type SupportTierScope = {
+  /** Hosting, uptime, monitoring, security patching, backups, fixing what breaks, and the tier's one stated response time. */
+  keepingItRunning: string[];
+  /** The included monthly hours and what they cover — changes, new automations, dashboard updates, process adjustments, report changes. */
+  keepingItCurrent: string[];
+  /** Training new staff on the system, documentation updates, and a system review (monthly at Pro and above, quarterly below). */
+  keepingItUsed: string[];
+  /** Seats, portal access, support channels. */
+  access: string[];
+};
+
 export type SupportTierInfo = {
   label: string;
   price: number | null;
   priceLabel: string;
-  included: string[];
-  excluded: string[];
+  /** null = unlimited (Enterprise) or not applicable (Custom). */
+  includedSeats: number | null;
+  /** Cost per seat beyond includedSeats — null when there's no per-seat overage (unlimited or Custom). */
+  extraSeatRate: number | null;
+  /** null = not a fixed number (Custom). */
+  includedHoursPerMonth: number | null;
+  responseTime: string;
+  scope: SupportTierScope;
+  /** The concrete jump from the tier immediately below — null for Base (bottom tier) and Custom. Drives the client report's tier-comparison ladder; written by hand per tier so it can never silently drift from the actual numbers below. */
+  whatsNewFromPreviousTier: string[] | null;
 };
-
-// Each tier's included scope is "everything in the tier below, plus its
-// own additions" — built from these increments so the cumulative lists
-// can't drift out of sync with each other. Concrete numbers throughout
-// (seats, response times, change-request/hour blocks), not vague words —
-// James can adjust the actual figures, but the panel should never show a
-// number-shaped promise as a word. Exported (Stage 20) so the client
-// report's tier-comparison ladder can show exactly what's new at each
-// step, using this same content rather than restating it.
-export const BASE_ITEMS = [
-  "Hosting and uptime for their system",
-  "Security updates and patching",
-  "Daily data backups",
-  "Up to 3 user seats",
-  "Email support — 2 business day response",
-  "Minor content and settings changes (up to 2 hours/month)",
-  "Monthly system health check",
-];
-export const GROWTH_ITEMS = [
-  "Up to 10 user seats",
-  "Priority email support — next business day response",
-  "5 change requests per month",
-  "Dashboard and report adjustments",
-  "Automation maintenance and fixes",
-  "Quarterly system review",
-];
-export const PRO_ITEMS = [
-  "Up to 25 user seats",
-  "Phone and scheduled call support — same business day response",
-  "12 change requests per month (up from 5)",
-  "New automation builds, up to 5 hours/month",
-  "Client portal access for their customers",
-  "Monthly reporting review",
-  "Integration maintenance",
-];
-export const ENTERPRISE_ITEMS = [
-  "Unlimited user seats",
-  "Dedicated support contact",
-  "Same-day response",
-  "10 development hours per month",
-  "Multiple integrations maintained",
-  "Advanced dashboards and reporting",
-  "Quarterly strategic review",
-];
 
 export const SUPPORT_TIER_INFO: Record<SupportTier, SupportTierInfo> = {
   base: {
     label: "Base",
-    price: 350,
-    priceLabel: "$350/mo",
-    included: BASE_ITEMS,
-    excluded: ["New feature development", "New automations", "Additional modules", "Dashboard changes", "Priority response", "Phone support"],
+    price: 500,
+    priceLabel: "$500/mo",
+    includedSeats: 10,
+    extraSeatRate: 35,
+    includedHoursPerMonth: 2,
+    responseTime: "2 business days",
+    scope: {
+      keepingItRunning: [
+        "Hosting and uptime for their system",
+        "Security updates and patching",
+        "Daily data backups",
+        "Fixing what breaks",
+        "Response time: 2 business days",
+      ],
+      keepingItCurrent: ["2 hours of included work per month — covers minor content and settings changes"],
+      keepingItUsed: ["New staff trained on the system as needed", "Documentation kept current", "Quarterly system review"],
+      access: ["Up to 10 user seats included ($35/mo per additional seat)", "Email support"],
+    },
+    whatsNewFromPreviousTier: null,
   },
   growth: {
     label: "Growth",
-    price: 750,
-    priceLabel: "$750/mo",
-    included: [...BASE_ITEMS, ...GROWTH_ITEMS],
-    excluded: ["New modules", "Custom development", "A dedicated support line"],
+    price: 1200,
+    priceLabel: "$1,200/mo",
+    includedSeats: 25,
+    extraSeatRate: 30,
+    includedHoursPerMonth: 6,
+    responseTime: "Next business day",
+    scope: {
+      keepingItRunning: [
+        "Hosting and uptime for their system",
+        "Security updates and patching",
+        "Daily data backups",
+        "Fixing what breaks",
+        "Response time: next business day",
+      ],
+      keepingItCurrent: [
+        "6 hours of included work per month — covers changes, dashboard and report adjustments, and automation maintenance and fixes",
+      ],
+      keepingItUsed: ["New staff trained on the system as needed", "Documentation kept current", "Quarterly system review"],
+      access: ["Up to 25 user seats included ($30/mo per additional seat)", "Priority email support"],
+    },
+    whatsNewFromPreviousTier: [
+      "15 more included seats (25 vs. 10), at a lower per-seat overage rate ($30 vs. $35)",
+      "3x the included work each month (6 hours vs. 2)",
+      "Response time drops to next business day",
+    ],
   },
   pro: {
     label: "Pro",
-    price: 1500,
-    priceLabel: "$1,500/mo",
-    included: [...BASE_ITEMS, ...GROWTH_ITEMS, ...PRO_ITEMS],
-    excluded: ["Major new modules", "Unlimited development"],
+    price: 2500,
+    priceLabel: "$2,500/mo",
+    includedSeats: 50,
+    extraSeatRate: 25,
+    includedHoursPerMonth: 12,
+    responseTime: "Same business day",
+    scope: {
+      keepingItRunning: [
+        "Hosting and uptime for their system",
+        "Security updates and patching",
+        "Daily data backups",
+        "Fixing what breaks",
+        "Response time: same business day",
+      ],
+      keepingItCurrent: [
+        "12 hours of included work per month — covers changes, new automation builds, dashboard and report adjustments, and integration maintenance",
+      ],
+      keepingItUsed: ["New staff trained on the system", "Documentation kept current", "Monthly system review"],
+      access: ["Up to 50 user seats included ($25/mo per additional seat)", "Phone and scheduled call support"],
+    },
+    whatsNewFromPreviousTier: [
+      "25 more included seats (50 vs. 25), at a lower per-seat overage rate ($25 vs. $30)",
+      "Double the included work each month (12 hours vs. 6)",
+      "Response time drops to same business day",
+      "Monthly system review instead of quarterly, plus phone and scheduled call support",
+    ],
   },
   enterprise: {
     label: "Enterprise",
-    price: 2500,
-    priceLabel: "$2,500+/mo",
-    included: [...BASE_ITEMS, ...GROWTH_ITEMS, ...PRO_ITEMS, ...ENTERPRISE_ITEMS],
-    excluded: ["Work beyond this scope — moves to Custom, quoted separately"],
+    price: 4000,
+    priceLabel: "$4,000+/mo",
+    includedSeats: null,
+    extraSeatRate: null,
+    includedHoursPerMonth: 24,
+    responseTime: "Same day, with a dedicated contact",
+    scope: {
+      keepingItRunning: [
+        "Hosting and uptime for their system",
+        "Security updates and patching",
+        "Daily data backups",
+        "Fixing what breaks",
+        "Response time: same day, with a dedicated contact",
+      ],
+      keepingItCurrent: [
+        "24 hours of included work per month — covers changes, new automation builds, ongoing development work, and multiple integrations maintained",
+      ],
+      keepingItUsed: ["New staff trained on the system", "Documentation kept current", "Monthly system review", "Advanced dashboards and reporting"],
+      access: ["Unlimited user seats", "Dedicated support contact"],
+    },
+    whatsNewFromPreviousTier: [
+      "Unlimited seats — no per-seat overage",
+      "Double the included work again each month (24 hours vs. 12)",
+      "Same-day response with a dedicated contact instead of a shared queue",
+    ],
   },
   custom: {
     label: "Custom",
     price: null,
     priceLabel: "Quoted",
-    included: ["Scope defined per client"],
-    excluded: ["No fixed inclusions or exclusions — scoped and quoted per engagement"],
+    includedSeats: null,
+    extraSeatRate: null,
+    includedHoursPerMonth: null,
+    responseTime: "Defined per engagement",
+    scope: {
+      keepingItRunning: ["Scope defined per client"],
+      keepingItCurrent: ["Scope defined per client"],
+      keepingItUsed: ["Scope defined per client"],
+      access: ["Scope defined per client"],
+    },
+    whatsNewFromPreviousTier: null,
   },
 };
 

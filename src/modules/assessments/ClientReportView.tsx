@@ -11,26 +11,16 @@ import {
   SUPPORT_TIER_INFO,
   SUPPORT_SUBSCRIPTION_NAME,
   STABILIZATION_PERIOD_DAYS,
-  BASE_ITEMS,
-  GROWTH_ITEMS,
-  PRO_ITEMS,
-  ENTERPRISE_ITEMS,
   type SupportTier,
 } from "./buildTiers";
 import { BusinessProfilePanels } from "./BusinessProfilePanels";
 import { computeScopeOfWork } from "./scopeOfWork";
 import { getEffectiveBuildScope } from "./effectiveScope";
-import { getSupportTierValueJustification } from "./supportTierValue";
+import { getSupportTierValueJustification, MANAGED_IT_PER_USER_RANGE } from "./supportTierValue";
+import { FLAT_FEE_ADD_ONS, VA_ASSIGNMENT_FEE_LABEL, VA_ASSIGNMENT_FEE_DESCRIPTION, VA_MINIMUM_HOURS_PER_WEEK, VA_ROLES, VA_TERMS } from "./supportAddOns";
 import type { AssessmentReport, Band } from "./types";
 
 const SUPPORT_LADDER: Exclude<SupportTier, "custom">[] = ["base", "growth", "pro", "enterprise"];
-/** What's genuinely NEW at each step — the same content the cumulative included-scope lists are built from, not restated. */
-const SUPPORT_TIER_NEW_ITEMS: Record<Exclude<SupportTier, "custom">, string[]> = {
-  base: BASE_ITEMS,
-  growth: GROWTH_ITEMS,
-  pro: PRO_ITEMS,
-  enterprise: ENTERPRISE_ITEMS,
-};
 
 const TONE_CLASS: Record<"green" | "yellow" | "red", string> = {
   green: "cr-tone-green",
@@ -351,6 +341,70 @@ export function ClientReportView({
               continues at <span className="font-semibold cr-tone-gold">{supportInfo.label}</span> ({supportInfo.priceLabel}), starting{" "}
               {STABILIZATION_PERIOD_DAYS} days after handover.
             </p>
+            <div className="grid grid-cols-2 gap-3 border-y border-[var(--hairline)] py-3 sm:grid-cols-4">
+              <div>
+                <p className="section-label">Seats</p>
+                <p className="text-[12.5px] text-[var(--cream)]">{supportInfo.includedSeats !== null ? `${supportInfo.includedSeats} included` : "Unlimited"}</p>
+              </div>
+              <div>
+                <p className="section-label">Extra seat</p>
+                <p className="text-[12.5px] text-[var(--cream)]">{supportInfo.extraSeatRate !== null ? `$${supportInfo.extraSeatRate}/mo` : "—"}</p>
+              </div>
+              <div>
+                <p className="section-label">Included hours</p>
+                <p className="text-[12.5px] text-[var(--cream)]">{supportInfo.includedHoursPerMonth !== null ? `${supportInfo.includedHoursPerMonth}/mo` : "—"}</p>
+              </div>
+              <div>
+                <p className="section-label">Response time</p>
+                <p className="text-[12.5px] text-[var(--cream)]">{supportInfo.responseTime}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="section-label">Keeping it running</p>
+                <ul className="mt-1.5 flex flex-col gap-1">
+                  {supportInfo.scope.keepingItRunning.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
+                      <span className="cr-tone-green">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="section-label">Keeping it current</p>
+                <ul className="mt-1.5 flex flex-col gap-1">
+                  {supportInfo.scope.keepingItCurrent.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
+                      <span className="cr-tone-green">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="section-label">Keeping it used</p>
+                <ul className="mt-1.5 flex flex-col gap-1">
+                  {supportInfo.scope.keepingItUsed.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
+                      <span className="cr-tone-green">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="section-label">Access</p>
+                <ul className="mt-1.5 flex flex-col gap-1">
+                  {supportInfo.scope.access.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
+                      <span className="cr-tone-green">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </Card>
 
           {effectiveSupportTier && effectiveSupportTier !== "custom" ? (
@@ -380,6 +434,24 @@ export function ClientReportView({
                           </p>
                           {isTheirs ? <Badge tone="gold">Your tier</Badge> : null}
                         </div>
+                        <div className="grid grid-cols-2 gap-3 border-y border-[var(--hairline)] py-2.5 sm:grid-cols-4">
+                          <div>
+                            <p className="section-label">Seats</p>
+                            <p className="text-[12px] text-[var(--cream)]">{info.includedSeats !== null ? `${info.includedSeats} included` : "Unlimited"}</p>
+                          </div>
+                          <div>
+                            <p className="section-label">Extra seat</p>
+                            <p className="text-[12px] text-[var(--cream)]">{info.extraSeatRate !== null ? `$${info.extraSeatRate}/mo` : "—"}</p>
+                          </div>
+                          <div>
+                            <p className="section-label">Included hours</p>
+                            <p className="text-[12px] text-[var(--cream)]">{info.includedHoursPerMonth !== null ? `${info.includedHoursPerMonth}/mo` : "—"}</p>
+                          </div>
+                          <div>
+                            <p className="section-label">Response time</p>
+                            <p className="text-[12px] text-[var(--cream)]">{info.responseTime}</p>
+                          </div>
+                        </div>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                           <div>
                             <p className="section-label">What this costs otherwise</p>
@@ -393,6 +465,12 @@ export function ClientReportView({
                             <p className="mt-1.5 text-[12.5px] font-semibold text-[var(--cream)]">
                               Market value: {formatCurrency(value.marketTotal)}/mo
                             </p>
+                            {value.costPerUser !== null ? (
+                              <p className="mt-1 text-[10.5px] leading-relaxed text-[var(--muted)]">
+                                Works out to {formatCurrency(value.costPerUser)}/user/mo — below the {formatCurrency(MANAGED_IT_PER_USER_RANGE.low)}-
+                                {formatCurrency(MANAGED_IT_PER_USER_RANGE.high)}/user/mo managed-IT market range.
+                              </p>
+                            ) : null}
                           </div>
                           <div>
                             <p className="section-label">Who this is for</p>
@@ -404,12 +482,14 @@ export function ClientReportView({
                           </div>
                         </div>
                       </Card>
-                      {nextTier ? (
+                      {nextTier && SUPPORT_TIER_INFO[nextTier].whatsNewFromPreviousTier ? (
                         <div className="cr-avoid-break flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pl-3 text-[11.5px] leading-relaxed">
                           <span className="font-semibold cr-tone-gold">
                             +{formatCurrency((SUPPORT_TIER_INFO[nextTier].price ?? 0) - (info.price ?? 0))}/mo →
                           </span>
-                          <span className="text-[var(--muted)]">{SUPPORT_TIER_NEW_ITEMS[nextTier].slice(0, 3).join(", ")}</span>
+                          <span className="text-[var(--muted)]">
+                            {(SUPPORT_TIER_INFO[nextTier].whatsNewFromPreviousTier ?? []).join("; ")}
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -418,6 +498,49 @@ export function ClientReportView({
               </div>
             </Card>
           ) : null}
+
+          <Card className="flex flex-col gap-4">
+            <div>
+              <p className="section-label">Available Add-ons</p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--cream)]">
+                These attach to any tier above, billed monthly unless noted otherwise.
+              </p>
+            </div>
+            <ul className="flex flex-col gap-2">
+              {FLAT_FEE_ADD_ONS.map((addOn) => (
+                <li key={addOn.name} className="cr-avoid-break flex items-start justify-between gap-3 border-b border-[var(--hairline)] pb-2 text-[12.5px] leading-relaxed last:border-b-0 last:pb-0">
+                  <span className="text-[var(--cream)]">
+                    <span className="font-semibold">{addOn.name}.</span> {addOn.description}
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap font-semibold cr-tone-gold">{addOn.priceLabel}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="cr-avoid-break mt-2 flex flex-col gap-2 border-t border-[var(--hairline)] pt-4">
+              <p className="section-label">Virtual Assistant Staffing</p>
+              <p className="text-[12.5px] leading-relaxed text-[var(--cream)]">
+                <span className="font-semibold cr-tone-gold">{VA_ASSIGNMENT_FEE_LABEL}.</span> {VA_ASSIGNMENT_FEE_DESCRIPTION} Then billed hourly for
+                actual hours worked, {VA_MINIMUM_HOURS_PER_WEEK} hours/week minimum per VA:
+              </p>
+              <ul className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+                {VA_ROLES.map((role) => (
+                  <li key={role.name} className="flex items-center justify-between gap-3 text-[12px] text-[var(--cream)]">
+                    <span>{role.name}</span>
+                    <span className="font-tabular cr-tone-gold">${role.hourlyRate}/hr</span>
+                  </li>
+                ))}
+              </ul>
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {VA_TERMS.map((term) => (
+                  <li key={term} className="flex items-start gap-2 text-[11.5px] leading-relaxed text-[var(--muted)]">
+                    <span className="cr-tone-gold">—</span>
+                    <span>{term}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
 
           {firstYearValue !== null ? (
             <Card strong className="cr-avoid-break flex flex-col items-center gap-1 py-6 text-center">
