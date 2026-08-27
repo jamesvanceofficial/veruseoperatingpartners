@@ -6,11 +6,31 @@ import { formatCurrency, formatDate, formatNumber } from "@/shared/format";
 import { categoryScoreTone } from "./scoreTone";
 import { CATEGORY_BOTTLENECK_COPY } from "./bottleneckCopy";
 import { WEIGHTING_RATIONALE, CATEGORY_SCORE_MEANING, CATEGORY_TYPICAL_COST, CATEGORY_FIX_INVOLVES, NEXT_STEPS, VERUS_CONTACT } from "./reportCopy";
-import { BUILD_TIER_INFO, SUPPORT_TIER_INFO, SUPPORT_SUBSCRIPTION_NAME, STABILIZATION_PERIOD_DAYS } from "./buildTiers";
+import {
+  BUILD_TIER_INFO,
+  SUPPORT_TIER_INFO,
+  SUPPORT_SUBSCRIPTION_NAME,
+  STABILIZATION_PERIOD_DAYS,
+  BASE_ITEMS,
+  GROWTH_ITEMS,
+  PRO_ITEMS,
+  ENTERPRISE_ITEMS,
+  type SupportTier,
+} from "./buildTiers";
 import { BusinessProfilePanels } from "./BusinessProfilePanels";
 import { computeScopeOfWork } from "./scopeOfWork";
 import { getEffectiveBuildScope } from "./effectiveScope";
+import { getSupportTierValueJustification } from "./supportTierValue";
 import type { AssessmentReport, Band } from "./types";
+
+const SUPPORT_LADDER: Exclude<SupportTier, "custom">[] = ["base", "growth", "pro", "enterprise"];
+/** What's genuinely NEW at each step — the same content the cumulative included-scope lists are built from, not restated. */
+const SUPPORT_TIER_NEW_ITEMS: Record<Exclude<SupportTier, "custom">, string[]> = {
+  base: BASE_ITEMS,
+  growth: GROWTH_ITEMS,
+  pro: PRO_ITEMS,
+  enterprise: ENTERPRISE_ITEMS,
+};
 
 const TONE_CLASS: Record<"green" | "yellow" | "red", string> = {
   green: "cr-tone-green",
@@ -332,6 +352,72 @@ export function ClientReportView({
               {STABILIZATION_PERIOD_DAYS} days after handover.
             </p>
           </Card>
+
+          {effectiveSupportTier && effectiveSupportTier !== "custom" ? (
+            <Card className="flex flex-col gap-4">
+              <div>
+                <p className="section-label">The Support Ladder</p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--cream)]">
+                  {supportInfo.label} is the recommended tier for {orgName}. Here's the full ladder — what's below, what's above, and why each
+                  step costs what it costs.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                {SUPPORT_LADDER.map((tier, i) => {
+                  const info = SUPPORT_TIER_INFO[tier];
+                  const value = getSupportTierValueJustification(tier);
+                  const isTheirs = tier === effectiveSupportTier;
+                  const nextTier = SUPPORT_LADDER[i + 1];
+                  return (
+                    <div key={tier} className="flex flex-col gap-2">
+                      <Card
+                        strong={isTheirs}
+                        className={cn("cr-avoid-break flex flex-col gap-3", isTheirs && "border-2 border-[var(--gold)]")}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-[15px] font-semibold cr-tone-gold">
+                            {info.label} <span className="text-[13px] font-normal text-[var(--cream)]">· {info.priceLabel}</span>
+                          </p>
+                          {isTheirs ? <Badge tone="gold">Your tier</Badge> : null}
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                          <div>
+                            <p className="section-label">What this costs otherwise</p>
+                            <ul className="mt-1 flex flex-col gap-0.5 text-[11px] leading-relaxed text-[var(--muted)]">
+                              <li>Hosting &amp; infrastructure: {formatCurrency(value.hostingInfra)}/mo</li>
+                              <li>Software licenses replaced: {formatCurrency(value.softwareLicenses)}/mo</li>
+                              <li>
+                                {value.hoursEquivalent} hrs/mo of dev time @ {formatCurrency(value.hourlyRate)}/hr: {formatCurrency(value.hoursValue)}/mo
+                              </li>
+                            </ul>
+                            <p className="mt-1.5 text-[12.5px] font-semibold text-[var(--cream)]">
+                              Market value: {formatCurrency(value.marketTotal)}/mo
+                            </p>
+                          </div>
+                          <div>
+                            <p className="section-label">Who this is for</p>
+                            <p className="text-[11.5px] leading-relaxed text-[var(--cream)]">{value.whoFor}</p>
+                          </div>
+                          <div>
+                            <p className="section-label">When you outgrow it</p>
+                            <p className="text-[11.5px] leading-relaxed text-[var(--cream)]">{value.outgrowSignal}</p>
+                          </div>
+                        </div>
+                      </Card>
+                      {nextTier ? (
+                        <div className="cr-avoid-break flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pl-3 text-[11.5px] leading-relaxed">
+                          <span className="font-semibold cr-tone-gold">
+                            +{formatCurrency((SUPPORT_TIER_INFO[nextTier].price ?? 0) - (info.price ?? 0))}/mo →
+                          </span>
+                          <span className="text-[var(--muted)]">{SUPPORT_TIER_NEW_ITEMS[nextTier].slice(0, 3).join(", ")}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          ) : null}
 
           {firstYearValue !== null ? (
             <Card strong className="cr-avoid-break flex flex-col items-center gap-1 py-6 text-center">

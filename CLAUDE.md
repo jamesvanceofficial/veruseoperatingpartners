@@ -271,6 +271,30 @@ presence already did, so a business needing a portal plus several
 automations lands on a higher tier than one needing neither — verified
 directly (same base inputs, tier jumped from foundation to enterprise).
 
+**Support tier value justification + ladder (Stage 20)**, in the client
+report's Recommended Path section, right after the subscription card:
+`supportTierValue.ts` gives each of Base/Growth/Pro/Enterprise (never
+Custom — quoted, no fixed numbers to justify) a static "what this would
+cost otherwise" breakdown (`SUPPORT_TIER_VALUE`) — market-rate hosting/
+infra, the SaaS licenses the system replaces, and that tier's included
+ongoing work converted to hours at `AGENCY_HOURLY_RATE` ($125/hr) — plus
+a one-sentence "who this tier is for" and "when you outgrow it."
+`getSupportTierValueJustification()` sums the three into a market total;
+every tier's price sits genuinely below it (verified: 25-51% below
+market, strictly increasing up the ladder — $475/$1,150/$3,075/$5,125
+market value for $350/$750/$1,500/$2,500 actual price). The client report
+shows ALL FOUR tiers as a ladder (`ClientReportView.tsx`), not just
+theirs — a "Your tier" badge marks the recommended/effective one, and
+between each adjacent pair a delta line shows the exact price jump plus
+2-3 concrete NEW items that tier adds, reusing the same
+`BASE_ITEMS`/`GROWTH_ITEMS`/`PRO_ITEMS`/`ENTERPRISE_ITEMS` arrays the
+cumulative included-scope lists are built from (now exported from
+`buildTiers.ts` for this) rather than restating what's new in prose.
+Fixed a pre-existing content bug while touching this: Pro's "12 change
+requests per month" sat in the same cumulative included list as Growth's
+"5 change requests per month" with nothing distinguishing which applied
+— reworded to "12 change requests per month (up from 5)".
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

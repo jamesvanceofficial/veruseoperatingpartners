@@ -46,8 +46,10 @@ export type SupportTierInfo = {
 // can't drift out of sync with each other. Concrete numbers throughout
 // (seats, response times, change-request/hour blocks), not vague words —
 // James can adjust the actual figures, but the panel should never show a
-// number-shaped promise as a word.
-const BASE_ITEMS = [
+// number-shaped promise as a word. Exported (Stage 20) so the client
+// report's tier-comparison ladder can show exactly what's new at each
+// step, using this same content rather than restating it.
+export const BASE_ITEMS = [
   "Hosting and uptime for their system",
   "Security updates and patching",
   "Daily data backups",
@@ -56,7 +58,7 @@ const BASE_ITEMS = [
   "Minor content and settings changes (up to 2 hours/month)",
   "Monthly system health check",
 ];
-const GROWTH_ITEMS = [
+export const GROWTH_ITEMS = [
   "Up to 10 user seats",
   "Priority email support — next business day response",
   "5 change requests per month",
@@ -64,16 +66,16 @@ const GROWTH_ITEMS = [
   "Automation maintenance and fixes",
   "Quarterly system review",
 ];
-const PRO_ITEMS = [
+export const PRO_ITEMS = [
   "Up to 25 user seats",
   "Phone and scheduled call support — same business day response",
-  "12 change requests per month",
+  "12 change requests per month (up from 5)",
   "New automation builds, up to 5 hours/month",
   "Client portal access for their customers",
   "Monthly reporting review",
   "Integration maintenance",
 ];
-const ENTERPRISE_ITEMS = [
+export const ENTERPRISE_ITEMS = [
   "Unlimited user seats",
   "Dedicated support contact",
   "Same-day response",
