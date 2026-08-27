@@ -11,6 +11,7 @@ import { AssessmentReportView } from "@/modules/assessments/AssessmentReportView
 import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
 import { AssessmentRunner } from "@/modules/assessments/AssessmentRunner";
 import { ShareLinkPanel } from "@/modules/assessments/ShareLinkPanel";
+import { PricingReleaseControl } from "@/modules/assessments/PricingReleaseControl";
 import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { DangerZone } from "@/shared/ui/DangerZone";
@@ -95,7 +96,19 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
 async function FullReport({ supabase, assessmentId, canEdit }: { supabase: SupabaseClient; assessmentId: string; canEdit: boolean }) {
   const report = await getAssessmentReport(supabase, assessmentId);
   if (!report) return null;
-  return <AssessmentReportView report={report} canEdit={canEdit} />;
+  return (
+    <div className="flex flex-col gap-4">
+      {canEdit ? (
+        <PricingReleaseControl
+          assessmentId={assessmentId}
+          released={report.assessment.pricing_released}
+          releasedAt={report.assessment.pricing_released_at}
+          releasedByName={report.pricingReleasedByName}
+        />
+      ) : null}
+      <AssessmentReportView report={report} canEdit={canEdit} />
+    </div>
+  );
 }
 
 async function QuickScanReport({ supabase, assessmentId }: { supabase: SupabaseClient; assessmentId: string }) {

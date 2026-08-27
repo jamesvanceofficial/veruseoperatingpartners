@@ -18,6 +18,7 @@ import {
   type SupportTier,
 } from "./buildTiers";
 import { getEffectiveBuildScope } from "./effectiveScope";
+import { redactPriceMentions, PRICING_HIDDEN_INLINE, PRICING_HIDDEN_MESSAGE } from "./pricingGate";
 import type { OperationalNeeds } from "./types";
 
 function ScopeList({ title, items, tone }: { title: string; items: string[]; tone: "green" | "red" }) {
@@ -59,6 +60,7 @@ export function BuildRecommendationPanel({
   supportTierOverrideByName,
   supportTierOverrideAt,
   operationalNeeds,
+  pricingReleased,
   canEdit,
 }: {
   assessmentId: string;
@@ -73,6 +75,8 @@ export function BuildRecommendationPanel({
   supportTierOverrideByName: string | null;
   supportTierOverrideAt: string | null;
   operationalNeeds: OperationalNeeds | null;
+  /** Stage 22 — off by default. Staff (canEdit) always sees full pricing regardless; this only gates the view for a non-staff viewer (a client_owner/client_user, or the public share link, which never has canEdit). */
+  pricingReleased: boolean;
   canEdit: boolean;
 }) {
   const router = useRouter();
@@ -101,6 +105,7 @@ export function BuildRecommendationPanel({
   const effectiveScope = getEffectiveBuildScope(displayedBuildTier, operationalNeeds);
   const buildSelectDirty = displayedBuildTier !== effectiveBuildTier;
   const supportSelectDirty = displayedSupportTier !== effectiveSupportTier;
+  const showPricing = canEdit || pricingReleased;
   // Live off the same displayed tiers as the scope lists — updates
   // immediately as either dropdown changes, saved or not.
   const firstYearValue = buildInfo.price !== null && supportInfo.price !== null ? buildInfo.price + supportInfo.price * 9 : null;
@@ -134,7 +139,9 @@ export function BuildRecommendationPanel({
     <div className="flex flex-col gap-4">
       <Card strong className="flex flex-col gap-1">
         <p className="section-label">First-Year Value</p>
-        {firstYearValue !== null ? (
+        {!showPricing ? (
+          <p className="text-[13px] italic text-[var(--muted)]">{PRICING_HIDDEN_MESSAGE}</p>
+        ) : firstYearValue !== null ? (
           <>
             <p className="font-tabular text-[24px] font-semibold text-[var(--gold-light)]">{formatCurrency(firstYearValue)}</p>
             <p className="text-[11.5px] text-[var(--muted)]">
@@ -152,7 +159,7 @@ export function BuildRecommendationPanel({
           <div>
             <p className="section-label">Build Recommendation</p>
             <p className="mt-1 text-[19px] font-semibold text-[var(--gold-light)]">
-              {buildInfo.label} <span className="text-[15px] font-normal text-[var(--cream)]">· {buildInfo.priceLabel}</span>
+              {buildInfo.label} <span className="text-[15px] font-normal text-[var(--cream)]">· {showPricing ? buildInfo.priceLabel : PRICING_HIDDEN_INLINE}</span>
             </p>
           </div>
           {buildSelectDirty ? (
@@ -171,18 +178,26 @@ export function BuildRecommendationPanel({
           </p>
         ) : buildTierOverride ? (
           <p className="text-[11.5px] text-[var(--muted)]">
-            Recommended: {BUILD_TIER_INFO[recommendedBuildTier].label} ({BUILD_TIER_INFO[recommendedBuildTier].priceLabel}) — overridden to{" "}
-            {BUILD_TIER_INFO[buildTierOverride].label}
+            {showPricing ? (
+              <>
+                Recommended: {BUILD_TIER_INFO[recommendedBuildTier].label} ({BUILD_TIER_INFO[recommendedBuildTier].priceLabel}) — overridden to{" "}
+                {BUILD_TIER_INFO[buildTierOverride].label}
+              </>
+            ) : (
+              <>
+                Overridden to {BUILD_TIER_INFO[buildTierOverride].label} from the recommended {BUILD_TIER_INFO[recommendedBuildTier].label}
+              </>
+            )}
             {buildTierOverrideByName ? ` by ${buildTierOverrideByName}` : ""}
             {buildTierOverrideAt ? ` on ${formatDate(buildTierOverrideAt)}` : ""}.
           </p>
         ) : null}
 
-        <p className="text-[13px] leading-relaxed text-[var(--cream)]">{buildReasoning}</p>
+        <p className="text-[13px] leading-relaxed text-[var(--cream)]">{redactPriceMentions(buildReasoning ?? "", showPricing)}</p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ScopeList title="Included in scope" items={effectiveScope.included} tone="green" />
-          <ScopeList title="Explicitly excluded" items={effectiveScope.excluded} tone="red" />
+          <ScopeList title="Included in scope" items={effectiveScope.included.map((t) => redactPriceMentions(t, showPricing))} tone="green" />
+          <ScopeList title="Explicitly excluded" items={effectiveScope.excluded.map((t) => redactPriceMentions(t, showPricing))} tone="red" />
         </div>
 
         {canEdit ? (
@@ -214,7 +229,7 @@ export function BuildRecommendationPanel({
             <p className="section-label">{SUPPORT_SUBSCRIPTION_NAME}</p>
             <p className="mt-1 text-[11.5px] text-[var(--muted)]">Included with every build — what keeps running once it's handed off, not a separate purchase.</p>
             <p className="mt-2 text-[17px] font-semibold text-[var(--gold-light)]">
-              {supportInfo.label} <span className="text-[13px] font-normal text-[var(--cream)]">· {supportInfo.priceLabel}</span>
+              {supportInfo.label} <span className="text-[13px] font-normal text-[var(--cream)]">· {showPricing ? supportInfo.priceLabel : PRICING_HIDDEN_INLINE}</span>
             </p>
           </div>
           {supportSelectDirty ? (
@@ -244,14 +259,22 @@ export function BuildRecommendationPanel({
           </p>
         ) : supportTierOverride ? (
           <p className="text-[11.5px] text-[var(--muted)]">
-            Recommended: {SUPPORT_TIER_INFO[recommendedSupportTier].label} ({SUPPORT_TIER_INFO[recommendedSupportTier].priceLabel}) — overridden to{" "}
-            {SUPPORT_TIER_INFO[supportTierOverride].label}
+            {showPricing ? (
+              <>
+                Recommended: {SUPPORT_TIER_INFO[recommendedSupportTier].label} ({SUPPORT_TIER_INFO[recommendedSupportTier].priceLabel}) — overridden
+                to {SUPPORT_TIER_INFO[supportTierOverride].label}
+              </>
+            ) : (
+              <>
+                Overridden to {SUPPORT_TIER_INFO[supportTierOverride].label} from the recommended {SUPPORT_TIER_INFO[recommendedSupportTier].label}
+              </>
+            )}
             {supportTierOverrideByName ? ` by ${supportTierOverrideByName}` : ""}
             {supportTierOverrideAt ? ` on ${formatDate(supportTierOverrideAt)}` : ""}.
           </p>
         ) : null}
 
-        <p className="text-[13px] leading-relaxed text-[var(--cream)]">{supportReasoning}</p>
+        <p className="text-[13px] leading-relaxed text-[var(--cream)]">{redactPriceMentions(supportReasoning ?? "", showPricing)}</p>
 
         <div className="grid grid-cols-2 gap-3 border-y border-[var(--hairline)] py-3 sm:grid-cols-4">
           <div>
@@ -262,7 +285,9 @@ export function BuildRecommendationPanel({
           </div>
           <div>
             <p className="section-label">Extra seat rate</p>
-            <p className="text-[13px] text-[var(--cream)]">{supportInfo.extraSeatRate !== null ? `$${supportInfo.extraSeatRate}/mo` : "—"}</p>
+            <p className="text-[13px] text-[var(--cream)]">
+              {supportInfo.extraSeatRate === null ? "—" : showPricing ? `$${supportInfo.extraSeatRate}/mo` : PRICING_HIDDEN_INLINE}
+            </p>
           </div>
           <div>
             <p className="section-label">Included hours/mo</p>
@@ -275,10 +300,10 @@ export function BuildRecommendationPanel({
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ScopeList title="Keeping it running" items={supportInfo.scope.keepingItRunning} tone="green" />
-          <ScopeList title="Keeping it current" items={supportInfo.scope.keepingItCurrent} tone="green" />
-          <ScopeList title="Keeping it used" items={supportInfo.scope.keepingItUsed} tone="green" />
-          <ScopeList title="Access" items={supportInfo.scope.access} tone="green" />
+          <ScopeList title="Keeping it running" items={supportInfo.scope.keepingItRunning.map((t) => redactPriceMentions(t, showPricing))} tone="green" />
+          <ScopeList title="Keeping it current" items={supportInfo.scope.keepingItCurrent.map((t) => redactPriceMentions(t, showPricing))} tone="green" />
+          <ScopeList title="Keeping it used" items={supportInfo.scope.keepingItUsed.map((t) => redactPriceMentions(t, showPricing))} tone="green" />
+          <ScopeList title="Access" items={supportInfo.scope.access.map((t) => redactPriceMentions(t, showPricing))} tone="green" />
         </div>
 
         {canEdit ? (

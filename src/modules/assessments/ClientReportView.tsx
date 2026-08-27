@@ -18,6 +18,7 @@ import { computeScopeOfWork } from "./scopeOfWork";
 import { getEffectiveBuildScope } from "./effectiveScope";
 import { getSupportTierValueJustification, MANAGED_IT_PER_USER_RANGE } from "./supportTierValue";
 import { FLAT_FEE_ADD_ONS, VA_ASSIGNMENT_FEE_LABEL, VA_ASSIGNMENT_FEE_DESCRIPTION, VA_MINIMUM_HOURS_PER_WEEK, VA_ROLES, VA_TERMS } from "./supportAddOns";
+import { redactPriceMentions, PRICING_HIDDEN_MESSAGE, PRICING_HIDDEN_INLINE } from "./pricingGate";
 import type { AssessmentReport, Band } from "./types";
 
 const SUPPORT_LADDER: Exclude<SupportTier, "custom">[] = ["base", "growth", "pro", "enterprise"];
@@ -40,6 +41,16 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
       <h2 className="text-[22px] font-semibold text-[var(--cream)]">{title}</h2>
       <div className="mt-1 h-px w-16 bg-[var(--gold)]" />
     </div>
+  );
+}
+
+/** A whole card's worth of pricing content, replaced with one deliberate line — never a blank space — while pricing_released is off. */
+function PricingGateCard({ label }: { label: string }) {
+  return (
+    <Card strong className="cr-avoid-break flex flex-col items-center gap-1 py-6 text-center">
+      <p className="section-label">{label}</p>
+      <p className="text-[13px] italic text-[var(--muted)]">{PRICING_HIDDEN_MESSAGE}</p>
+    </Card>
   );
 }
 
@@ -95,6 +106,9 @@ export function ClientReportView({
 
   const score = assessment.enterprise_score ?? 0;
   const preparedDate = assessment.completed_at ?? assessment.created_at;
+  // Stage 22 — findings are always visible; every dollar figure stays
+  // hidden behind a deliberate placeholder until staff releases pricing.
+  const pricingReleased = assessment.pricing_released;
 
   return (
     <div className="client-report flex flex-col">
@@ -148,20 +162,26 @@ export function ClientReportView({
           <>
             <div className="flex flex-col gap-2">
               <p className="section-label">What we recommend</p>
-              <p className="text-[13px] leading-relaxed text-[var(--cream)]">{assessment.build_recommendation_reasoning}</p>
-            </div>
-            <Card className="cr-avoid-break flex flex-col gap-1">
-              <p className="section-label">What it costs, and what it produces</p>
               <p className="text-[13px] leading-relaxed text-[var(--cream)]">
-                {buildInfo.priceLabel} to build {buildInfo.label.replace(" Build", "")}-level systems. {SUPPORT_SUBSCRIPTION_NAME} continues at{" "}
-                {supportInfo.priceLabel} after the first {STABILIZATION_PERIOD_DAYS} days, included in the build.{" "}
-                {firstYearValue !== null ? (
-                  <>
-                    Combined, that&apos;s <span className="font-semibold cr-tone-gold">{formatCurrency(firstYearValue)}</span> in year one.
-                  </>
-                ) : null}
+                {redactPriceMentions(assessment.build_recommendation_reasoning ?? "", pricingReleased)}
               </p>
-            </Card>
+            </div>
+            {pricingReleased ? (
+              <Card className="cr-avoid-break flex flex-col gap-1">
+                <p className="section-label">What it costs, and what it produces</p>
+                <p className="text-[13px] leading-relaxed text-[var(--cream)]">
+                  {buildInfo.priceLabel} to build {buildInfo.label.replace(" Build", "")}-level systems. {SUPPORT_SUBSCRIPTION_NAME} continues at{" "}
+                  {supportInfo.priceLabel} after the first {STABILIZATION_PERIOD_DAYS} days, included in the build.{" "}
+                  {firstYearValue !== null ? (
+                    <>
+                      Combined, that&apos;s <span className="font-semibold cr-tone-gold">{formatCurrency(firstYearValue)}</span> in year one.
+                    </>
+                  ) : null}
+                </p>
+              </Card>
+            ) : (
+              <PricingGateCard label="What it costs, and what it produces" />
+            )}
           </>
         ) : null}
       </section>
@@ -305,7 +325,7 @@ export function ClientReportView({
           <Card strong className="cr-avoid-break flex flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[19px] font-semibold cr-tone-gold">{buildInfo.label}</p>
-              <p className="text-[19px] font-semibold text-[var(--cream)]">{buildInfo.priceLabel}</p>
+              <p className="text-[19px] font-semibold text-[var(--cream)]">{pricingReleased ? buildInfo.priceLabel : PRICING_HIDDEN_INLINE}</p>
             </div>
             <p className="text-[12.5px] text-[var(--muted)]">Timeline: {buildInfo.timeline}</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -315,7 +335,7 @@ export function ClientReportView({
                   {effectiveScope.included.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12.5px] leading-relaxed text-[var(--cream)]">
                       <span className="cr-tone-green">✓</span>
-                      <span>{item}</span>
+                      <span>{redactPriceMentions(item, pricingReleased)}</span>
                     </li>
                   ))}
                 </ul>
@@ -326,7 +346,7 @@ export function ClientReportView({
                   {effectiveScope.excluded.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12.5px] leading-relaxed text-[var(--muted)]">
                       <span className="cr-tone-red">✕</span>
-                      <span>{item}</span>
+                      <span>{redactPriceMentions(item, pricingReleased)}</span>
                     </li>
                   ))}
                 </ul>
@@ -338,8 +358,8 @@ export function ClientReportView({
             <p className="section-label">{SUPPORT_SUBSCRIPTION_NAME}</p>
             <p className="text-[13px] leading-relaxed text-[var(--cream)]">
               Included with the build — the first {STABILIZATION_PERIOD_DAYS} days are covered to stabilize the new systems. After that, it
-              continues at <span className="font-semibold cr-tone-gold">{supportInfo.label}</span> ({supportInfo.priceLabel}), starting{" "}
-              {STABILIZATION_PERIOD_DAYS} days after handover.
+              continues at <span className="font-semibold cr-tone-gold">{supportInfo.label}</span>{" "}
+              ({pricingReleased ? supportInfo.priceLabel : PRICING_HIDDEN_INLINE}), starting {STABILIZATION_PERIOD_DAYS} days after handover.
             </p>
             <div className="grid grid-cols-2 gap-3 border-y border-[var(--hairline)] py-3 sm:grid-cols-4">
               <div>
@@ -348,7 +368,9 @@ export function ClientReportView({
               </div>
               <div>
                 <p className="section-label">Extra seat</p>
-                <p className="text-[12.5px] text-[var(--cream)]">{supportInfo.extraSeatRate !== null ? `$${supportInfo.extraSeatRate}/mo` : "—"}</p>
+                <p className="text-[12.5px] text-[var(--cream)]">
+                  {supportInfo.extraSeatRate === null ? "—" : pricingReleased ? `$${supportInfo.extraSeatRate}/mo` : PRICING_HIDDEN_INLINE}
+                </p>
               </div>
               <div>
                 <p className="section-label">Included hours</p>
@@ -366,7 +388,7 @@ export function ClientReportView({
                   {supportInfo.scope.keepingItRunning.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
                       <span className="cr-tone-green">✓</span>
-                      <span>{item}</span>
+                      <span>{redactPriceMentions(item, pricingReleased)}</span>
                     </li>
                   ))}
                 </ul>
@@ -377,7 +399,7 @@ export function ClientReportView({
                   {supportInfo.scope.keepingItCurrent.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
                       <span className="cr-tone-green">✓</span>
-                      <span>{item}</span>
+                      <span>{redactPriceMentions(item, pricingReleased)}</span>
                     </li>
                   ))}
                 </ul>
@@ -388,7 +410,7 @@ export function ClientReportView({
                   {supportInfo.scope.keepingItUsed.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
                       <span className="cr-tone-green">✓</span>
-                      <span>{item}</span>
+                      <span>{redactPriceMentions(item, pricingReleased)}</span>
                     </li>
                   ))}
                 </ul>
@@ -399,7 +421,7 @@ export function ClientReportView({
                   {supportInfo.scope.access.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[12px] leading-relaxed text-[var(--cream)]">
                       <span className="cr-tone-green">✓</span>
-                      <span>{item}</span>
+                      <span>{redactPriceMentions(item, pricingReleased)}</span>
                     </li>
                   ))}
                 </ul>
@@ -407,7 +429,9 @@ export function ClientReportView({
             </div>
           </Card>
 
-          {effectiveSupportTier && effectiveSupportTier !== "custom" ? (
+          {effectiveSupportTier && effectiveSupportTier !== "custom" && !pricingReleased ? (
+            <PricingGateCard label="The Support Ladder" />
+          ) : effectiveSupportTier && effectiveSupportTier !== "custom" ? (
             <Card className="flex flex-col gap-4">
               <div>
                 <p className="section-label">The Support Ladder</p>
@@ -499,6 +523,9 @@ export function ClientReportView({
             </Card>
           ) : null}
 
+          {!pricingReleased ? (
+            <PricingGateCard label="Available Add-ons" />
+          ) : (
           <Card className="flex flex-col gap-4">
             <div>
               <p className="section-label">Available Add-ons</p>
@@ -541,16 +568,21 @@ export function ClientReportView({
               </ul>
             </div>
           </Card>
+          )}
 
           {firstYearValue !== null ? (
-            <Card strong className="cr-avoid-break flex flex-col items-center gap-1 py-6 text-center">
-              <p className="section-label">Combined First-Year Investment</p>
-              <p className="font-tabular text-[30px] font-semibold cr-tone-gold">{formatCurrency(firstYearValue)}</p>
-              <p className="text-[11.5px] text-[var(--muted)]">
-                {buildInfo.priceLabel} build + {formatCurrency((supportInfo.price ?? 0) * 9)} subscription (9 billed months after the included
-                period)
-              </p>
-            </Card>
+            pricingReleased ? (
+              <Card strong className="cr-avoid-break flex flex-col items-center gap-1 py-6 text-center">
+                <p className="section-label">Combined First-Year Investment</p>
+                <p className="font-tabular text-[30px] font-semibold cr-tone-gold">{formatCurrency(firstYearValue)}</p>
+                <p className="text-[11.5px] text-[var(--muted)]">
+                  {buildInfo.priceLabel} build + {formatCurrency((supportInfo.price ?? 0) * 9)} subscription (9 billed months after the included
+                  period)
+                </p>
+              </Card>
+            ) : (
+              <PricingGateCard label="Combined First-Year Investment" />
+            )
           ) : null}
         </section>
       ) : null}
@@ -641,8 +673,8 @@ export function ClientReportView({
 
           {buildInfo ? (
             <p className="cr-avoid-break text-[13px] font-medium leading-relaxed text-[var(--cream)]">
-              This is what your {buildInfo.priceLabel} build covers — {scopePlan.totalWeeks} weeks from kickoff to handover, addressing your
-              constraints in the order they&apos;re actually holding {orgName} back.
+              This is what your {pricingReleased ? buildInfo.priceLabel : "recommended"} build covers — {scopePlan.totalWeeks} weeks from kickoff
+              to handover, addressing your constraints in the order they&apos;re actually holding {orgName} back.
             </p>
           ) : null}
         </section>

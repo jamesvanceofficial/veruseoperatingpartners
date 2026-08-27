@@ -351,6 +351,55 @@ value justification, add-ons) correctly show the new ones — a genuine,
 not-yet-resolved inconsistency for that one real record, left alone per
 the scope rule rather than silently recomputed.
 
+**Pricing release control (Stage 22)** — findings and price are two
+separate moments; a new `pricing_released`/`pricing_released_at`/
+`pricing_released_by` triple on `assessments` (off by default) decides
+which the client sees. While off, the client report
+(`/business-assessments/[id]/report`) and the completed-assessment view
+reached via the public share link (`/assessment/[token]`, which renders
+`AssessmentReportView`) show every diagnostic section — score,
+categories, constraints, business profile, scope of work — with every
+dollar figure replaced by a deliberate placeholder instead of a blank or
+broken layout: whole pricing-only blocks (the exec summary cost card, the
+Support Ladder, Available Add-ons, Combined First-Year Investment) become
+a single `PricingGateCard` reading "Investment reviewed together."; a
+price embedded inline in an otherwise-useful card (the build/support tier
+headline price, the extra-seat-rate stat) is swapped for the same phrase
+in place; a price woven into freeform copy (a scope-list item's "($35/mo
+per additional seat)" aside, or the stored `build_recommendation_reasoning`/
+`support_recommendation_reasoning` snapshot text) is stripped by
+`redactPriceMentions()` — both live in the new shared `pricingGate.ts`,
+imported by both `ClientReportView.tsx` and `BuildRecommendationPanel.tsx`
+so the two surfaces redact identically. Staff always sees full pricing
+regardless of the flag — `BuildRecommendationPanel`'s `showPricing = canEdit
+|| pricingReleased`, and `canEdit` is already exactly "is VERUS staff" at
+every call site, so this same one prop also correctly gates the internal
+`/business-assessments/[id]` page for a `client_owner`/`client_user` who
+navigates there directly, not just the two surfaces named in the request —
+a client viewer is a client viewer regardless of route. Toggled from the
+internal assessment view via `PricingReleaseControl.tsx` (staff-only,
+"Release pricing to client" / "Hide pricing from client", one click each
+way) → `POST /api/assessments/[id]/pricing-release` (staff-guarded, same
+`requireStaff()` pattern as every other mutation route) →
+`setPricingReleased()` in `data.ts`, which stamps who/when on release and
+clears both back to null on hide — the fields always describe the CURRENT
+state, never a history of past releases, same convention as
+`build_tier_override_by`/`_at`. Verified end-to-end: rendered the actual
+`ClientReportView` and `AssessmentReportView` component trees (the latter
+via a stubbed `AppRouterContext.Provider`, since `BuildRecommendationPanel`
+is a client component that calls `useRouter()`) against a real completed
+throwaway Full Assessment with pricing hidden — confirmed zero literal
+`$` characters anywhere in the gated client report while every diagnostic
+section still rendered — then released pricing and confirmed real dollar
+figures and the redacted asides both came back, then hid it again and
+confirmed `pricing_released_at`/`_by` cleared to null, then confirmed an
+unauthenticated `POST` to the release endpoint is rejected with 401. This
+pass caught and fixed two real leaks the first implementation missed:
+`BuildRecommendationPanel`'s build-tier `ScopeList` (whose last item is
+`buildTiers.ts`'s `subscriptionScopeLine()`, e.g. "...then Growth at
+$1,200/mo") and the stored `support_recommendation_reasoning` snapshot
+text — both were rendered unredacted before the fix.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
@@ -446,14 +495,16 @@ today, no exceptions.
   `build_tier_override_by` (FK profiles)/`build_tier_override_at`,
   `support_tier_override`/`support_tier_override_by` (FK profiles)/
   `support_tier_override_at` — effective tier is always `override ??
-  recommended`, computed at read time, never stored redundantly. Fixed
-  scope-per-tier (included/excluded, concrete seat/response-time/change-
-  request numbers) and pricing live as static config in
-  `src/modules/assessments/buildTiers.ts`, not in the database — support
-  tiers are cumulative (`SUPPORT_TIER_INFO[tier].included` for Growth/Pro/
-  Enterprise literally contains every item from the tier(s) below it, via
-  `BASE_ITEMS`/`GROWTH_ITEMS`/`PRO_ITEMS`/`ENTERPRISE_ITEMS` in that file,
-  never restated by hand) the way build tiers aren't. The monthly support
+  recommended`, computed at read time, never stored redundantly. Stage 22:
+  `pricing_released`/`pricing_released_at`/`pricing_released_by` (FK
+  profiles) — see the Client Report section's Stage 22 entry. Fixed
+  scope-per-tier and pricing live as static config in
+  `src/modules/assessments/buildTiers.ts`, not in the database — as of
+  Stage 21 each support tier states its own complete, standalone scope
+  under four headings (`SupportTierScope`), never built from shared
+  cumulative arrays (that pattern is what caused Stage 20's stacking bug;
+  see the Stage 21 entry above) the way build tiers' included/excluded
+  lists still are. The monthly support
   product is always labeled "Software, Systems & Support Subscription"
   (`SUPPORT_SUBSCRIPTION_NAME` in that same file) — never a "Compass
   subscription". Stage 14: the subscription is bundled with every build,

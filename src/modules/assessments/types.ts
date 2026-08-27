@@ -41,6 +41,10 @@ export type Assessment = {
   support_tier_override: SupportTier | null;
   support_tier_override_by: string | null;
   support_tier_override_at: string | null;
+  /** Stage 22 — off by default. While off, the client report and the public share link hide every dollar figure; staff always sees everything regardless of this flag. */
+  pricing_released: boolean;
+  pricing_released_at: string | null;
+  pricing_released_by: string | null;
   price_paid: number | null;
   notes: string | null;
   share_token: string | null;
@@ -136,6 +140,7 @@ export type AssessmentReport = {
   notApplicableCount: number;
   buildTierOverrideByName: string | null;
   supportTierOverrideByName: string | null;
+  pricingReleasedByName: string | null;
   /** null for quick_scan (never captured) or a full assessment where the section was never saved. */
   financialProfile: FinancialProfile | null;
   businessPresence: BusinessPresence | null;

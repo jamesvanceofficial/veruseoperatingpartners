@@ -170,15 +170,19 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
 
   const band = bandResult.data as { label: string; description: string | null } | null;
 
-  const overrideByIds = [assessment.build_tier_override_by, assessment.support_tier_override_by].filter((v): v is string => Boolean(v));
+  const overrideByIds = [assessment.build_tier_override_by, assessment.support_tier_override_by, assessment.pricing_released_by].filter(
+    (v): v is string => Boolean(v)
+  );
   let buildTierOverrideByName: string | null = null;
   let supportTierOverrideByName: string | null = null;
+  let pricingReleasedByName: string | null = null;
   if (overrideByIds.length > 0) {
     const { data: profiles, error: profilesError } = await supabase.from("profiles").select("id, full_name, email").in("id", overrideByIds);
     if (profilesError) throw profilesError;
     const nameMap = new Map((profiles ?? []).map((p) => [p.id as string, (p.full_name as string | null) ?? (p.email as string | null) ?? "Unnamed"]));
     buildTierOverrideByName = assessment.build_tier_override_by ? (nameMap.get(assessment.build_tier_override_by) ?? null) : null;
     supportTierOverrideByName = assessment.support_tier_override_by ? (nameMap.get(assessment.support_tier_override_by) ?? null) : null;
+    pricingReleasedByName = assessment.pricing_released_by ? (nameMap.get(assessment.pricing_released_by) ?? null) : null;
   }
 
   // Full Assessment only — never captured for a quick_scan.
@@ -205,6 +209,7 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
     notApplicableCount: naTotalResult.count ?? 0,
     buildTierOverrideByName,
     supportTierOverrideByName,
+    pricingReleasedByName,
     financialProfile,
     businessPresence,
     workforce,
@@ -583,6 +588,24 @@ export async function setRecommendationOverride(
   if (Object.keys(patch).length === 0) return;
 
   const { error } = await admin.from("assessments").update(patch).eq("id", assessmentId);
+  if (error) throw error;
+}
+
+/** Stage 22 — staff-only toggle. Releasing stamps who/when; hiding again clears both, same as an override reverting to null — the fields always describe the CURRENT state, not a history of past releases. */
+export async function setPricingReleased(
+  admin: SupabaseClient,
+  assessmentId: string,
+  input: { released: boolean; releasedBy: string }
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await admin
+    .from("assessments")
+    .update({
+      pricing_released: input.released,
+      pricing_released_at: input.released ? now : null,
+      pricing_released_by: input.released ? input.releasedBy : null,
+    })
+    .eq("id", assessmentId);
   if (error) throw error;
 }
 
