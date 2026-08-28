@@ -43,6 +43,14 @@ export const SUPPORT_SUBSCRIPTION_NAME = "Software, Systems & Support Subscripti
 /** Days after build handover covered by the build price before the subscription starts billing. */
 export const STABILIZATION_PERIOD_DAYS = 90;
 
+/** Stage 9 — once a build package has a real handover_date, this is the literal first-billing date instead of the generic "N days after handover" phrasing. Null until handover_date is set. */
+export function computeFirstBillingDate(handoverDate: string | null): string | null {
+  if (!handoverDate) return null;
+  const date = new Date(handoverDate);
+  date.setUTCDate(date.getUTCDate() + STABILIZATION_PERIOD_DAYS);
+  return date.toISOString().slice(0, 10);
+}
+
 /** A support tier's scope, organized under four fixed headings — every tier gets all four, depth/cadence varies. */
 export type SupportTierScope = {
   /** Hosting, uptime, monitoring, security patching, backups, fixing what breaks, and the tier's one stated response time. */

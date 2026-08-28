@@ -150,4 +150,6 @@ export type AssessmentReport = {
   revenuePerEmployee: number | null;
   /** w2EmployeeCount + contractorCount + vaCount, if workforce was ever saved — the real headcount, not organizations.employee_count_estimate. */
   realHeadcount: number | null;
+  /** Stage 9 — the most recent linked build package's handover_date, if any exists and it's been set. Feeds computeFirstBillingDate() so the client report and internal panel can show a real first-billing date instead of "90 days after handover." */
+  buildPackageHandoverDate: string | null;
 };

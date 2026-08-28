@@ -14,6 +14,7 @@ import {
   SUPPORT_TIER_INFO,
   SUPPORT_SUBSCRIPTION_NAME,
   STABILIZATION_PERIOD_DAYS,
+  computeFirstBillingDate,
   type BuildTier,
   type SupportTier,
 } from "./buildTiers";
@@ -60,6 +61,7 @@ export function BuildRecommendationPanel({
   supportTierOverrideByName,
   supportTierOverrideAt,
   operationalNeeds,
+  handoverDate,
   pricingReleased,
   canEdit,
 }: {
@@ -75,6 +77,8 @@ export function BuildRecommendationPanel({
   supportTierOverrideByName: string | null;
   supportTierOverrideAt: string | null;
   operationalNeeds: OperationalNeeds | null;
+  /** Stage 9 — the linked build package's real handover_date, if one exists and has been set. Drives a real first-billing date instead of the generic "N days after handover" phrasing. */
+  handoverDate: string | null;
   /** Stage 22 — off by default. Staff (canEdit) always sees full pricing regardless; this only gates the view for a non-staff viewer (a client_owner/client_user, or the public share link, which never has canEdit). */
   pricingReleased: boolean;
   canEdit: boolean;
@@ -106,6 +110,7 @@ export function BuildRecommendationPanel({
   const buildSelectDirty = displayedBuildTier !== effectiveBuildTier;
   const supportSelectDirty = displayedSupportTier !== effectiveSupportTier;
   const showPricing = canEdit || pricingReleased;
+  const firstBillingDate = computeFirstBillingDate(handoverDate);
   // Live off the same displayed tiers as the scope lists — updates
   // immediately as either dropdown changes, saved or not.
   const firstYearValue = buildInfo.price !== null && supportInfo.price !== null ? buildInfo.price + supportInfo.price * 9 : null;
@@ -248,7 +253,9 @@ export function BuildRecommendationPanel({
           </div>
           <div>
             <p className="section-label">First billing</p>
-            <p className="text-[13px] text-[var(--cream)]">{STABILIZATION_PERIOD_DAYS} days after build handover</p>
+            <p className="text-[13px] text-[var(--cream)]">
+              {firstBillingDate ? formatDate(firstBillingDate) : `${STABILIZATION_PERIOD_DAYS} days after build handover`}
+            </p>
           </div>
         </div>
 

@@ -12,6 +12,8 @@ import { QuickScanResult } from "@/modules/assessments/QuickScanResult";
 import { AssessmentRunner } from "@/modules/assessments/AssessmentRunner";
 import { ShareLinkPanel } from "@/modules/assessments/ShareLinkPanel";
 import { PricingReleaseControl } from "@/modules/assessments/PricingReleaseControl";
+import { getBuildPackageByAssessmentId } from "@/modules/buildPackages/data";
+import { CreateBuildPackageButton } from "@/modules/buildPackages/CreateBuildPackageButton";
 import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { DangerZone } from "@/shared/ui/DangerZone";
@@ -36,6 +38,10 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
     deleteConfirmMessage = `Delete this ${ASSESSMENT_TYPE_LABELS[assessment.assessment_type]} for ${orgName}? This permanently deletes its ${answerCount} answer${answerCount === 1 ? "" : "s"} and category scores. This cannot be undone.`;
   }
 
+  const effectiveBuildTier = assessment.build_tier_override ?? assessment.recommended_build_tier;
+  const isCompletedFull = assessment.status === "completed" && assessment.assessment_type === "full";
+  const existingBuildPackage = canEdit && isCompletedFull ? await getBuildPackageByAssessmentId(supabase, id) : null;
+
   return (
     <div className="page-container flex flex-1 flex-col gap-6 py-8">
       <div className="flex items-start justify-between gap-4">
@@ -51,11 +57,22 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
             </Link>
           </div>
         </div>
-        {assessment.status === "completed" && assessment.assessment_type === "full" ? (
-          <LinkButton href={`/business-assessments/${id}/report`} variant="primary" target="_blank">
-            Client report ↗
-          </LinkButton>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {isCompletedFull ? (
+            <LinkButton href={`/business-assessments/${id}/report`} variant="primary" target="_blank">
+              Client report ↗
+            </LinkButton>
+          ) : null}
+          {canEdit && isCompletedFull && effectiveBuildTier ? (
+            existingBuildPackage ? (
+              <LinkButton href={`/build-packages/${existingBuildPackage.id}`} variant="secondary">
+                View build package →
+              </LinkButton>
+            ) : (
+              <CreateBuildPackageButton assessmentId={id} />
+            )
+          ) : null}
+        </div>
       </div>
 
       {canEdit ? (

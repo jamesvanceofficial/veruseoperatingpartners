@@ -112,6 +112,7 @@ export function AssessmentReportView({ report, canEdit = false }: { report: Asse
         supportTierOverrideByName={supportTierOverrideByName}
         supportTierOverrideAt={assessment.support_tier_override_at}
         operationalNeeds={operationalNeeds}
+        handoverDate={report.buildPackageHandoverDate}
         pricingReleased={assessment.pricing_released}
         canEdit={canEdit}
       />

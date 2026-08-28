@@ -11,6 +11,7 @@ import {
   SUPPORT_TIER_INFO,
   SUPPORT_SUBSCRIPTION_NAME,
   STABILIZATION_PERIOD_DAYS,
+  computeFirstBillingDate,
   type SupportTier,
 } from "./buildTiers";
 import { BusinessProfilePanels } from "./BusinessProfilePanels";
@@ -109,6 +110,7 @@ export function ClientReportView({
   // Stage 22 — findings are always visible; every dollar figure stays
   // hidden behind a deliberate placeholder until staff releases pricing.
   const pricingReleased = assessment.pricing_released;
+  const firstBillingDate = computeFirstBillingDate(report.buildPackageHandoverDate);
 
   return (
     <div className="client-report flex flex-col">
@@ -361,7 +363,8 @@ export function ClientReportView({
             <p className="text-[13px] leading-relaxed text-[var(--cream)]">
               Included with the build — the first {STABILIZATION_PERIOD_DAYS} days are covered to stabilize the new systems. After that, it
               continues at <span className="font-semibold cr-tone-gold">{supportInfo.label}</span>{" "}
-              ({pricingReleased ? supportInfo.priceLabel : PRICING_HIDDEN_INLINE}), starting {STABILIZATION_PERIOD_DAYS} days after handover.
+              ({pricingReleased ? supportInfo.priceLabel : PRICING_HIDDEN_INLINE}), starting{" "}
+              {firstBillingDate ? formatDate(firstBillingDate) : `${STABILIZATION_PERIOD_DAYS} days after handover`}.
             </p>
             <div className="grid grid-cols-2 gap-3 border-y border-[var(--hairline)] py-3 sm:grid-cols-4">
               <div>

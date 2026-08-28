@@ -426,6 +426,95 @@ branch can; this is why that half of the check ran against the live
 container instead. Cleaned up the test logo and reset `app_settings` back
 to `null` (its real state — no logo has been uploaded yet) afterward.
 
+## Build Packages (Stage 9)
+
+Manages the actual work VERUS sells after an assessment is accepted —
+`src/modules/buildPackages/`. The only creation path is FROM a completed
+Full Assessment: one click (`CreateBuildPackageButton.tsx`, a plain POST,
+no intermediate form) carries over the effective build tier
+(`build_tier_override ?? recommended_build_tier`), that tier's price
+(`BUILD_TIER_INFO[tier].price`), and the assessment's already-computed
+Scope of Work — nothing retyped. Lands on the new package's detail page;
+deposit/balance/dates/status/notes get filled in afterward via the edit
+form, which is the only form this stage has (see below for why "create"
+isn't a separate form page).
+
+**Scope items come from each phase's own deliverables, not the flat
+Recommended-Path scope list** — a deliberate design decision, not an
+oversight. `effectiveScope.ts`'s `included` array (Website, CRM, SOPs,
+Dashboards, Setup, Implementation, the subscription line) is a flat,
+marketing-style summary built for the client report's tier comparison; it
+has no natural per-phase grouping. `scopeOfWork.ts`'s phases, by contrast,
+already carry their own itemized `whatWeDo` deliverables per bottleneck
+category (plus Foundation & Scope Lock / Portal / Training & Handover) —
+exactly the granularity a trackable build checklist needs. So
+`generateBuildPackagePlan()` in `generatePlan.ts` (pure function, no DB)
+turns each phase's `whatWeDo` items into that phase's scope items,
+categorized into the six `scope_category` values by
+`categorizeScopeText()` (keyword match: website/sop/document/dashboard/
+automation/subscription, else software). Automation deliverables from the
+business profile (Stage 18) don't correspond to any bottleneck-category
+phase, so they attach to Training & Handover, where automations actually
+get wired up and validated at the end of a build. The subscription line is
+never carried over as a scope item at all — it's a different, ongoing
+product (see `subscriptions`/`subscription_line_items`), not build scope.
+A Custom build has no fixed phase structure (`computeScopeOfWork()`
+returns null), so it gets one fallback "Build" phase (week 1-1) holding
+the generic "scoped individually" line plus any automation deliverables,
+so the one-click flow never silently drops data for Custom.
+
+Creating a package also moves its linked opportunity (via the assessment's
+`opportunity_id`, if any) to `build_package_sold` through the existing
+`transitionStage()` helper — the same one the kanban and edit-form stage
+changes use, so the transition is logged in `opportunity_stage_history`
+exactly once, however it happened.
+
+**Pages**: `/build-packages` (list, filterable by status/org — no create
+button, since creation always starts from an assessment or the org tab);
+`/build-packages/[id]` (detail — org/tier/status header, Stat row for
+price/payment status/overall progress/first billing date, a payment/dates
+Card, then every phase as its own card with a progress bar and its scope
+items, each with a staff-only status `<select>` that PATCHes immediately);
+`/build-packages/[id]/edit` (the one form — org/assessment/tier are always
+shown read-only and are never editable, since they're what the generated
+phases were built from; price/deposit/balance+paid/dates/status/notes are
+the only ever-editable fields). Organizations gained a real `build-packages`
+tab (`ORG_TABS`/`BUILT_TAB_SLUGS` in `organizations/tabs.ts`) listing that
+client's packages, plus a "Start one" section listing the org's completed
+Full Assessments — each shows "Create build package" if it doesn't have
+one yet, or "View build package →" if it does (multiple packages per
+assessment aren't blocked at the DB level, e.g. a genuine re-build, but
+the UI nudges toward one per assessment).
+
+**Payment status** (`unpaid`/`deposit_paid`/`paid_in_full`) is computed at
+read time from `deposit_paid_at`/`balance_paid_at` in
+`buildPackages/data.ts` — never a stored column, same "derived, not
+redundant" convention as an assessment's effective tier. Saving the edit
+form with "paid" checked sets the `_paid_at` timestamp only if it wasn't
+already set (preserves the real original paid-at across later edits);
+unchecking it clears the timestamp back to null, mirroring how a tier
+override clears when reverted.
+
+**Progress** rolls up from scope-item status: a phase's `progressPct` is
+`complete / total` for its own items; a package's `overallProgressPct` is
+the same ratio across every phase. Both computed at read time in
+`getBuildPackageDetail()`, never stored.
+
+**Connected to the client report's billing date (requirement carried over
+from Stage 14's "no build-package/handover date tracked anywhere yet"
+limitation)**: `computeFirstBillingDate()` in `assessments/buildTiers.ts`
+adds `STABILIZATION_PERIOD_DAYS` to a build package's `handover_date`.
+`getAssessmentReport()` now also returns `buildPackageHandoverDate` (the
+most recent linked package's `handover_date`, queried directly rather
+than through the buildPackages module to avoid a circular import, since
+`buildPackages/data.ts` itself calls `getAssessmentReport()`). Both
+`ClientReportView.tsx`'s subscription card and `BuildRecommendationPanel.tsx`'s
+"First billing" cell show the real computed date once handover_date is
+set, falling back to the original "N days after handover" phrasing until
+then — verified both ways directly (rendered the actual report component
+tree before and after setting a real handover_date and confirmed the text
+switches over correctly, not assumed from the ternary alone).
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
@@ -616,11 +705,37 @@ today, no exceptions.
   in the sidebar — and the report shows it via `BusinessProfilePanels.tsx`,
   which renders each of the three panels only if something was actually
   saved for it.
-- `build_packages` — org_id, opportunity_id, tier (foundation/growth/
-  enterprise/custom), status, price, deposit/balance amounts + paid_at,
-  timeline dates, notes.
-- `build_package_scope_items` — flexible scope line items per build
-  package (website/software/sop_documents/automation/dashboards/support).
+- `build_packages` — org_id, opportunity_id, `assessment_id` (Stage 9 — the
+  source assessment it was created FROM, nullable FK, `on delete set
+  null`), tier (foundation/growth/enterprise/custom), status (proposed/
+  sold/in_progress/complete/cancelled), price, deposit/balance amounts +
+  `deposit_paid_at`/`balance_paid_at` (whether-paid is `IS NOT NULL` on
+  these, same convention as `share_token_revoked_at` — never a separate
+  boolean column), start_date, target_completion_date, `handover_date`
+  (Stage 9 — what the 90-day subscription billing counts from, see
+  `computeFirstBillingDate()` in `assessments/buildTiers.ts`), notes.
+  **Note**: `actual_completion_date` also exists on this table (from the
+  original Stage-1 migration) but is unused everywhere in the app —
+  `handover_date` was added instead of repurposing it, since renaming a
+  column in place is against the migrations rule and reusing an
+  differently-named column under a new meaning in code, with nothing in
+  the schema itself hinting at that, would be a real trap for whoever
+  reads this schema next.
+- `build_package_scope_items` — one row per tracked deliverable
+  (website/software/sop_documents/automation/dashboards/support),
+  status (not_started/in_progress/complete), nested under a
+  `build_package_phases` row via `phase_id` (Stage 9, `not null`, `on
+  delete cascade`).
+- `build_package_phases` (Stage 9) — one row per phase carried over from
+  the source assessment's already-computed Scope of Work
+  (`computeScopeOfWork()` in `assessments/scopeOfWork.ts`) at build-package
+  creation time: phase_number, name, week_start, week_end, kind
+  (scope-lock/bottleneck/portal/handover/custom), category_name/
+  category_score (set for a bottleneck phase, null otherwise). A snapshot,
+  not a live link — same snapshot philosophy as `assessment_answers` — so
+  a later change to the question bank or tier config never rewrites an
+  already-sold package's phases. See the "Build Packages (Stage 9)"
+  section below for how phases/scope items are actually generated.
 - `subscriptions` — org_id, build_package_id, plan_name, status, seats,
   start_date, renewal_date, cancelled_at. Never stores a price directly.
 - `subscription_line_items` — **where MRR lives**: monthly_price *

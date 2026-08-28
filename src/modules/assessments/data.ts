@@ -200,6 +200,20 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
   }
   const realHeadcount = realHeadcountFrom(workforce);
 
+  // Stage 9 — most recent linked build package's handover date, if any.
+  // Queried directly (not via the buildPackages module) to avoid a
+  // circular import, since buildPackages/data.ts itself calls
+  // getAssessmentReport().
+  const { data: latestPackage, error: packageError } = await supabase
+    .from("build_packages")
+    .select("handover_date")
+    .eq("assessment_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (packageError) throw packageError;
+  const buildPackageHandoverDate = (latestPackage?.handover_date as string | null) ?? null;
+
   return {
     assessment,
     orgName: (orgResult.data as { name: string } | null)?.name ?? "Unknown organization",
@@ -216,6 +230,7 @@ export async function getAssessmentReport(supabase: SupabaseClient, id: string):
     operationalNeeds,
     revenuePerEmployee: revenuePerEmployeeFrom(financialProfile, realHeadcount),
     realHeadcount,
+    buildPackageHandoverDate,
   };
 }
 
