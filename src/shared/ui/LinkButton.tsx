@@ -7,16 +7,25 @@ export function LinkButton({
   variant = "secondary",
   className,
   target,
+  onClick,
   children,
 }: {
   href: string;
   variant?: ButtonVariant;
   className?: string;
   target?: string;
+  /** For closing a mobile menu, etc. — the link still navigates normally. */
+  onClick?: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <Link href={href} target={target} rel={target === "_blank" ? "noopener noreferrer" : undefined} className={buttonClassName({ variant, className })}>
+    <Link
+      href={href}
+      target={target}
+      rel={target === "_blank" ? "noopener noreferrer" : undefined}
+      onClick={onClick}
+      className={buttonClassName({ variant, className })}
+    >
       {children}
     </Link>
   );

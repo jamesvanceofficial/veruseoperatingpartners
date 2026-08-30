@@ -80,11 +80,17 @@ empty shell if one was explicitly asked for, no speculative schema, no
 
 ## Public / private routing split
 
-- `src/app/page.tsx` — public landing page, no auth, at `/`.
+- `src/app/(marketing)/` — the public VERUS website (Stage 18), no auth,
+  at `/` and its sibling pages. See "The Public Website (Stage 18)" below.
 - `src/proxy.ts` (Next 16 renamed `middleware.ts` → `proxy.ts`, same
   semantics) gates everything else: unauthenticated requests to any
   non-public path redirect to `/login?next=<path>`. Public paths: `/`,
-  `/login`, `/reset-password`, `/update-password`, `/scan`, `/assessment`.
+  `/login`, `/reset-password`, `/update-password`, `/scan`, `/assessment`,
+  and the Stage 18 marketing pages (`/what-we-do`, `/the-assessment`,
+  `/builds`, `/systems-and-support`, `/case-studies`, `/about`,
+  `/contact`) — plus, unconditionally, `/sitemap.xml` and any
+  `/opengraph-image*` path (Next's file-convention SEO routes, which
+  crawlers/unfurlers must reach with no session).
 - Everything under the `(app)` route group requires a session (enforced
   again at the layout level via `redirect()` as defense in depth, not just
   the proxy).
@@ -671,6 +677,121 @@ task is not affected.
 are the first date+time (not just date) helpers in the app — meetings are
 the first record type that needed a real time, not just a day.
 
+## The Public Website (Stage 18)
+
+`src/app/(marketing)/` — what paid traffic lands on: Home (`/`), What We
+Do, The Business Assessment, Build Packages (`/builds` — the internal
+build-package list already owns `/build-packages`), Software Systems &
+Support (`/systems-and-support` — the internal nav already owns
+`/software-support`), Case Studies, About James Vance, Contact/Apply.
+One shared `(marketing)/layout.tsx` wraps all of them in
+`MarketingHeader`/`MarketingFooter` (`src/modules/marketing/`) — a
+distinct, lighter chrome from both the authenticated `(app)` shell and
+`/scan`'s deliberately nav-free minimal header, which stays untouched.
+`MarketingHeader` is `"use client"` (the mobile hamburger menu needs
+state) but never imports `BrandMark` directly — `BrandMark` is itself an
+async Server Component (reads `app_settings` via a cookie-based client),
+and a client module can only ever receive a Server Component as a prop,
+never import and instantiate one — same `brand: React.ReactNode` prop
+pattern `AppShell` already used. This broke the build once already; fixed
+by rendering `<BrandMark>` in the (Server Component) layout and passing
+it down, not inside the header itself.
+
+**Positioning language is locked** — `marketing/positioning.ts` holds it
+word for word (`POSITIONING.notConsulting`, `.approach`,
+`.systemsAndProcesses`, `.whoWeServe`, `.delivery`), reused verbatim
+across Home/What We Do/About rather than retyped. Do not rephrase it,
+including `.approach`'s slightly unusual phrasing — it was given exactly
+as locked text, not paraphraseable copy.
+
+**Case studies** (`marketing/caseStudies.ts`) — RBL Safety and Radiant
+Moments, written as "what was built" / "what changed," no invented
+numbers, no testimonials. Each carries a `quotePlaceholder` field
+(`"[Client quote to be added]"`) rendered on the Case Studies page,
+clearly marked rather than left blank or faked — replace with a real
+quote once one exists, never fill it with an invented one in the
+meantime.
+
+**Pricing pages never show a price list** (requirement 5) — `/builds`
+and `/systems-and-support` pull tier content live from
+`BUILD_TIER_INFO`/`SUPPORT_TIER_INFO` (so it can never drift from what
+the client report says) but never render `.price`/`.priceLabel`, and run
+every included/scope-list string through the same `redactPriceMentions()`
+used for Stage 22's pricing-release gating to strip any embedded dollar
+figure (e.g. the build tier's trailing subscription line, or a support
+tier's "($35/mo per additional seat)" aside) — seats/hours/response-time
+numbers stay visible since they're quantities, not prices, matching the
+Stage 22 convention exactly. **A real leak this caught**: redacting the
+*visible text* isn't enough if a list item's ORIGINAL unredacted string is
+still used as the React `key` prop — React key values get serialized into
+the page's HTML/RSC payload for hydration, so the raw "$500/mo" was
+reaching the page source even though the rendered text correctly showed
+"the reviewed rate." Fixed by keying every such list off the redacted
+string instead of the raw one. Caught by grepping the actual live HTML
+response for known dollar amounts after deploy, not by reading the
+component code and assuming it was correct. The Business Assessment page
+(`/the-assessment`) is the one deliberate exception — it states $2,500
+plainly, per requirement 5, and also reads real category names/weights
+and band labels live from `assessment_categories`/`assessment_bands` via
+the admin client (same reasoning as `/scan`: that RLS is `to authenticated`
+only, so an anon page has to read it through the admin client, same as
+the public quick-scan flow already does), degrading gracefully to a
+category-list-free version of the page if the read ever fails.
+
+**Contact/Apply (requirement 6)** — `marketing/data.ts`'s
+`submitContactInquiry()` needed zero schema changes: every form field
+maps onto an existing `organizations`/`contacts`/`opportunities` column.
+Revenue range (a bucket, not a number) goes into `organizations.notes`
+as self-reported text, exactly like the Quick Scan flow already does for
+the same reason — same precedent, not a new pattern. Runs via
+`POST /api/public/contact`, admin client, no staff guard (same reasoning
+as `/api/public/scan`: every write-RLS policy on these tables is
+staff-only, so an anon request via the request-scoped client would have
+zero access regardless). Lands on `/contact/thank-you`, which points back
+at `/scan` while they wait.
+
+**"Notify me" is email via Resend** (`marketing/notify.ts`,
+`notifyNewLead()`) — the `resend` npm package, gated behind
+`RESEND_API_KEY`/`LEAD_NOTIFICATION_FROM`/`LEAD_NOTIFICATION_TO` env vars
+(gitignored `.env.local`, never committed). Never blocks or fails the
+form submission — the CRM record is already saved by the time this runs,
+so a missing key or a Resend outage degrades to "no email sent," not a
+lost lead or a 500 to the visitor. There was no notification
+infrastructure anywhere in this app before this stage (the existing Quick
+Scan lead-capture flow just relies on checking the CRM Pipeline) — this
+was a deliberate, asked-first decision, not assumed.
+
+**SEO** (requirement 8): every marketing page has its own real
+`title`/`description`/`openGraph` metadata export. `src/app/layout.tsx`
+gained `metadataBase` (required — without it, Next silently resolves
+Open Graph image URLs to `localhost` in production, breaking every
+social-share preview; caught from the build's own warning, not assumed).
+`src/app/(marketing)/opengraph-image.tsx` generates one shared branded OG
+image for the whole site via `next/og`'s `ImageResponse` (no static
+asset — it's built from the same locked palette in `globals.css`, so it
+can't drift from the brand). `src/app/sitemap.ts` lists every marketing
+page plus `/scan`, not `/contact/thank-you` (a post-submission utility
+page, not meant to be indexed).
+
+**Mobile** (requirement 7): every layout in this stage is mobile-first
+Tailwind (`grid-cols-1` before any `sm:`/`lg:` override, no fixed pixel
+widths anywhere in `(marketing)/` or `modules/marketing/` — verified by
+grep, not assumed) and reuses `.page-container`'s existing responsive
+`--page-pad` (48px → 20px under 640px, from Stage 1). `MarketingHeader`
+collapses to a hamburger menu below `lg:`. Per the standing verification
+rules, this app never uses Playwright/screenshots — so "tested at 375px"
+here means confirmed responsive-by-construction (real breakpoints, no
+fixed widths, the shared mobile padding override) via curl and code
+review, not a rendered visual check; James does that part.
+
+**Known placeholder, not fabricated**: the About page's biographical
+content about James Vance is deliberately generic — restating VERUS's
+locked positioning/approach rather than inventing specific unverifiable
+history (past roles, years of experience, credentials), since none were
+given and this app has no verified facts about his background beyond
+running VERUS. Replace with real specifics when they're provided, same
+philosophy as the `VERUS_CONTACT` placeholder in the client report.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
@@ -704,6 +825,14 @@ The app must degrade gracefully when a migration hasn't been run yet
   (compose's own variable-substitution file — separate from `.env.local`,
   which is what the running container loads via `env_file:`). Both are
   gitignored; never commit either, never echo their contents.
+- `RESEND_API_KEY` / `LEAD_NOTIFICATION_FROM` / `LEAD_NOTIFICATION_TO`
+  (Stage 18) — server-only, used by `src/modules/marketing/notify.ts` to
+  email James when the public Contact/Apply form is submitted. Loaded via
+  `env_file: .env.local` at runtime like `SUPABASE_SECRET_KEY` — no
+  `docker-compose.yml` change needed when these get filled in, just a
+  redeploy. All three are blank until real values are provided; the form
+  degrades to "lead saved to CRM, no email sent" until then, never a
+  broken submission.
 
 ## Database tables (update this list every time a migration adds one)
 

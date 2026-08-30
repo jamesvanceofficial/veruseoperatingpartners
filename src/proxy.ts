@@ -1,7 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/reset-password", "/update-password", "/scan", "/assessment"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/reset-password",
+  "/update-password",
+  "/scan",
+  "/assessment",
+  // Stage 18 — the public marketing site.
+  "/what-we-do",
+  "/the-assessment",
+  "/builds",
+  "/systems-and-support",
+  "/case-studies",
+  "/about",
+  "/contact",
+];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -28,7 +42,12 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  // Stage 18 — Next's file-convention SEO routes (sitemap.xml, and the
+  // generated opengraph-image, which Next serves with a cache-busting
+  // hash suffix like /opengraph-image-pwu6ef) must stay reachable by
+  // crawlers/unfurlers with no session, same as any other public path.
+  const isMetadataPath = pathname === "/sitemap.xml" || pathname.startsWith("/opengraph-image");
+  const isPublicPath = pathname === "/" || isMetadataPath || PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
   if (!user && !isPublicPath) {
     const loginUrl = new URL("/login", request.url);
