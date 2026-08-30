@@ -789,13 +789,26 @@ here means confirmed responsive-by-construction (real breakpoints, no
 fixed widths, the shared mobile padding override) via curl and code
 review, not a rendered visual check; James does that part.
 
-**Known placeholder, not fabricated**: the About page's biographical
-content about James Vance is deliberately generic — restating VERUS's
-locked positioning/approach rather than inventing specific unverifiable
-history (past roles, years of experience, credentials), since none were
-given and this app has no verified facts about his background beyond
-running VERUS. Replace with real specifics when they're provided, same
-philosophy as the `VERUS_CONTACT` placeholder in the client report.
+**About page real bio (Stage 26)** — the placeholder generic content
+noted below was replaced with James's own approved bio, supplied verbatim
+and never paraphrased: four fixed paragraphs in `about/page.tsx`
+(`FIRST_PARAGRAPH`/`REMAINING_PARAGRAPHS`), a `SECTORS` chip band (Real
+Estate, Oil & Gas, Telecommunications, Security, Construction, Sales,
+Business Development) and a `CAPABILITIES` chip band (Business
+Development, Acquisitions, Project Management, Sales Leadership,
+Operational Systems, Process Improvement, Strategic Relationships) — both
+pulled directly from the approved copy, not invented groupings. Chips
+reuse the exact `glass-panel px-4 py-2` pill style already established on
+the home page's "What VERUS Builds" list, not a new component. The hero's
+visual is `OperatorDiagram` (`modules/marketing/AboutIcons.tsx`) — a
+central node connected to seven satellite nodes, echoing the seven-sector
+band on the same page — drawn in the same SVG line-art style as
+`CategoryIcons.tsx`, never a photo, since no real photo or additional
+biographical fact beyond the approved copy exists to use. This replaced
+the old positioning-only page and its `POSITIONING`-quoting approach
+cards entirely — the "Known placeholder, not fabricated" note that used
+to live here no longer applies; there is nothing generic left on this
+page to replace.
 
 **Visual overhaul — real product visuals, layout variety, expanded
 content, restrained motion (Stage 24)**. The marketing site's original

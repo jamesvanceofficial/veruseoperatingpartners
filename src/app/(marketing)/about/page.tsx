@@ -1,78 +1,115 @@
 import type { Metadata } from "next";
 import { LinkButton } from "@/shared/ui/LinkButton";
-import { Card } from "@/shared/ui/Card";
-import { SectionHeading } from "@/modules/marketing/SectionHeading";
+import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
-import { POSITIONING } from "@/modules/marketing/positioning";
+import { OperatorDiagram } from "@/modules/marketing/AboutIcons";
 
 export const metadata: Metadata = {
-  title: "About James Vance | VERUS Operating Company",
-  description: "James Vance leads VERUS Operating Company — diagnosing what's holding founder-led businesses back, building the systems to fix it, and staying embedded running it.",
+  title: "James Vance | VERUS Operating Company",
+  description:
+    "James Vance is an entrepreneur, business owner, investor, and operator with experience across real estate, oil and gas, telecommunications, security, construction, sales, and business development.",
   openGraph: {
-    title: "About James Vance | VERUS Operating Company",
+    title: "James Vance | VERUS Operating Company",
     description: "The operator behind VERUS Operating Company.",
   },
 };
 
+const FIRST_PARAGRAPH =
+  "James Vance is an entrepreneur, business owner, investor, and operator with experience across real estate, oil and gas, telecommunications, security, construction, sales, and business development.";
+
+const REMAINING_PARAGRAPHS = [
+  "His background is rooted in building businesses, improving operations, developing systems and processes, and creating the structure companies need to grow. He has hands-on experience in business development, acquisitions, project management, sales leadership, operational systems, process improvement, and strategic relationship building.",
+  "James brings an operator's mindset to VERUS Operating Partners, with a focus on identifying inefficiencies, building repeatable processes, strengthening execution, and helping businesses operate more effectively. His approach centers on creating scalable systems, improving accountability, and developing practical solutions that support long-term growth.",
+  "Across investments, operating companies, and strategic partnerships, James focuses on disciplined execution, strong relationships, and building businesses that create durable long-term value.",
+];
+
+const SECTORS = ["Real Estate", "Oil & Gas", "Telecommunications", "Security", "Construction", "Sales", "Business Development"];
+
+const CAPABILITIES = [
+  "Business Development",
+  "Acquisitions",
+  "Project Management",
+  "Sales Leadership",
+  "Operational Systems",
+  "Process Improvement",
+  "Strategic Relationships",
+];
+
 export default function AboutPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
-        <FadeUp>
-          <span className="section-label text-[var(--gold-light)]">About</span>
-        </FadeUp>
-        <FadeUp delayMs={80}>
-          <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">James Vance</h1>
-        </FadeUp>
-        <FadeUp delayMs={160}>
-          <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--muted)]">
-            James Vance leads VERUS Operating Company. VERUS exists on a simple belief: founder-led businesses don&apos;t stall because
-            their owners aren&apos;t working hard enough — they stall because the business was never built with systems and processes
-            that could run without the owner holding every piece of it together.
-          </p>
-        </FadeUp>
+      {/* HERO — name + first paragraph, operator diagram as the visual */}
+      <section className="page-container py-12 sm:py-16">
+        <TwoColSection
+          visual={
+            <FadeUp>
+              <div className="glass-panel-strong mx-auto flex aspect-square max-w-[440px] items-center justify-center p-12">
+                <OperatorDiagram className="h-full w-full" />
+              </div>
+            </FadeUp>
+          }
+        >
+          <FadeUp>
+            <span className="section-label text-[var(--gold-light)]">About</span>
+          </FadeUp>
+          <FadeUp delayMs={80}>
+            <h1 className="text-[32px] font-semibold leading-tight text-[var(--cream)] sm:text-[44px]">James Vance</h1>
+          </FadeUp>
+          <FadeUp delayMs={160}>
+            <p className="text-[14.5px] leading-relaxed text-[var(--muted)]">{FIRST_PARAGRAPH}</p>
+          </FadeUp>
+        </TwoColSection>
       </section>
 
+      {/* REMAINING PARAGRAPHS — readable measure, not full width */}
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col gap-8 py-11 sm:py-14">
-          <FadeUp>
-            <SectionHeading eyebrow="The Approach" title="Not advice from the sidelines" />
-          </FadeUp>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <FadeUp delayMs={0}>
-              <Card className="flex h-full flex-col gap-2">
-                <h3 className="text-[14px] font-semibold text-[var(--cream)]">Not consulting, not coaching</h3>
-                <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{POSITIONING.notConsulting}</p>
-              </Card>
-            </FadeUp>
-            <FadeUp delayMs={60}>
-              <Card className="flex h-full flex-col gap-2">
-                <h3 className="text-[14px] font-semibold text-[var(--cream)]">Diagnose, build, stay embedded</h3>
-                <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{POSITIONING.approach}</p>
-              </Card>
-            </FadeUp>
-            <FadeUp delayMs={120}>
-              <Card className="flex h-full flex-col gap-2">
-                <h3 className="text-[14px] font-semibold text-[var(--cream)]">Systems and processes, always both</h3>
-                <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">
-                  A system nobody follows is dead weight. A process nobody&apos;s built the tooling for doesn&apos;t scale. Every
-                  engagement builds both together.
-                </p>
-              </Card>
-            </FadeUp>
-            <FadeUp delayMs={180}>
-              <Card className="flex h-full flex-col gap-2">
-                <h3 className="text-[14px] font-semibold text-[var(--cream)]">Who VERUS serves</h3>
-                <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">
-                  {POSITIONING.whoWeServe} {POSITIONING.delivery}
-                </p>
-              </Card>
-            </FadeUp>
+        <div className="page-container py-12 sm:py-16">
+          <div className="mx-auto flex max-w-[680px] flex-col gap-5">
+            {REMAINING_PARAGRAPHS.map((p, i) => (
+              <FadeUp key={p} delayMs={i * 80}>
+                <p className="text-[14.5px] leading-relaxed text-[var(--cream)]">{p}</p>
+              </FadeUp>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
+      {/* SECTOR EXPERIENCE */}
+      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
+        <FadeUp>
+          <span className="section-label text-[var(--gold-light)]">Experience Across</span>
+        </FadeUp>
+        <FadeUp delayMs={60}>
+          <div className="flex flex-wrap justify-center gap-3">
+            {SECTORS.map((s) => (
+              <span key={s} className="glass-panel px-4 py-2 text-[12.5px] font-medium text-[var(--cream)]">
+                {s}
+              </span>
+            ))}
+          </div>
+        </FadeUp>
+      </section>
+
+      {/* CAPABILITIES */}
+      <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
+        <div className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
+          <FadeUp>
+            <span className="section-label text-[var(--gold-light)]">Core Capabilities</span>
+          </FadeUp>
+          <FadeUp delayMs={60}>
+            <div className="flex flex-wrap justify-center gap-3">
+              {CAPABILITIES.map((c) => (
+                <span key={c} className="glass-panel px-4 py-2 text-[12.5px] font-medium text-[var(--cream)]">
+                  {c}
+                </span>
+              ))}
+            </div>
+          </FadeUp>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
           <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
             Start with a real look at what&apos;s holding your business back.
