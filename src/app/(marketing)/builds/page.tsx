@@ -3,6 +3,10 @@ import { LinkButton } from "@/shared/ui/LinkButton";
 import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { SectionHeading } from "@/modules/marketing/SectionHeading";
+import { TwoColSection } from "@/modules/marketing/TwoColSection";
+import { DiagramHero } from "@/modules/marketing/DiagramHero";
+import { PhotoSection } from "@/modules/marketing/PhotoSection";
+import { BuildStackDiagram } from "@/modules/marketing/PageHeroIcons";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { BUILD_TIER_INFO, BUILD_TIERS } from "@/modules/assessments/buildTiers";
 import { redactPriceMentions } from "@/modules/assessments/pricingGate";
@@ -20,24 +24,33 @@ export const metadata: Metadata = {
 export default function BuildsPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
-        <FadeUp>
-          <span className="section-label text-[var(--gold-light)]">Build Packages</span>
-        </FadeUp>
-        <FadeUp delayMs={80}>
-          <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-            Scoped to your business, not a template.
-          </h1>
-        </FadeUp>
-        <FadeUp delayMs={160}>
-          <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--muted)]">
-            Every build is scoped from your own Business Assessment — the tier and price are exact recommendations for your business, not
-            a generic package. What follows is the shape of each tier; your own number comes from the assessment.
-          </p>
-        </FadeUp>
+      <section className="page-container py-12 sm:py-16">
+        <TwoColSection
+          visual={
+            <FadeUp>
+              <DiagramHero><BuildStackDiagram className="h-full w-full" /></DiagramHero>
+            </FadeUp>
+          }
+        >
+          <FadeUp>
+            <span className="section-label text-[var(--gold-light)]">Build Packages</span>
+          </FadeUp>
+          <FadeUp delayMs={80}>
+            <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
+              Scoped to your business, not a template.
+            </h1>
+          </FadeUp>
+          <FadeUp delayMs={160}>
+            <p className="text-[14.5px] leading-relaxed text-[var(--muted)]">
+              Every build is scoped from your own Business Assessment — the tier and price are exact recommendations for your business,
+              not a generic package. What follows is the shape of each tier; your own number comes from the assessment.
+            </p>
+          </FadeUp>
+        </TwoColSection>
       </section>
 
-      <section className="page-container flex flex-col gap-10 pb-11 sm:pb-14">
+      <PhotoSection src="/images/photography/handshake.webp" className="border-y border-[var(--hairline)]">
+        <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {BUILD_TIERS.filter((t) => t !== "custom").map((tier, i) => {
             const info = BUILD_TIER_INFO[tier];
@@ -74,7 +87,8 @@ export default function BuildsPage() {
             </p>
           </Card>
         </FadeUp>
-      </section>
+        </div>
+      </PhotoSection>
 
       <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
         <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">

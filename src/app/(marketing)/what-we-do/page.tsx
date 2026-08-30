@@ -6,6 +6,9 @@ import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { PullQuote } from "@/modules/marketing/PullQuote";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { POSITIONING, HOW_IT_WORKS_STEPS } from "@/modules/marketing/positioning";
+import { DiagramHero } from "@/modules/marketing/DiagramHero";
+import { PhotoSection } from "@/modules/marketing/PhotoSection";
+import { SystemsMapDiagram } from "@/modules/marketing/PageHeroIcons";
 import {
   WebsiteIcon,
   SoftwareIcon,
@@ -109,21 +112,30 @@ const BUILD_CATEGORIES = [
 export default function WhatWeDoPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
-        <FadeUp>
-          <span className="section-label text-[var(--gold-light)]">What We Do</span>
-        </FadeUp>
-        <FadeUp delayMs={80}>
-          <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-            We diagnose. We build. We stay embedded running it.
-          </h1>
-        </FadeUp>
-        <FadeUp delayMs={160}>
-          <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--muted)]">{POSITIONING.notConsulting}</p>
-        </FadeUp>
-        <FadeUp delayMs={220}>
-          <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--muted)]">{POSITIONING.approach}</p>
-        </FadeUp>
+      <section className="page-container py-12 sm:py-16">
+        <TwoColSection
+          reverse
+          visual={
+            <FadeUp>
+              <DiagramHero><SystemsMapDiagram className="h-full w-full" /></DiagramHero>
+            </FadeUp>
+          }
+        >
+          <FadeUp>
+            <span className="section-label text-[var(--gold-light)]">What We Do</span>
+          </FadeUp>
+          <FadeUp delayMs={80}>
+            <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
+              We diagnose. We build. We stay embedded running it.
+            </h1>
+          </FadeUp>
+          <FadeUp delayMs={160}>
+            <p className="text-[14.5px] leading-relaxed text-[var(--muted)]">{POSITIONING.notConsulting}</p>
+          </FadeUp>
+          <FadeUp delayMs={220}>
+            <p className="text-[14.5px] leading-relaxed text-[var(--muted)]">{POSITIONING.approach}</p>
+          </FadeUp>
+        </TwoColSection>
       </section>
 
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
@@ -169,7 +181,7 @@ export default function WhatWeDoPage() {
         ))}
       </div>
 
-      <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
+      <PhotoSection src="/images/photography/whiteboard-discussion.webp" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="How We Work" title="Worst bottleneck first" align="center" />
@@ -186,7 +198,7 @@ export default function WhatWeDoPage() {
             ))}
           </div>
         </div>
-      </section>
+      </PhotoSection>
 
       <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>

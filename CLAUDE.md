@@ -1030,6 +1030,94 @@ The app must degrade gracefully when a migration hasn't been run yet
 `src/shared/session.ts`'s `getMyProfile()` for the pattern: return a typed
 "not configured" result, never let a missing table crash a page.
 
+**Every marketing page brought to the Home standard (Stage 28)** — Stage
+27 gave Home real imagery, parallax, and hover-lift; every other page had
+almost none of it. Fixed page by page, plus one real bug in the imagery
+itself.
+
+*The PhotoSection overlay was too heavy.* Stage 27's 92% navy tint made a
+photo "read as almost nothing" per direct feedback — lightened to 55%
+navy + a top/bottom black gradient (light in the middle, where cards
+already carry their own contrast). `PhotoSection` also gained its own
+scroll parallax directly on the background `<img>` (sized 130% height /
+`-15%` top offset so the drift never reveals an edge), so every page
+using it gets the same motion as the hero, not just Home.
+
+**Real bug this uncovered**: `useParallax`'s offset was unbounded — an
+element far below the fold, before ever scrolling, computes distance-
+from-viewport-center against its position at rest, which for a section
+near the bottom of a long page produces a translate of several hundred
+pixels. For a full-bleed background image sized only 130% of its own
+section, that blew straight through the 15% buffer and pushed the image
+completely out of view — a section-shaped hole where the photo used to
+be. Fixed by clamping the computed offset to `maxOffsetPx` (default 40,
+comfortably inside the buffer for any section taller than ~270px).
+Caught by evaluating the actual computed `style.transform` on a fresh
+page load, not by reading the formula and assuming it was bounded.
+
+**Some source photos still needed per-image correction even after the
+overlay fix**: a photo with a large bright-white area (a laptop dashboard
+screenshot, a white notebook desk, a tablet screen) stays visibly bright
+under the same overlay a darker photo disappears under, since `brightness`
+multiplies existing pixel values — 255×0.75 is still ~191. Reprocessed
+`dashboard-laptop.webp` and `checklist.webp` at `brightness: 0.45` (down
+from 0.75) and `whiteboard-discussion.webp` at `0.55`, all `saturation:
+0.25-0.28`; caught by looking at each PhotoSection screenshot individually
+rather than trusting one uniform `sharp` setting to work for every photo.
+
+*Shared components built once, reused everywhere*: `ScreenshotVisual.tsx`
+replaces the Stage 27 `HeroReportVisual`/`RunnerScreenshotVisual` pair —
+one component, a `tilt` boolean, used for the Home hero, the Home "See It"
+runner section, and The Assessment's new hero (a real screenshot at an
+angle, replacing the live gauge that used to be there — the live
+`AnimatedScoreGauge` moved into the page's existing "The Result" section
+instead, so the count-up motion isn't lost, just relocated).
+`DiagramHero.tsx` panel-frames a page's SVG hero diagram with the same
+parallax; three new ones in `PageHeroIcons.tsx`
+(`SystemsMapDiagram`/`BuildStackDiagram`/`UptimeShieldDiagram`) plus the
+existing `OperatorDiagram` cover What We Do/Builds/Systems & Support/
+About. **Real RSC bug caught building this**: `DiagramHero` first took an
+`Icon` component-reference prop — React rejects passing a function
+directly from a Server Component page into a `"use client"` module
+("Functions cannot be passed directly to Client Components"), caught only
+at `next build`'s prerender step, not by typecheck. Fixed the same way
+`AppShell`/`MarketingHeader`'s `brand` prop already works: `DiagramHero`
+takes already-rendered `children`, and every call site instantiates its
+own icon element (`<DiagramHero><BuildStackDiagram .../></DiagramHero>`)
+rather than passing the component itself. `PhotoFrame.tsx` gives a photo
+real visual weight (bordered, parallaxed, no navy wash) instead of a
+background — used for Contact's hero and, replacing Case Studies' faint
+full-section photo wash entirely, one prominent framed photo per case
+study in a proper alternating `TwoColSection` next to that case's
+Situation text.
+
+*Per page*: What We Do and Systems & Support each gained a diagram hero
+plus one `PhotoSection`; Builds' photo sits specifically behind the tier-
+card section per the brief; The Assessment's hero is now the tilted
+runner screenshot; Case Studies gained a real photo hero band and
+per-case-study `PhotoFrame`s; About's existing `OperatorDiagram` hero
+picked up parallax via `DiagramHero`, plus a `PhotoSection` behind Core
+Capabilities — the approved bio copy itself was never touched. Contact
+got a `PhotoFrame` hero, a restructured `ContactForm` (three numbered,
+labeled sections — About You / About Your Business / What You Need —
+instead of one flat field grid), and a new "What Happens Next" trust
+band. `/scan`, the highest-stakes page, got the `checklist.webp`
+`PhotoSection` background plus a real `StatBand` (10 categories/20
+questions/4 minutes/100-point scale) between the intro copy and the form
+— **a real layout bug found and fixed here**: a `-pt` suffix on "100"
+wrapped onto its own line inside a narrow centered column at large
+stat-number font sizes; fixed by widening the stat band's own container
+independently of the narrower intro-text column above it, and dropping
+the suffix in favor of a plain "Point Scale" label rather than fighting
+the wrap. `hover-lift` was extended to every remaining scannable card
+grid (support tier cards, the-assessment's category-weight cards,
+Contact's next-steps cards) that didn't already have it from Stage 27.
+
+*Nine photos total now in `public/images/photography/`*, all
+`images.unsplash.com/photo-...` (never a paid `plus.unsplash.com`
+Unsplash+ image), downloaded, resized, desaturated, and self-hosted —
+never hotlinked, per the standing rule from Stage 27.
+
 ## Environment variables
 
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — read

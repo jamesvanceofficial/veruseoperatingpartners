@@ -4,6 +4,8 @@ import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { SectionHeading } from "@/modules/marketing/SectionHeading";
 import { PhotoSection } from "@/modules/marketing/PhotoSection";
+import { PhotoFrame } from "@/modules/marketing/PhotoFrame";
+import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { CASE_STUDIES } from "@/modules/marketing/caseStudies";
 
@@ -19,22 +21,24 @@ export const metadata: Metadata = {
 export default function CaseStudiesPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
-        <FadeUp>
-          <span className="section-label text-[var(--gold-light)]">Case Studies</span>
-        </FadeUp>
-        <FadeUp delayMs={80}>
-          <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-            What was built, and what changed.
-          </h1>
-        </FadeUp>
-        <FadeUp delayMs={160}>
-          <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--muted)]">Not testimonials — a plain account of the work.</p>
-        </FadeUp>
-      </section>
+      <PhotoSection src="/images/photography/construction-workers.webp">
+        <div className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
+          <FadeUp>
+            <span className="section-label text-[var(--gold-light)]">Case Studies</span>
+          </FadeUp>
+          <FadeUp delayMs={80}>
+            <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
+              What was built, and what changed.
+            </h1>
+          </FadeUp>
+          <FadeUp delayMs={160}>
+            <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--muted)]">Not testimonials — a plain account of the work.</p>
+          </FadeUp>
+        </div>
+      </PhotoSection>
 
       {CASE_STUDIES.map((cs, i) => (
-        <PhotoSection key={cs.slug} src={cs.photo} className={i % 2 === 1 ? "border-y border-[var(--hairline)]" : undefined}>
+        <section key={cs.slug} className={i % 2 === 1 ? "border-y border-[var(--hairline)] bg-[var(--surface)]" : undefined}>
           <div className="page-container flex flex-col gap-8 py-11 sm:py-14">
             <FadeUp>
               <div className="flex flex-wrap items-center gap-3">
@@ -43,22 +47,30 @@ export default function CaseStudiesPage() {
               </div>
             </FadeUp>
 
-            <FadeUp delayMs={40}>
-              <div>
-                <p className="text-[24px] font-semibold text-[var(--gold-light)] sm:text-[30px]">{cs.client}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge tone="neutral">{cs.location}</Badge>
-                  <Badge tone="gold">{cs.industry}</Badge>
+            <TwoColSection
+              reverse={i % 2 === 1}
+              visual={
+                <FadeUp delayMs={40}>
+                  <PhotoFrame src={cs.photo} alt={`${cs.client} — ${cs.industry}`} />
+                </FadeUp>
+              }
+            >
+              <FadeUp delayMs={40}>
+                <div>
+                  <p className="text-[24px] font-semibold text-[var(--gold-light)] sm:text-[30px]">{cs.client}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Badge tone="neutral">{cs.location}</Badge>
+                    <Badge tone="gold">{cs.industry}</Badge>
+                  </div>
                 </div>
-              </div>
-            </FadeUp>
-
-            <FadeUp delayMs={80}>
-              <div className="max-w-3xl">
-                <p className="section-label">The Situation</p>
-                <p className="mt-2 text-[14px] leading-relaxed text-[var(--cream)]">{cs.situation}</p>
-              </div>
-            </FadeUp>
+              </FadeUp>
+              <FadeUp delayMs={80}>
+                <div>
+                  <p className="section-label">The Situation</p>
+                  <p className="mt-2 text-[14px] leading-relaxed text-[var(--cream)]">{cs.situation}</p>
+                </div>
+              </FadeUp>
+            </TwoColSection>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <FadeUp delayMs={120}>
@@ -88,7 +100,7 @@ export default function CaseStudiesPage() {
               </div>
             </FadeUp>
           </div>
-        </PhotoSection>
+        </section>
       ))}
 
       <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">

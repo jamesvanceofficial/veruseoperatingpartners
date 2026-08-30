@@ -6,6 +6,8 @@ import { SectionHeading } from "@/modules/marketing/SectionHeading";
 import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
+import { ScreenshotVisual } from "@/modules/marketing/ScreenshotVisual";
+import { PhotoSection } from "@/modules/marketing/PhotoSection";
 import { BandScale } from "@/modules/assessments/BandScale";
 import { RankedBottleneckList } from "@/modules/assessments/RankedBottleneckList";
 import { SAMPLE_SCORE, SAMPLE_BAND_LABEL, SAMPLE_BANDS, SAMPLE_BOTTLENECKS, SAMPLE_QUESTION } from "@/modules/marketing/sampleAssessment";
@@ -36,16 +38,17 @@ export default async function TheAssessmentPage() {
 
   return (
     <div className="flex flex-col">
-      {/* HERO — text left, live score/band visual right */}
+      {/* HERO — text left, real runner screenshot at an angle right */}
       <section className="page-container py-12 sm:py-16">
         <TwoColSection
           visual={
             <FadeUp>
-              <Card strong className="flex flex-col items-center gap-3 py-8">
-                <AnimatedScoreGauge score={SAMPLE_SCORE} className="w-32 sm:w-36" />
-                <span className="text-[14px] font-semibold text-[var(--gold-light)]">{SAMPLE_BAND_LABEL}</span>
-                <span className="text-[10.5px] text-[var(--muted)]">Illustrative sample result</span>
-              </Card>
+              <ScreenshotVisual
+                tilt
+                maxWidthClassName="max-w-md"
+                src="/images/product/runner-screenshot.webp"
+                alt="The VERUS assessment runner mid-question, showing answer choices and a live provisional score"
+              />
             </FadeUp>
           }
         >
@@ -77,7 +80,7 @@ export default async function TheAssessmentPage() {
       </section>
 
       {categories.length > 0 ? (
-        <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
+        <PhotoSection src="/images/photography/dashboard-laptop.webp" className="border-y border-[var(--hairline)]">
           <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
             <FadeUp>
               <SectionHeading
@@ -92,7 +95,7 @@ export default async function TheAssessmentPage() {
                 .sort((a, b) => b.weight - a.weight)
                 .map((c, i) => (
                   <FadeUp key={c.id} delayMs={Math.min(i * 40, 320)}>
-                    <Card className="flex items-center justify-between gap-3 py-3.5">
+                    <Card className="hover-lift flex items-center justify-between gap-3 py-3.5">
                       <span className="text-[13px] text-[var(--cream)]">{c.name}</span>
                       <span className="font-tabular text-[12px] text-[var(--gold-light)]">weight {c.weight}</span>
                     </Card>
@@ -100,7 +103,7 @@ export default async function TheAssessmentPage() {
                 ))}
             </div>
           </div>
-        </section>
+        </PhotoSection>
       ) : null}
 
       {/* HOW SCORING WORKS — a real sample question, visual left */}
@@ -159,11 +162,14 @@ export default async function TheAssessmentPage() {
               <SectionHeading eyebrow="The Result" title="A score, a band, and a ranked list of what to fix first" />
             </FadeUp>
             <FadeUp delayMs={80}>
-              <div>
-                <h3 className="text-[14px] font-semibold text-[var(--cream)]">An Enterprise Score</h3>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--muted)]">
-                  A single number out of 100 that reflects where the business actually stands today.
-                </p>
+              <div className="flex items-center gap-4">
+                <AnimatedScoreGauge score={SAMPLE_SCORE} className="w-16 shrink-0" />
+                <div>
+                  <h3 className="text-[14px] font-semibold text-[var(--cream)]">An Enterprise Score</h3>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--muted)]">
+                    A single number out of 100 that reflects where the business actually stands today.
+                  </p>
+                </div>
               </div>
             </FadeUp>
             <FadeUp delayMs={140}>

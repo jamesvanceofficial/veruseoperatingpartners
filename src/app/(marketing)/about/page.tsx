@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LinkButton } from "@/shared/ui/LinkButton";
 import { TwoColSection } from "@/modules/marketing/TwoColSection";
+import { DiagramHero } from "@/modules/marketing/DiagramHero";
+import { PhotoSection } from "@/modules/marketing/PhotoSection";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { OperatorDiagram } from "@/modules/marketing/AboutIcons";
 
@@ -43,9 +45,7 @@ export default function AboutPage() {
         <TwoColSection
           visual={
             <FadeUp>
-              <div className="glass-panel-strong mx-auto flex aspect-square max-w-[440px] items-center justify-center p-12">
-                <OperatorDiagram className="h-full w-full" />
-              </div>
+              <DiagramHero><OperatorDiagram className="h-full w-full" /></DiagramHero>
             </FadeUp>
           }
         >
@@ -91,7 +91,7 @@ export default function AboutPage() {
       </section>
 
       {/* CAPABILITIES */}
-      <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
+      <PhotoSection src="/images/photography/handshake.webp" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
           <FadeUp>
             <span className="section-label text-[var(--gold-light)]">Core Capabilities</span>
@@ -106,7 +106,7 @@ export default function AboutPage() {
             </div>
           </FadeUp>
         </div>
-      </section>
+      </PhotoSection>
 
       {/* CTA */}
       <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">

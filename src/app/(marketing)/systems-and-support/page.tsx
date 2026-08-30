@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { LinkButton } from "@/shared/ui/LinkButton";
 import { Card } from "@/shared/ui/Card";
 import { SectionHeading } from "@/modules/marketing/SectionHeading";
+import { TwoColSection } from "@/modules/marketing/TwoColSection";
+import { DiagramHero } from "@/modules/marketing/DiagramHero";
+import { PhotoSection } from "@/modules/marketing/PhotoSection";
+import { UptimeShieldDiagram } from "@/modules/marketing/PageHeroIcons";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { SUPPORT_TIER_INFO, SUPPORT_TIERS, SUPPORT_SUBSCRIPTION_NAME } from "@/modules/assessments/buildTiers";
 import { redactPriceMentions } from "@/modules/assessments/pricingGate";
@@ -26,22 +30,31 @@ const HEADING_LABELS: Record<"keepingItRunning" | "keepingItCurrent" | "keepingI
 export default function SystemsAndSupportPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
-        <FadeUp>
-          <span className="section-label text-[var(--gold-light)]">{SUPPORT_SUBSCRIPTION_NAME}</span>
-        </FadeUp>
-        <FadeUp delayMs={80}>
-          <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-            What we build doesn&apos;t stop working the day we hand it over.
-          </h1>
-        </FadeUp>
-        <FadeUp delayMs={160}>
-          <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--muted)]">
-            Every build is bundled with an ongoing subscription that keeps it running, keeps it current as the business changes, and
-            keeps your team actually using it. Pulled directly from the same tier structure your build recommendation is scoped from —
-            nothing here can drift from what you&apos;d actually see.
-          </p>
-        </FadeUp>
+      <section className="page-container py-12 sm:py-16">
+        <TwoColSection
+          reverse
+          visual={
+            <FadeUp>
+              <DiagramHero><UptimeShieldDiagram className="h-full w-full" /></DiagramHero>
+            </FadeUp>
+          }
+        >
+          <FadeUp>
+            <span className="section-label text-[var(--gold-light)]">{SUPPORT_SUBSCRIPTION_NAME}</span>
+          </FadeUp>
+          <FadeUp delayMs={80}>
+            <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
+              What we build doesn&apos;t stop working the day we hand it over.
+            </h1>
+          </FadeUp>
+          <FadeUp delayMs={160}>
+            <p className="text-[14.5px] leading-relaxed text-[var(--muted)]">
+              Every build is bundled with an ongoing subscription that keeps it running, keeps it current as the business changes, and
+              keeps your team actually using it. Pulled directly from the same tier structure your build recommendation is scoped from
+              — nothing here can drift from what you&apos;d actually see.
+            </p>
+          </FadeUp>
+        </TwoColSection>
       </section>
 
       <section className="page-container flex flex-col gap-6 pb-11 sm:pb-14">
@@ -85,7 +98,7 @@ export default function SystemsAndSupportPage() {
         </FadeUp>
       </section>
 
-      <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
+      <PhotoSection src="/images/photography/warehouse-interior.webp" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="Included With Every Build" title="Support tier is scoped by the Business Assessment" align="center" />
@@ -107,7 +120,7 @@ export default function SystemsAndSupportPage() {
             </div>
           </FadeUp>
         </div>
-      </section>
+      </PhotoSection>
     </div>
   );
 }

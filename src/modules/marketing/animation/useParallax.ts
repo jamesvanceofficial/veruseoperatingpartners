@@ -8,8 +8,14 @@ import { prefersReducedMotion } from "./useInView";
  * a fraction of how far its center has drifted from the viewport center.
  * Mutates style.transform directly via rAF instead of React state, so it
  * never re-renders on scroll. A no-op under prefers-reduced-motion.
+ *
+ * The offset is clamped to maxOffsetPx: an element far below the fold (at
+ * rest, before ever scrolling) computes an unbounded distance-from-center
+ * — for a full-bleed background image sized only slightly taller than its
+ * section (see PhotoSection's 130%/-15% buffer), an uncapped offset can
+ * exceed that buffer and shift the image clean out of its own section.
  */
-export function useParallax<T extends HTMLElement>(ref: React.RefObject<T | null>, strength = 0.12) {
+export function useParallax<T extends HTMLElement>(ref: React.RefObject<T | null>, strength = 0.12, maxOffsetPx = 40) {
   useEffect(() => {
     const el = ref.current;
     if (!el || prefersReducedMotion()) return;
@@ -23,7 +29,8 @@ export function useParallax<T extends HTMLElement>(ref: React.RefObject<T | null
       const rect = node.getBoundingClientRect();
       const viewportCenter = window.innerHeight / 2;
       const elementCenter = rect.top + rect.height / 2;
-      const delta = (viewportCenter - elementCenter) * strength;
+      const raw = (viewportCenter - elementCenter) * strength;
+      const delta = Math.max(-maxOffsetPx, Math.min(maxOffsetPx, raw));
       node.style.transform = `translate3d(0, ${delta.toFixed(1)}px, 0)`;
     }
 
@@ -40,5 +47,5 @@ export function useParallax<T extends HTMLElement>(ref: React.RefObject<T | null
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [ref, strength]);
+  }, [ref, strength, maxOffsetPx]);
 }

@@ -7,8 +7,7 @@ import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { PullQuote } from "@/modules/marketing/PullQuote";
 import { StatBand } from "@/modules/marketing/StatBand";
 import { FaqAccordion } from "@/modules/marketing/FaqAccordion";
-import { HeroReportVisual } from "@/modules/marketing/HeroReportVisual";
-import { RunnerScreenshotVisual } from "@/modules/marketing/RunnerScreenshotVisual";
+import { ScreenshotVisual } from "@/modules/marketing/ScreenshotVisual";
 import { PhotoSection } from "@/modules/marketing/PhotoSection";
 import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
@@ -37,7 +36,11 @@ export default function HomePage() {
         <TwoColSection
           visual={
             <FadeUp>
-              <HeroReportVisual />
+              <ScreenshotVisual
+                tilt
+                src="/images/product/report-screenshot.webp"
+                alt="A completed VERUS business assessment report showing an enterprise score, category breakdown, and ranked bottleneck list"
+              />
             </FadeUp>
           }
         >
@@ -100,7 +103,12 @@ export default function HomePage() {
           reverse
           visual={
             <FadeUp>
-              <RunnerScreenshotVisual />
+              <ScreenshotVisual
+                parallaxStrength={0.05}
+                maxWidthClassName="max-w-none"
+                src="/images/product/runner-screenshot.webp"
+                alt="The VERUS assessment runner mid-question, showing answer choices and a live provisional score"
+              />
             </FadeUp>
           }
         >
