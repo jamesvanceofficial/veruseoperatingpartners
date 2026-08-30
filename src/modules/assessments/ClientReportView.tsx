@@ -20,20 +20,11 @@ import { getEffectiveBuildScope } from "./effectiveScope";
 import { getSupportTierValueJustification, MANAGED_IT_PER_USER_RANGE } from "./supportTierValue";
 import { FLAT_FEE_ADD_ONS, VA_ASSIGNMENT_FEE_LABEL, VA_ASSIGNMENT_FEE_DESCRIPTION, VA_MINIMUM_HOURS_PER_WEEK, VA_ROLES, VA_TERMS } from "./supportAddOns";
 import { redactPriceMentions, PRICING_HIDDEN_MESSAGE, PRICING_HIDDEN_INLINE } from "./pricingGate";
+import { BandScale } from "./BandScale";
+import { CategoryBars, TONE_CLASS } from "./CategoryBars";
 import type { AssessmentReport, Band } from "./types";
 
 const SUPPORT_LADDER: Exclude<SupportTier, "custom">[] = ["base", "growth", "pro", "enterprise"];
-
-const TONE_CLASS: Record<"green" | "yellow" | "red", string> = {
-  green: "cr-tone-green",
-  yellow: "cr-tone-yellow",
-  red: "cr-tone-red",
-};
-const TONE_BAR: Record<"green" | "yellow" | "red", string> = {
-  green: "bg-[var(--green)]",
-  yellow: "bg-[var(--yellow)]",
-  red: "bg-[var(--red)]",
-};
 
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
@@ -221,63 +212,26 @@ export function ClientReportView({
           <span className="mt-2 text-[19px] font-semibold cr-tone-gold">{bandLabel ?? "—"}</span>
         </Card>
 
-        <div className="cr-avoid-break flex flex-col gap-2">
-          <p className="section-label">The five-band scale</p>
-          <div className="flex h-8 w-full overflow-hidden rounded-[var(--radius-sm)] border border-[var(--hairline-strong)]">
-            {bands.map((b) => {
-              const width = b.max_score - b.min_score + 1;
-              const active = score >= b.min_score && score <= b.max_score;
-              return (
-                <div
-                  key={b.id}
-                  className={cn("flex items-center justify-center border-r border-[var(--hairline)] last:border-r-0", active ? "bg-[var(--gold)]" : "bg-[var(--hairline)]")}
-                  style={{ width: `${width}%` }}
-                />
-              );
-            })}
-          </div>
-          <div className="flex w-full text-[10px] text-[var(--muted)]">
-            {bands.map((b) => {
-              const width = b.max_score - b.min_score + 1;
-              const active = score >= b.min_score && score <= b.max_score;
-              return (
-                <div key={b.id} className={cn("px-0.5 text-center leading-tight", active && "font-semibold cr-tone-gold")} style={{ width: `${width}%` }}>
-                  {b.label}
-                  <br />
-                  {b.min_score}-{b.max_score}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <BandScale score={score} bands={bands} />
       </section>
 
       {/* 5. CATEGORY BREAKDOWN */}
       <section className="cr-page-break flex flex-col gap-4 py-10">
         <SectionHeading eyebrow="Detail" title="Category breakdown" />
-        <div className="flex flex-col gap-3">
-          {byWeight.map((c) => {
+        <CategoryBars
+          categories={byWeight.map((c) => {
             const tone = categoryScoreTone(c.rawScore);
             const meaning = CATEGORY_SCORE_MEANING[c.categoryName];
-            const meaningText = meaning ? (tone === "green" ? meaning.strong : tone === "yellow" ? meaning.developing : meaning.weak) : "";
-            return (
-              <Card key={c.categoryId} className="cr-avoid-break flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-semibold text-[var(--cream)]">{c.categoryName}</span>
-                    <Badge tone="neutral">weight {c.weight}</Badge>
-                    {c.lowConfidence ? <Badge tone="yellow">Low confidence</Badge> : null}
-                  </div>
-                  <span className={cn("font-tabular text-[13px] font-semibold", TONE_CLASS[tone])}>{c.rawScore.toFixed(1)} / 10</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--hairline)]">
-                  <div className={cn("h-full rounded-full", TONE_BAR[tone])} style={{ width: `${Math.min(100, (c.rawScore / 10) * 100)}%` }} />
-                </div>
-                <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{meaningText}</p>
-              </Card>
-            );
+            return {
+              categoryId: c.categoryId,
+              categoryName: c.categoryName,
+              weight: c.weight,
+              rawScore: c.rawScore,
+              lowConfidence: c.lowConfidence,
+              meaning: meaning ? (tone === "green" ? meaning.strong : tone === "yellow" ? meaning.developing : meaning.weak) : undefined,
+            };
           })}
-        </div>
+        />
       </section>
 
       {/* 6. YOUR THREE BIGGEST CONSTRAINTS */}

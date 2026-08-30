@@ -792,6 +792,81 @@ given and this app has no verified facts about his background beyond
 running VERUS. Replace with real specifics when they're provided, same
 philosophy as the `VERUS_CONTACT` placeholder in the client report.
 
+**Visual overhaul — real product visuals, layout variety, expanded
+content, restrained motion (Stage 24)**. The marketing site's original
+pass (above) was every section centered with no visuals; this stage fixed
+that without touching the locked design tokens or positioning language.
+
+*Hero visuals are the real report components, not screenshots.*
+`BandScale`, `CategoryBars`, and `RankedBottleneckList` were extracted out
+of `ClientReportView.tsx`/`AssessmentReportView.tsx` into standalone,
+prop-driven components under `modules/assessments/` — both report views
+were refactored to import and render the SAME extracted components, so
+the marketing site can never visually drift from what a real client
+actually sees. `AnimatedScoreGauge` (`modules/marketing/animation/`) wraps
+the real `ScoreGauge` (unmodified, still used as-is by `QuickScanResult`)
+and RAF-drives its `score` prop from 0 to target on scroll-in, rather than
+duplicating the SVG. `marketing/sampleAssessment.ts` is the one fictional
+dataset on the site — real category names/weights and real band
+thresholds, but the per-category scores and the resulting enterprise
+score/band/bottleneck ranking are all computed programmatically through
+the actual scoring formulas (`categoryScore/10*weight` summed;
+`(10-score)*weight` for bottleneck impact), never a hand-picked number, so
+it can't be internally inconsistent under scrutiny. `ReportPreviewFrame`
+composes `AnimatedScoreGauge` + `RankedBottleneckList` against that sample
+data inside a CSS 3D-tilted panel (`[perspective:1600px]` +
+`rotateY/rotateX`, no library) as the "shown at an angle" report preview.
+Case studies deliberately got NO fabricated chart/score against the real
+RBL Safety/Radiant Moments records — attaching sample data to a real
+client would misrepresent an actual score; their expansion (a new
+`situation` field, full Built/Changed layout) is real content only.
+
+*Layout variety*: `TwoColSection` (visual/text, `reverse` to flip),
+`PullQuote`, and `StatBand` are the new alternating-layout primitives used
+across Home/What We Do/The Assessment in place of "centered heading over
+cards"; background plane alternates between the base gradient and
+`--surface` per section so sections read as distinct bands.
+
+*Motion*: `modules/marketing/animation/` — `useInView` (one-shot
+`IntersectionObserver`, disconnects after first trigger),
+`FadeUp` (opacity/translate on scroll-in), `AnimatedNumber` (RAF count-up,
+ease-out cubic), all respecting `prefers-reduced-motion` (both a JS
+`matchMedia` check and Tailwind's `motion-reduce:` variant) — reduced
+motion jumps straight to the end state, never gets stuck mid-animation.
+Home, The Assessment, Case Studies, and What We Do got full content and
+layout rewrites; Build Packages, Software Systems & Support, About, and
+Contact got the `FadeUp` motion treatment applied for site-wide
+consistency but no content or layout changes, since they weren't named in
+this stage's content-expansion scope.
+
+*Content*: Home added a plain-spoken who-this-is-for/who-this-is-not-for
+section and a real 6-question FAQ (`WHO_THIS_IS_FOR`/
+`WHO_THIS_IS_NOT_FOR`/`FAQ_ITEMS` in `positioning.ts`) via a client-side
+`FaqAccordion`. The Assessment page shows one real seeded question
+(`SAMPLE_QUESTION` in `sampleAssessment.ts`) with all four answer choices,
+plus an explanation of the 0-3 answer ladder. What We Do added a
+per-build-category breakdown (websites/software/SOPs/dashboards/
+automations/documentation/ongoing support), each with concrete
+`includes` bullets, alternating sides via `TwoColSection`.
+
+**Verifying the report-view refactor against real data**: because
+`BandScale`/`CategoryBars`/`RankedBottleneckList` now back BOTH the
+marketing site and the one real completed Full Assessment in the database
+(RBL Safety LLC), the standing no-Playwright rule's usual verification
+(typecheck/build/curl) can't render an authenticated internal page. Closed
+that gap with a one-off script (written under the project root, deleted
+before commit) using `renderToReadableStream` — not `renderToStaticMarkup`,
+which can't await async Server Components like `BrandMark` — to render
+`ClientReportView` and `RankedBottleneckList` directly against
+`getAssessmentReport()`'s real output for RBL Safety LLC via the admin
+client, confirming full output length, all ten category names, the band
+scale, and the ranked list all render correctly, and that no internal-only
+string (`Save`/`Delete`/`Override`) leaks into the client-facing view.
+This is direct DB-backed server rendering, not a browser or screenshot —
+consistent with the standing verification rules, and the closest
+equivalent to a real request this app's rules allow for a page a live curl
+can't reach.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
