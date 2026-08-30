@@ -11,8 +11,8 @@ import { SAMPLE_SCORE, SAMPLE_BAND_LABEL, SAMPLE_BOTTLENECKS } from "./sampleAss
  */
 export function ReportPreviewFrame() {
   return (
-    <div className="[perspective:1600px]">
-      <div className="glass-panel-strong fade-scale-in mx-auto max-w-md p-6 [transform:rotateY(-8deg)_rotateX(3deg)] sm:p-8">
+    <div className="[perspective:1100px]">
+      <div className="glass-panel-strong fade-scale-in mx-auto max-w-md p-6 [transform:rotateY(-16deg)_rotateX(6deg)] [box-shadow:32px_40px_70px_-24px_rgba(0,0,0,0.65)] sm:p-8">
         <div className="mb-5 flex items-center justify-between">
           <span className="section-label text-[var(--gold-light)]">Sample Business Assessment</span>
           <span className="text-[10px] text-[var(--muted)]">Illustrative</span>

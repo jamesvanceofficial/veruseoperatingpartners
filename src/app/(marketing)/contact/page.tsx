@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+      <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <span className="section-label text-[var(--gold-light)]">Contact</span>
         </FadeUp>

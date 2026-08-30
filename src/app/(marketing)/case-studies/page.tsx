@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function CaseStudiesPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-24">
+      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
           <span className="section-label text-[var(--gold-light)]">Case Studies</span>
         </FadeUp>
@@ -34,7 +34,7 @@ export default function CaseStudiesPage() {
 
       {CASE_STUDIES.map((cs, i) => (
         <section key={cs.slug} className={i % 2 === 1 ? "border-y border-[var(--hairline)] bg-[var(--surface)]" : undefined}>
-          <div className="page-container flex flex-col gap-8 py-16 sm:py-20">
+          <div className="page-container flex flex-col gap-8 py-11 sm:py-14">
             <FadeUp>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-tabular text-[13px] text-[var(--gold-light)]">{String(i + 1).padStart(2, "0")}</span>
@@ -90,7 +90,7 @@ export default function CaseStudiesPage() {
         </section>
       ))}
 
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+      <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <SectionHeading eyebrow="Next" title="Want to know what a build looks like for your business?" align="center" />
         </FadeUp>

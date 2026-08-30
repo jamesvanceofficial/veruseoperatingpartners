@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-24">
+      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
           <span className="section-label text-[var(--gold-light)]">About</span>
         </FadeUp>
@@ -34,7 +34,7 @@ export default function AboutPage() {
       </section>
 
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col gap-8 py-16 sm:py-20">
+        <div className="page-container flex flex-col gap-8 py-11 sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="The Approach" title="Not advice from the sidelines" />
           </FadeUp>
@@ -72,7 +72,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+      <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
             Start with a real look at what&apos;s holding your business back.

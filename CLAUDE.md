@@ -53,13 +53,18 @@ empty shell if one was explicitly asked for, no speculative schema, no
 
 ## Standing rules
 
-- Never use Playwright, Puppeteer, headless browsers, or screenshots to
-  verify work. Verification is limited to: `npm run typecheck`,
-  `npm run build`, `curl` for status codes, reading files, and direct
-  database queries. James does the visual checking.
+- The no-browser rule is scoped, not absolute. For VISUAL AND DESIGN work
+  on the marketing site and any client-facing page, Playwright MAY be
+  installed and used to screenshot pages and view them, so design output
+  can be judged and corrected directly rather than guessed at from markup.
+  For routine functional verification — does it compile, does it build,
+  does the URL respond, is the data right — the old rule still stands:
+  `npm run typecheck`, `npm run build`, `curl` for status codes, reading
+  files, and direct database queries, never a screenshot. Don't reach for
+  Playwright to confirm a route returns 200 or a field saved correctly —
+  only to judge how something actually looks.
 - No background agents. Work in the foreground so failures surface
   immediately.
-- Do not install browser-testing packages.
 
 ## Naming / hosting (decided — do not deviate)
 
@@ -866,6 +871,48 @@ This is direct DB-backed server rendering, not a browser or screenshot —
 consistent with the standing verification rules, and the closest
 equivalent to a real request this app's rules allow for a page a live curl
 can't reach.
+
+**Playwright visual QA pass (Stage 25)** — the no-browser rule was scoped
+(see Standing Rules) to allow Playwright for judging and fixing visual
+design specifically. `playwright` is now a devDependency; its Chromium
+browser and system deps are installed in this container
+(`npx playwright install --with-deps chromium`), never Docker-labeled or
+added to the production image — it's a local dev/QA tool only, not a
+runtime dependency. Screenshotting every marketing page (plus `/scan`)
+full-page at 1440px and 375px surfaced three real defects invisible to
+typecheck/build/curl: (1) `what-we-do`'s seven build-category visuals were
+empty glass-panel boxes holding only a number and a title — replaced with
+real hand-drawn SVG line-art diagrams in `CategoryIcons.tsx` (a browser
+frame, an app window, stacked SOP documents, a bar/line dashboard chart,
+connected automation nodes, a document, a shield-check), stroked in the
+locked brand tokens, never a stock photo; (2) `/scan`'s wrapper forced
+`min-h-screen` with top-aligned content, leaving a large dead gap below a
+short form on any viewport taller than the content — fixed by keeping the
+viewport-height wrapper (a `min-h-full` percentage-based wrapper doesn't
+resolve against `body`'s own `min-h-full`, so switching to that quietly
+reintroduced the bug — viewport units were the correct fix) but centering
+the `<main>` content vertically within it (`flex-1 justify-center`) so the
+empty space reads as intentional whitespace around a centered form, not a
+broken layout; (3) the hero `ReportPreviewFrame`'s "shown at an angle" 3D
+tilt (`rotateY/rotateX`) was too subtle at -8°/3° to read as intentional —
+increased to -16°/6° with a stronger directional drop-shadow. Also
+tightened section vertical padding/gaps across every marketing page
+(`py-16 sm:py-20/24` → `py-11/12 sm:py-14/16` site-wide, `what-we-do`'s
+per-category row `gap-16` → `gap-10`) since the original spacing, while
+individually reasonable, compounded into excessive dead space page over
+page. **Screenshot-capture artifacts that were investigated and confirmed
+NOT real bugs, so they were not "fixed" in application code**: a single
+instant `window.scrollTo` jump leaves most below-the-fold
+`FadeUp`/`AnimatedNumber`/`AnimatedScoreGauge` elements stuck at their
+pre-animation `opacity-0` state in a screenshot (real visitors scroll
+gradually, so this never happens to them) — worked around in the
+screenshot script with a stepped scroll, not a code change; and a faint
+duplicate of the footer's copyright line renders near the top of some
+very-tall (2000px+) single-viewport Chromium screenshots — confirmed via
+`elementFromPoint` and a full DOM text search that no such element exists
+at that position or anywhere but the real footer, so this is a headless-
+Chromium tile-rendering quirk specific to unusually tall single-frame
+captures, not a rendering bug in the app.
 
 ## Migrations rule
 

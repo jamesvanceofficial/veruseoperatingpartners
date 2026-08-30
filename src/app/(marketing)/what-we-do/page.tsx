@@ -6,6 +6,15 @@ import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { PullQuote } from "@/modules/marketing/PullQuote";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { POSITIONING, HOW_IT_WORKS_STEPS } from "@/modules/marketing/positioning";
+import {
+  WebsiteIcon,
+  SoftwareIcon,
+  SopIcon,
+  DashboardIcon,
+  AutomationIcon,
+  DocumentationIcon,
+  SupportIcon,
+} from "@/modules/marketing/CategoryIcons";
 
 export const metadata: Metadata = {
   title: "What We Do | VERUS Operating Company",
@@ -21,6 +30,7 @@ const BUILD_CATEGORIES = [
   {
     index: "01",
     title: "Websites",
+    icon: WebsiteIcon,
     description: "A site built to generate and convert leads, not just describe the business.",
     includes: [
       "Built to convert visitors into inquiries, not just look professional",
@@ -31,6 +41,7 @@ const BUILD_CATEGORIES = [
   {
     index: "02",
     title: "Software",
+    icon: SoftwareIcon,
     description: "The core system running day-to-day operations — CRM, scheduling, tracking, whatever the business actually needs.",
     includes: [
       "Scoped to the specific bottleneck the assessment found, not a generic package",
@@ -41,6 +52,7 @@ const BUILD_CATEGORIES = [
   {
     index: "03",
     title: "SOPs",
+    icon: SopIcon,
     description: "Documented, step-by-step processes anyone on the team can follow — not tribal knowledge in one person's head.",
     includes: [
       "Written from how the work actually happens, not a generic template",
@@ -51,6 +63,7 @@ const BUILD_CATEGORIES = [
   {
     index: "04",
     title: "Dashboards",
+    icon: DashboardIcon,
     description: "Real visibility into what's actually happening in the business, not a gut feeling.",
     includes: [
       "Built around the numbers that actually predict trouble, not vanity metrics",
@@ -61,6 +74,7 @@ const BUILD_CATEGORIES = [
   {
     index: "05",
     title: "Automations",
+    icon: AutomationIcon,
     description: "Repetitive work taken off a person's plate and handled by the system instead.",
     includes: [
       "Targeted at the specific repetitive tasks the business flagged, not automation for its own sake",
@@ -71,6 +85,7 @@ const BUILD_CATEGORIES = [
   {
     index: "06",
     title: "Documentation",
+    icon: DocumentationIcon,
     description: "Everything written down — so the business doesn't depend on one person's memory.",
     includes: [
       "Pricing, process, and who-does-what captured in writing, not in someone's head",
@@ -81,6 +96,7 @@ const BUILD_CATEGORIES = [
   {
     index: "07",
     title: "Ongoing Support",
+    icon: SupportIcon,
     description: "We stay embedded, keeping what we built running and current as the business changes.",
     includes: [
       "Hosting, uptime, security patching, and backups handled, not left to the client",
@@ -93,7 +109,7 @@ const BUILD_CATEGORIES = [
 export default function WhatWeDoPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-24">
+      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
           <span className="section-label text-[var(--gold-light)]">What We Do</span>
         </FadeUp>
@@ -111,7 +127,7 @@ export default function WhatWeDoPage() {
       </section>
 
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container py-16 sm:py-20">
+        <div className="page-container py-11 sm:py-14">
           <FadeUp>
             <PullQuote>{POSITIONING.systemsAndProcesses}</PullQuote>
           </FadeUp>
@@ -119,16 +135,16 @@ export default function WhatWeDoPage() {
       </section>
 
       {/* PER-CATEGORY BUILD BREAKDOWN — alternating sides */}
-      <div className="page-container flex flex-col gap-16 py-16 sm:py-20">
+      <div className="page-container flex flex-col gap-10 py-14 sm:py-16">
         {BUILD_CATEGORIES.map((cat, i) => (
           <TwoColSection
             key={cat.title}
             reverse={i % 2 === 1}
             visual={
               <FadeUp>
-                <div className="glass-panel flex aspect-square max-w-[280px] flex-col items-center justify-center gap-2 p-8 sm:mx-0 mx-auto">
-                  <span className="font-tabular text-[15px] text-[var(--gold-light)]">{cat.index}</span>
-                  <span className="text-center text-[26px] font-semibold leading-tight text-[var(--cream)]">{cat.title}</span>
+                <div className="glass-panel relative flex aspect-square max-w-[240px] flex-col items-center justify-center p-8 sm:mx-0 mx-auto">
+                  <span className="absolute left-4 top-4 font-tabular text-[12px] text-[var(--gold-light)]">{cat.index}</span>
+                  <cat.icon className="h-28 w-28" />
                 </div>
               </FadeUp>
             }
@@ -154,7 +170,7 @@ export default function WhatWeDoPage() {
       </div>
 
       <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col gap-10 py-16 sm:py-20">
+        <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="How We Work" title="Worst bottleneck first" align="center" />
           </FadeUp>
@@ -172,7 +188,7 @@ export default function WhatWeDoPage() {
         </div>
       </section>
 
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+      <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <SectionHeading eyebrow="Who We Serve" title="Founder-led, $1M–$25M, industry agnostic" align="center" />
         </FadeUp>

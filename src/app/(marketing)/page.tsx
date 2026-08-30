@@ -31,7 +31,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* HERO — text left, live report preview right */}
-      <section className="page-container py-16 sm:py-24">
+      <section className="page-container py-12 sm:py-16">
         <TwoColSection
           visual={
             <FadeUp>
@@ -67,7 +67,7 @@ export default function HomePage() {
 
       {/* THE PROBLEM — visual left (real category bars), text right */}
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container py-16 sm:py-20">
+        <div className="page-container py-11 sm:py-14">
           <TwoColSection
             visual={
               <FadeUp>
@@ -93,7 +93,7 @@ export default function HomePage() {
       </section>
 
       {/* WHAT VERUS BUILDS — full-width numbers band */}
-      <section className="page-container flex flex-col gap-12 py-16 sm:py-20">
+      <section className="page-container flex flex-col gap-12 py-11 sm:py-14">
         <FadeUp>
           <SectionHeading eyebrow="What VERUS Builds" title="Systems and processes — always both" align="center" />
         </FadeUp>
@@ -121,7 +121,7 @@ export default function HomePage() {
 
       {/* HOW IT WORKS */}
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col gap-10 py-16 sm:py-20">
+        <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="How It Works" title="Four steps, start to finish" />
           </FadeUp>
@@ -140,7 +140,7 @@ export default function HomePage() {
       </section>
 
       {/* THE ASSESSMENT AS ENTRY POINT — text left, band scale right */}
-      <section className="page-container py-16 sm:py-20">
+      <section className="page-container py-11 sm:py-14">
         <TwoColSection
           reverse
           visual={
@@ -178,7 +178,7 @@ export default function HomePage() {
 
       {/* PULL QUOTE */}
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container py-16 sm:py-20">
+        <div className="page-container py-11 sm:py-14">
           <FadeUp>
             <PullQuote>{POSITIONING.approach}</PullQuote>
           </FadeUp>
@@ -186,7 +186,7 @@ export default function HomePage() {
       </section>
 
       {/* PROOF POINTS — visual left (ranked bottleneck list), case studies below */}
-      <section className="page-container flex flex-col gap-14 py-16 sm:py-20">
+      <section className="page-container flex flex-col gap-10 py-11 sm:py-14">
         <TwoColSection
           visual={
             <FadeUp>
@@ -227,7 +227,7 @@ export default function HomePage() {
 
       {/* WHO THIS IS FOR / NOT FOR */}
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col gap-10 py-16 sm:py-20">
+        <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="Fit" title="Who this is for — and who it isn't" align="center" />
           </FadeUp>
@@ -263,7 +263,7 @@ export default function HomePage() {
       </section>
 
       {/* FAQ */}
-      <section className="page-container flex flex-col gap-10 py-16 sm:py-20">
+      <section className="page-container flex flex-col gap-10 py-11 sm:py-14">
         <FadeUp>
           <SectionHeading eyebrow="Questions" title="Straight answers" align="center" />
         </FadeUp>
@@ -276,7 +276,7 @@ export default function HomePage() {
 
       {/* FINAL CTA */}
       <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+        <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
             <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
               Find out what&apos;s actually holding your company back.

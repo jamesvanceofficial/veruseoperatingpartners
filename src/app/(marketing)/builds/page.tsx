@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function BuildsPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-24">
+      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
           <span className="section-label text-[var(--gold-light)]">Build Packages</span>
         </FadeUp>
@@ -37,7 +37,7 @@ export default function BuildsPage() {
         </FadeUp>
       </section>
 
-      <section className="page-container flex flex-col gap-10 pb-16 sm:pb-20">
+      <section className="page-container flex flex-col gap-10 pb-11 sm:pb-14">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {BUILD_TIERS.filter((t) => t !== "custom").map((tier, i) => {
             const info = BUILD_TIER_INFO[tier];
@@ -77,7 +77,7 @@ export default function BuildsPage() {
       </section>
 
       <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+        <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="Every Build Includes" title="Support and systems that keep running after handover" align="center" />
           </FadeUp>
@@ -92,7 +92,7 @@ export default function BuildsPage() {
         </div>
       </section>
 
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+      <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
             Your exact tier and price come from your Business Assessment.

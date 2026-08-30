@@ -18,7 +18,7 @@ export default async function ScanPage() {
         </a>
       </header>
 
-      <main className="page-container flex flex-1 flex-col gap-6 pb-16">
+      <main className="page-container flex flex-1 flex-col justify-center gap-6 py-10">
         <div>
           <span className="section-label">Free Quick Scan</span>
           <h1 className="mt-1 text-[22px] font-semibold text-[var(--cream)]">Where does your business actually stand?</h1>

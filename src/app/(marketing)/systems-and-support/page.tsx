@@ -26,7 +26,7 @@ const HEADING_LABELS: Record<"keepingItRunning" | "keepingItCurrent" | "keepingI
 export default function SystemsAndSupportPage() {
   return (
     <div className="flex flex-col">
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-24">
+      <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
           <span className="section-label text-[var(--gold-light)]">{SUPPORT_SUBSCRIPTION_NAME}</span>
         </FadeUp>
@@ -44,7 +44,7 @@ export default function SystemsAndSupportPage() {
         </FadeUp>
       </section>
 
-      <section className="page-container flex flex-col gap-6 pb-16 sm:pb-20">
+      <section className="page-container flex flex-col gap-6 pb-11 sm:pb-14">
         {SUPPORT_TIERS.filter((t) => t !== "custom").map((tier, i) => {
           const info = SUPPORT_TIER_INFO[tier];
           return (
@@ -86,7 +86,7 @@ export default function SystemsAndSupportPage() {
       </section>
 
       <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+        <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="Included With Every Build" title="Support tier is scoped by the Business Assessment" align="center" />
           </FadeUp>

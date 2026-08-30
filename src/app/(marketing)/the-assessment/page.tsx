@@ -37,7 +37,7 @@ export default async function TheAssessmentPage() {
   return (
     <div className="flex flex-col">
       {/* HERO — text left, live score/band visual right */}
-      <section className="page-container py-16 sm:py-24">
+      <section className="page-container py-12 sm:py-16">
         <TwoColSection
           visual={
             <FadeUp>
@@ -78,7 +78,7 @@ export default async function TheAssessmentPage() {
 
       {categories.length > 0 ? (
         <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-          <div className="page-container flex flex-col gap-10 py-16 sm:py-20">
+          <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
             <FadeUp>
               <SectionHeading
                 eyebrow="What It Covers"
@@ -104,7 +104,7 @@ export default async function TheAssessmentPage() {
       ) : null}
 
       {/* HOW SCORING WORKS — a real sample question, visual left */}
-      <section className="page-container py-16 sm:py-20">
+      <section className="page-container py-11 sm:py-14">
         <TwoColSection
           visual={
             <FadeUp>
@@ -146,7 +146,7 @@ export default async function TheAssessmentPage() {
 
       {/* THE RESULT — ranked bottleneck list visual, text right */}
       <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container py-16 sm:py-20">
+        <div className="page-container py-11 sm:py-14">
           <TwoColSection
             reverse
             visual={
@@ -187,7 +187,7 @@ export default async function TheAssessmentPage() {
         </div>
       </section>
 
-      <section className="page-container flex flex-col items-center gap-6 py-16 text-center sm:py-20">
+      <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
             Not ready for the full assessment? Start with the free scan.
