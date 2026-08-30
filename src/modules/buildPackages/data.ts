@@ -4,6 +4,7 @@ import { BUILD_TIER_INFO } from "@/modules/assessments/buildTiers";
 import { getOpportunityById } from "@/modules/opportunities/data";
 import { transitionStage } from "@/modules/opportunities/stageTransition";
 import { generateBuildPackagePlan } from "./generatePlan";
+import { scopeItemStatusToTaskStatus } from "@/modules/tasks/scopeItemSync";
 import type { PaymentStatus } from "./labels";
 import type { BuildPackage, BuildPackageDetail, BuildPackageListRow, BuildPackagePhaseDetail, BuildPackageScopeItem } from "./types";
 
@@ -125,6 +126,24 @@ export async function getLatestHandoverDateForAssessment(supabase: SupabaseClien
     .maybeSingle();
   if (error) throw error;
   return (data?.handover_date as string | null) ?? null;
+}
+
+/** Powers the project form's org-dependent build-package dropdown. */
+export async function listBuildPackageOptions(supabase: SupabaseClient, orgId: string): Promise<{ id: string; label: string }[]> {
+  const { data, error } = await supabase.from("build_packages").select("id, tier").eq("org_id", orgId).order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((r) => ({ id: r.id as string, label: BUILD_TIER_INFO[r.tier as keyof typeof BUILD_TIER_INFO].label }));
+}
+
+/** Powers the project form's build-package-dependent phase dropdown. */
+export async function listPhaseOptions(supabase: SupabaseClient, buildPackageId: string): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase
+    .from("build_package_phases")
+    .select("id, name")
+    .eq("build_package_id", buildPackageId)
+    .order("phase_number", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as { id: string; name: string }[];
 }
 
 // ===========================================================
@@ -285,9 +304,22 @@ export async function updateBuildPackage(admin: SupabaseClient, id: string, inpu
   if (error) throw error;
 }
 
+/** Also syncs any task generated from this scope item (Stage 10 requirement 6) — a direct write, never calling back into updateTask(), so the two functions can't loop. */
 export async function updateScopeItemStatus(admin: SupabaseClient, itemId: string, status: string): Promise<void> {
   const { error } = await admin.from("build_package_scope_items").update({ status }).eq("id", itemId);
   if (error) throw error;
+
+  const mappedTaskStatus = scopeItemStatusToTaskStatus(status as Parameters<typeof scopeItemStatusToTaskStatus>[0]);
+  const { data: linkedTask, error: taskLookupError } = await admin.from("tasks").select("id, completed_at").eq("scope_item_id", itemId).maybeSingle();
+  if (taskLookupError) throw taskLookupError;
+  if (linkedTask) {
+    const completedAt = mappedTaskStatus === "complete" ? (linkedTask.completed_at ?? new Date().toISOString()) : null;
+    const { error: taskUpdateError } = await admin
+      .from("tasks")
+      .update({ status: mappedTaskStatus, completed_at: completedAt })
+      .eq("id", linkedTask.id);
+    if (taskUpdateError) throw taskUpdateError;
+  }
 }
 
 // ===========================================================

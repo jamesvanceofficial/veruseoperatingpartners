@@ -546,6 +546,78 @@ then — verified both ways directly (rendered the actual report component
 tree before and after setting a real handover_date and confirmed the text
 switches over correctly, not assumed from the ternary alone).
 
+## Projects and Tasks (Stage 10)
+
+`src/modules/projects/` and `src/modules/tasks/` — the actual delivery
+work, one project per build-package phase, one task per scope item.
+
+**Generation** (`generateProjectsFromBuildPackage()` in `projects/data.ts`,
+triggered by a single "Generate Projects" button on the build package
+detail page, staff only): one project per phase (name, `build_package_id`,
+`build_package_phase_id`, `category_id` — resolved by looking up
+`assessment_categories` by the phase's `category_name`, null for
+scope-lock/portal/handover/custom phases, which have no category), one
+task per scope item in that phase (title = the scope item's description,
+`scope_item_id` set, status carried over from the scope item's CURRENT
+status via `scopeItemStatusToTaskStatus()` — not always blank, since a
+build package might already have some progress recorded before Generate
+Projects is ever clicked). Phase week ranges (1-based, relative) become
+real calendar dates via `phaseDatesFrom()`, anchored to the build
+package's own `start_date` — a project/task gets real
+`start_date`/`due_date` only when that anchor exists; with no
+`start_date` set yet, dates stay null rather than guessing (Stage 10's
+literal "carrying the phase week ranges across as dates where they
+exist"). Blocked from running twice on the same build package
+(`getProjectCountForBuildPackage() > 0` → rejected) so re-clicking never
+piles up duplicates; a second, independently-created build package (e.g.
+after Stage 9's delete-and-recreate flow) generates its own fully
+separate set of projects with no cross-contamination — verified directly.
+
+**The two-way status sync (requirement 6)** is the one place this stage
+has real bidirectional logic, not just CRUD: `updateTask()`
+(`tasks/data.ts`) and `updateScopeItemStatus()` (`buildPackages/data.ts`)
+each do a single direct write to the OTHER table when the linked side
+exists — neither ever calls back into the other, so they can't loop.
+`tasks/scopeItemSync.ts` holds the one-way-each mapping: task
+`open`/`in_progress`/`complete` maps cleanly to scope item
+`not_started`/`in_progress`/`complete` in both directions; a task set to
+`blocked` or `cancelled` has no clean scope-item equivalent, so it leaves
+the scope item exactly as it was rather than forcing a guess onto
+build-tracking data (verified directly: marking a task "blocked" does not
+touch its scope item's status). Deleting a task never deletes its linked
+scope item (only unlinks by removing the task) — the delete-confirmation
+message says so explicitly when a task has one.
+
+**Completion percentage** (a project field, per requirement 2) is always
+computed at read time from its tasks — `complete / total`, 0 with no
+tasks — never stored, same convention as a build package's own progress
+rollup.
+
+**Pages**: `/projects` (list, filterable by client/status),
+`/projects/[id]` (detail — completion/owner/dates Stat row, build
+package/phase/category fields, then its task list with an inline
+staff-only status `<select>` per task that PATCHes immediately and
+triggers the scope-item sync same as anywhere else), `/projects/new` +
+`/projects/[id]/edit` (one `ProjectForm`, org/build-package/phase are a
+cascading dependent-dropdown chain exactly like `OpportunityForm`'s
+org→contacts pattern — picking an org loads its build packages via
+`GET /api/organizations/[id]/build-packages`, picking a build package
+loads its phases via `GET /api/build-packages/[id]/phases`); `/tasks`
+(list with "My Tasks"/"Overdue" quick-filter chips plus org and build
+package dropdowns — a build-package filter resolves through that
+package's projects since tasks don't carry `build_package_id` directly),
+`/tasks/new` + `/tasks/[id]/edit` (one `TaskForm`; tasks have no separate
+detail page — edit doubles as it, per the same reasoning as
+`build_packages`, and carries the `DangerZone` for delete). Organizations
+gained real `projects`/`tasks` tabs (`ORG_TABS`/`BUILT_TAB_SLUGS` in
+`organizations/tabs.ts`).
+
+**Delete** (staff only, `DangerZone`, same style as everywhere else):
+a project's confirm message names its task count (tasks cascade via the
+existing `project_id` FK, verified directly); a task's confirm message
+flags when it's tracking a build-package scope item, since deleting the
+task does NOT delete that scope item — only removes the link.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
@@ -787,12 +859,21 @@ today, no exceptions.
   that generated it), amount, event_date, status, revenue_transaction_id.
   Read = staff + the vendor's own org only (never the source client's org —
   would leak the vendor's commission rate).
-- `projects` — org_id, build_package_id, name, description, status, dates,
-  owner.
+- `projects` — org_id, build_package_id, `build_package_phase_id`/
+  `category_id` (Stage 10, both nullable FKs — see the Projects and Tasks
+  section), name, description, status, `priority` (Stage 10, added — the
+  original migration only had it on tasks), owner, start_date, `due_date`
+  (Stage 10 — the original `target_end_date`/`actual_end_date` were never
+  used anywhere and are left as unused leftovers rather than repurposed,
+  same reasoning as `build_packages.actual_completion_date` in Stage 9),
+  completion percentage always computed at read time from its tasks,
+  never stored.
 - `tasks` — project_id (nullable), org_id (nullable — supports purely
   internal tasks), title, description, assignee, status, priority,
-  due_date, completed_at. Staff-only write, no exceptions (see decision
-  above re: Stage 17).
+  due_date, completed_at, `notes` (Stage 10, added), `scope_item_id`
+  (Stage 10, nullable FK to `build_package_scope_items` — see the
+  Projects and Tasks section for the two-way status sync this drives).
+  Staff-only write, no exceptions (see decision above re: Stage 17).
 - `meetings` — org_id (nullable — supports internal meetings), opportunity_id,
   project_id, title, meeting_type (discovery/check_in/qbr/internal), agenda,
   notes, decisions, created_by.

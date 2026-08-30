@@ -8,6 +8,9 @@ import { BUILD_PACKAGE_STATUS_LABELS, BUILD_PACKAGE_STATUS_TONE, PAYMENT_STATUS_
 import { BuildPackagePhaseCard } from "@/modules/buildPackages/BuildPackagePhaseCard";
 import { BUILD_TIER_INFO, computeFirstBillingDate, STABILIZATION_PERIOD_DAYS } from "@/modules/assessments/buildTiers";
 import { ASSESSMENT_TYPE_LABELS } from "@/modules/assessments/labels";
+import { listProjectsForBuildPackage } from "@/modules/projects/data";
+import { PROJECT_STATUS_LABELS, PROJECT_STATUS_TONE } from "@/modules/projects/labels";
+import { GenerateProjectsButton } from "@/modules/projects/GenerateProjectsButton";
 import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { Stat } from "@/shared/ui/Stat";
@@ -37,6 +40,8 @@ export default async function BuildPackageDetailPage({ params }: { params: Promi
   const user = await getSessionUser();
   const profileResult = user ? await getMyProfile(user.id) : ({ status: "not_configured" } as const);
   const canEdit = profileResult.status === "ok" && isVerusStaff(profileResult.profile.role);
+
+  const generatedProjects = await listProjectsForBuildPackage(supabase, id);
 
   let deleteConfirmMessage = "";
   if (canEdit) {
@@ -117,6 +122,33 @@ export default async function BuildPackageDetailPage({ params }: { params: Promi
           </Card>
         ) : (
           phases.map((phase) => <BuildPackagePhaseCard key={phase.id} buildPackageId={id} phase={phase} canEdit={canEdit} />)
+        )}
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[14px] font-semibold text-[var(--cream)]">Projects</h2>
+          {canEdit && generatedProjects.length === 0 ? <GenerateProjectsButton buildPackageId={id} /> : null}
+        </div>
+        {generatedProjects.length === 0 ? (
+          <Card>
+            <p className="text-[12.5px] text-[var(--muted)]">
+              No projects generated yet — one click turns each phase into a project and each scope item into a task.
+            </p>
+          </Card>
+        ) : (
+          <Card className="flex flex-col divide-y divide-[var(--hairline)]">
+            {generatedProjects.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                <Link href={`/projects/${p.id}`} className="text-[12.5px] text-[var(--cream)] hover:text-[var(--gold-light)]">
+                  {p.name}
+                </Link>
+                <Badge tone={PROJECT_STATUS_TONE[p.status as keyof typeof PROJECT_STATUS_TONE]}>
+                  {PROJECT_STATUS_LABELS[p.status as keyof typeof PROJECT_STATUS_LABELS]}
+                </Badge>
+              </div>
+            ))}
+          </Card>
         )}
       </div>
 
