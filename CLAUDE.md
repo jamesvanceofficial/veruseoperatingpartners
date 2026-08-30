@@ -449,10 +449,21 @@ already carry their own itemized `whatWeDo` deliverables per bottleneck
 category (plus Foundation & Scope Lock / Portal / Training & Handover) —
 exactly the granularity a trackable build checklist needs. So
 `generateBuildPackagePlan()` in `generatePlan.ts` (pure function, no DB)
-turns each phase's `whatWeDo` items into that phase's scope items,
-categorized into the six `scope_category` values by
-`categorizeScopeText()` (keyword match: website/sop/document/dashboard/
-automation/subscription, else software). Automation deliverables from the
+turns each phase's `whatWeDo` items into that phase's scope items.
+**Categorization (fixed after an audit of a real generated package found
+nearly every item landing on "software" by default)**: every deliverable
+string this app can ever generate is static copy — `reportCopy.ts`'s
+`CATEGORY_BUILD_DELIVERABLES` per bottleneck category, the fixed
+scope-lock/portal/handover phase text in `scopeOfWork.ts`, or a generated
+"`<automation task> automation`" line — never freeform text. So
+`categorizeScopeItem()` maps every one of those known strings to its
+actual category BY HAND in an exact-match table (`DELIVERABLE_CATEGORY_MAP`
+in `generatePlan.ts`), across all nine `scope_category` values (website,
+software, systems_process, sop_documents, automation,
+dashboards_reporting, people_hiring, training_handover, portal) — a
+keyword/phase-kind guess only fires as a defensive fallback for a string
+that isn't in the table (e.g. if `reportCopy.ts`'s copy changes later),
+and should never fire for anything generated today. Automation deliverables from the
 business profile (Stage 18) don't correspond to any bottleneck-category
 phase, so they attach to Training & Handover, where automations actually
 get wired up and validated at the end of a build. The subscription line is
@@ -722,7 +733,10 @@ today, no exceptions.
   the schema itself hinting at that, would be a real trap for whoever
   reads this schema next.
 - `build_package_scope_items` — one row per tracked deliverable
-  (website/software/sop_documents/automation/dashboards/support),
+  (website/software/systems_process/sop_documents/automation/
+  dashboards_reporting/people_hiring/training_handover/portal — widened
+  from an original six-value set that let almost everything collapse into
+  "software"; see `categorizeScopeItem()` under Build Packages below),
   status (not_started/in_progress/complete), nested under a
   `build_package_phases` row via `phase_id` (Stage 9, `not null`, `on
   delete cascade`).

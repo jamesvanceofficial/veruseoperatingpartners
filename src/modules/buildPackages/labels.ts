@@ -32,16 +32,30 @@ export const SCOPE_ITEM_STATUS_TONE: Record<ScopeItemStatus, "neutral" | "yellow
   complete: "green",
 };
 
-export const SCOPE_CATEGORIES = ["website", "software", "sop_documents", "automation", "dashboards", "support"] as const;
+/** Widened after an audit found nearly every deliverable landing on "software" by default — see categorizeScopeText() in generatePlan.ts for the content-driven mapping that now covers all nine. */
+export const SCOPE_CATEGORIES = [
+  "website",
+  "software",
+  "systems_process",
+  "sop_documents",
+  "automation",
+  "dashboards_reporting",
+  "people_hiring",
+  "training_handover",
+  "portal",
+] as const;
 export type ScopeCategory = (typeof SCOPE_CATEGORIES)[number];
 
 export const SCOPE_CATEGORY_LABELS: Record<ScopeCategory, string> = {
   website: "Website",
   software: "Software",
+  systems_process: "Systems & Process",
   sop_documents: "SOPs & Documents",
   automation: "Automation",
-  dashboards: "Dashboards",
-  support: "Support",
+  dashboards_reporting: "Dashboards & Reporting",
+  people_hiring: "People & Hiring",
+  training_handover: "Training & Handover",
+  portal: "Portal",
 };
 
 /** Computed at read time from deposit_paid_at/balance_paid_at — never stored, same "derived, not redundant" convention as the assessment tier-override effective-value pattern. */
