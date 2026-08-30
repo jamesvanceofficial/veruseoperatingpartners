@@ -138,6 +138,13 @@ export async function listContactOptions(supabase: SupabaseClient, orgId: string
   return (data as ContactOption[]) ?? [];
 }
 
+/** Powers the meeting form's org-dependent "related opportunity" dropdown. */
+export async function listOpportunityOptions(supabase: SupabaseClient, orgId: string): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase.from("opportunities").select("id, name").eq("org_id", orgId).order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as { id: string; name: string }[];
+}
+
 /** Total pipeline value (everything but Lost) and a per-stage breakdown — always over the WHOLE pipeline, independent of any board/table filters. */
 export async function getPipelineStats(supabase: SupabaseClient): Promise<PipelineStats> {
   const { data, error } = await supabase.from("opportunities").select("stage, expected_value");

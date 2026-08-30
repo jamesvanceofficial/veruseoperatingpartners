@@ -618,6 +618,59 @@ existing `project_id` FK, verified directly); a task's confirm message
 flags when it's tracking a build-package scope item, since deleting the
 task does NOT delete that scope item — only removes the link.
 
+## Meetings and Accountability (Stage 11)
+
+`src/modules/meetings/` — every meeting is an executive operating record,
+not scratch notes: Agenda, Notes, Decisions, and Action Items are always
+four visually separate sections on the detail page (`RecordSection`
+components plus a dedicated `MeetingActionItemsPanel`), never one
+freeform blob.
+
+**Related record** is one of opportunity/build_package/project, at most
+one at a time — the form presents this as a single "Related to" type
+picker plus a dependent record dropdown (not three separate always-visible
+fields), reusing the exact cascading-dropdown pattern `OpportunityForm`
+established for org→contacts: picking a type fetches that org's records
+through the same lightweight option endpoints Stage 9/10 already built
+(`/api/organizations/[id]/opportunities`, `.../build-packages`,
+`.../projects`). `getMeetingDetail()` resolves whichever FK is set into
+one display label (e.g. "Build Package: Growth Build").
+
+**Attendees** are contacts, staff, or free-text guests in one list —
+`meeting_attendees` already had exactly this shape from the Stage-1
+foundation migrations (`contact_id`/`profile_id`/`display_name`), so this
+stage only needed the UI. Saving a meeting always replaces the full
+attendee list (`replaceAttendees()`: delete all, re-insert what's
+submitted) rather than diffing — the list is always small enough that a
+full replace is simpler and cannot drift.
+
+**Action items → tasks (requirement 3)**: `convertActionItemToTask()`
+carries description/assignee/due date straight into a new task (org_id
+and project_id inherited from the meeting), then stamps
+`meeting_action_items.linked_task_id` — idempotent, so re-clicking an
+already-converted item returns the existing task instead of creating a
+duplicate (verified directly). That link is forward-only (action item →
+task), so "linked back to the meeting it came from" is served by a
+reverse lookup instead of a second column: `getMeetingForTask()` queries
+`meeting_action_items` for a row whose `linked_task_id` matches, and the
+task's edit page shows an "Originated from meeting: X →" line when one
+exists. Deleting a meeting cascades its attendees and action items (both
+FK'd to `meeting_id` `on delete cascade`) but never touches a task an
+action item was already converted to — verified directly: delete the
+meeting, confirm the action item row is gone, confirm the task survives.
+
+**Pages**: `/meetings` (list, filterable by client/type),
+`/meetings/[id]` (detail — the executive-record layout above, plus
+attendee badges and the action items panel), `/meetings/new` +
+`/meetings/[id]/edit` (one `MeetingForm`). Organizations gained a real
+`meetings` tab. Delete is staff-only `DangerZone`, confirming with real
+attendee/action-item counts and stating plainly that an already-converted
+task is not affected.
+
+`formatDateTime()`/`toDatetimeLocalValue()` (new, in `shared/format.ts`)
+are the first date+time (not just date) helpers in the app — meetings are
+the first record type that needed a real time, not just a day.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
@@ -875,12 +928,25 @@ today, no exceptions.
   Projects and Tasks section for the two-way status sync this drives).
   Staff-only write, no exceptions (see decision above re: Stage 17).
 - `meetings` — org_id (nullable — supports internal meetings), opportunity_id,
-  project_id, title, meeting_type (discovery/check_in/qbr/internal), agenda,
-  notes, decisions, created_by.
+  `build_package_id` (Stage 11, added), project_id — at most one of these
+  three is expected set at a time (app-level convention, not a DB
+  constraint), title, meeting_type (Stage 11 replaced the original
+  four-value placeholder set with the real nine: discovery_call/
+  assessment_review/build_kickoff/weekly_client_meeting/
+  internal_verus_review/monthly_business_review/support_review/
+  build_review/sop_systems_review — table was empty in production so this
+  was a straight replacement, not a data migration), `scheduled_at`
+  (date+time in one timestamptz, no separate columns needed), agenda,
+  notes, decisions, `follow_up_date` (Stage 11, added), created_by.
 - `meeting_attendees` — meeting_id, contact_id (nullable), profile_id
-  (nullable), display_name (for attendees not in the system).
+  (nullable), display_name (for attendees not in the system). Already
+  matched Stage 11's requirements exactly when it shipped in the Stage-1
+  foundation migrations — no schema change needed, only a UI.
 - `meeting_action_items` — meeting_id, description, assignee, due_date,
-  status, linked_task_id (nullable promotion to a real task).
+  status, linked_task_id (nullable promotion to a real task — forward-only;
+  see the Meetings and Accountability section for how a task finds its
+  way back to the meeting it came from). Also already matched Stage 11's
+  requirements exactly — no schema change needed.
 - `kpi_definitions` — name, unit, scope (verus_internal/client),
   higher_is_better. `client`-scope defs are readable by all authenticated
   users; `verus_internal` defs are staff-only read.
