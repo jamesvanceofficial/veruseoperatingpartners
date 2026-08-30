@@ -289,3 +289,50 @@ export async function updateScopeItemStatus(admin: SupabaseClient, itemId: strin
   const { error } = await admin.from("build_package_scope_items").update({ status }).eq("id", itemId);
   if (error) throw error;
 }
+
+// ===========================================================
+// Delete — staff only. The source assessment is never touched: nothing
+// here writes to assessments/assessment_answers/assessment_category_scores,
+// so its scores, answers, and recommendation are exactly what they were,
+// and a fresh build package can be created from it immediately after.
+// ===========================================================
+
+export type BuildPackageDeletePreview = { phaseCount: number; scopeItemCount: number; itemsWithProgressCount: number };
+
+export async function getBuildPackageDeletePreview(supabase: SupabaseClient, buildPackageId: string): Promise<BuildPackageDeletePreview> {
+  const [phasesResult, itemsResult, progressResult] = await Promise.all([
+    supabase.from("build_package_phases").select("*", { count: "exact", head: true }).eq("build_package_id", buildPackageId),
+    supabase.from("build_package_scope_items").select("*", { count: "exact", head: true }).eq("build_package_id", buildPackageId),
+    supabase
+      .from("build_package_scope_items")
+      .select("*", { count: "exact", head: true })
+      .eq("build_package_id", buildPackageId)
+      .neq("status", "not_started"),
+  ]);
+  if (phasesResult.error) throw phasesResult.error;
+  if (itemsResult.error) throw itemsResult.error;
+  if (progressResult.error) throw progressResult.error;
+
+  return {
+    phaseCount: phasesResult.count ?? 0,
+    scopeItemCount: itemsResult.count ?? 0,
+    itemsWithProgressCount: progressResult.count ?? 0,
+  };
+}
+
+/** Deletes the package (phases/scope items cascade via their own FKs) and, if it was linked to an opportunity, moves that opportunity back to build_package_proposed — undoing the forward move creation made — logged in opportunity_stage_history like any other transition. */
+export async function deleteBuildPackage(admin: SupabaseClient, buildPackageId: string, changedBy: string): Promise<void> {
+  const { data: pkg, error: pkgError } = await admin.from("build_packages").select("opportunity_id").eq("id", buildPackageId).maybeSingle();
+  if (pkgError) throw pkgError;
+
+  const { error: deleteError } = await admin.from("build_packages").delete().eq("id", buildPackageId);
+  if (deleteError) throw deleteError;
+
+  const opportunityId = pkg?.opportunity_id as string | null | undefined;
+  if (opportunityId) {
+    const opportunity = await getOpportunityById(admin, opportunityId);
+    if (opportunity) {
+      await transitionStage(admin, opportunityId, opportunity.stage, "build_package_proposed", changedBy);
+    }
+  }
+}

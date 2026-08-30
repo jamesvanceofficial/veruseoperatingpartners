@@ -149,14 +149,15 @@ Four roles (`src/shared/roles.ts`): `verus_admin`, `verus_staff`,
 
 ## Delete
 
-Organizations, Opportunities, and Assessments (any status) are deletable,
-staff only, from each record's own detail page — `src/shared/ui/DangerZone.tsx`,
-a deliberately unstyled/muted text control set off by a hairline, never a
-prominent button. It always confirms via `window.confirm()` with a message
-the caller builds server-side naming exactly what else goes, with real
-counts (`getOrganizationDeletePreview`/`getOpportunityDeletePreview` in
-each module's `data.ts`; assessments only need `getAnswerCount` since
-answers/scores cascade 1:1). The actual delete is always a single
+Organizations, Opportunities, Assessments (any status), and Build
+Packages are deletable, staff only, from each record's own detail page —
+`src/shared/ui/DangerZone.tsx`, a deliberately unstyled/muted text control
+set off by a hairline, never a prominent button. It always confirms via
+`window.confirm()` with a message the caller builds server-side naming
+exactly what else goes, with real counts (`getOrganizationDeletePreview`/
+`getOpportunityDeletePreview`/`getBuildPackageDeletePreview` in each
+module's `data.ts`; assessments only need `getAnswerCount` since
+answers/scores cascade 1:1). The actual delete is usually a single
 `admin.from(table).delete().eq("id", id)` — every org-scoped table's
 `org_id` FK is `ON DELETE CASCADE` (an assessment's `opportunity_id`,
 by contrast, is `ON DELETE SET NULL` — deleting an opportunity unlinks
@@ -165,6 +166,25 @@ deletes them), so the DB does the cascade; the API route never has to
 hand-delete children. Contacts already had delete (`ContactsPanel.tsx`,
 plain `window.confirm`) — copy its route pattern, not its confirm-message
 shape, for anything new.
+
+**Build Package delete is the one exception with real follow-up logic**,
+not just a cascade delete — `deleteBuildPackage()` in `buildPackages/data.ts`
+also moves the linked opportunity (if any) back to `build_package_proposed`
+via the same `transitionStage()` helper every other stage change uses
+(logged in `opportunity_stage_history` like any other move), undoing the
+forward move creation made. The confirm message names phase/scope-item
+counts plus how many of those items already have progress recorded
+(status other than `not_started`), so deleting a partially-worked package
+is never a silent loss. The source assessment is never touched by this —
+nothing in the delete path writes to `assessments`/`assessment_answers`/
+`assessment_category_scores` — so its score, recommendation, and answers
+are exactly what they were, and a fresh build package can be created from
+it immediately (verified directly: created, marked progress, deleted,
+confirmed the assessment's score/tier/reasoning/answer count were
+byte-for-byte identical before and after, then created a second package
+from the same assessment and confirmed it started clean — 0% progress,
+every item `not_started`, no rows anywhere still referencing the deleted
+package's id).
 
 ## Client Report (Stage 16)
 

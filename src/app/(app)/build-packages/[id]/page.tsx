@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
-import { getBuildPackageDetail } from "@/modules/buildPackages/data";
+import { getBuildPackageDetail, getBuildPackageDeletePreview } from "@/modules/buildPackages/data";
 import { BUILD_PACKAGE_STATUS_LABELS, BUILD_PACKAGE_STATUS_TONE, PAYMENT_STATUS_LABELS, PAYMENT_STATUS_TONE } from "@/modules/buildPackages/labels";
 import { BuildPackagePhaseCard } from "@/modules/buildPackages/BuildPackagePhaseCard";
 import { BUILD_TIER_INFO, computeFirstBillingDate, STABILIZATION_PERIOD_DAYS } from "@/modules/assessments/buildTiers";
@@ -12,6 +12,7 @@ import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { Stat } from "@/shared/ui/Stat";
 import { LinkButton } from "@/shared/ui/LinkButton";
+import { DangerZone } from "@/shared/ui/DangerZone";
 import { formatCurrency, formatDate } from "@/shared/format";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -36,6 +37,22 @@ export default async function BuildPackageDetailPage({ params }: { params: Promi
   const user = await getSessionUser();
   const profileResult = user ? await getMyProfile(user.id) : ({ status: "not_configured" } as const);
   const canEdit = profileResult.status === "ok" && isVerusStaff(profileResult.profile.role);
+
+  let deleteConfirmMessage = "";
+  if (canEdit) {
+    const preview = await getBuildPackageDeletePreview(supabase, id);
+    const lines = [`Delete this ${tierInfo.label} for ${orgName}? This cannot be undone.`];
+    lines.push("This will also permanently delete:");
+    lines.push(`• ${preview.phaseCount} phase${preview.phaseCount === 1 ? "" : "s"}`);
+    lines.push(`• ${preview.scopeItemCount} scope item${preview.scopeItemCount === 1 ? "" : "s"}`);
+    if (preview.itemsWithProgressCount > 0) {
+      lines.push(
+        `Note: ${preview.itemsWithProgressCount} of those scope item${preview.itemsWithProgressCount === 1 ? "" : "s"} already ${preview.itemsWithProgressCount === 1 ? "has" : "have"} progress recorded (in progress or complete) — that progress will be lost.`
+      );
+    }
+    lines.push("The linked opportunity (if any) will move back to Build Package Proposed. The source assessment is not affected.");
+    deleteConfirmMessage = lines.join("\n");
+  }
 
   return (
     <div className="page-container flex flex-1 flex-col gap-6 py-8">
@@ -102,6 +119,15 @@ export default async function BuildPackageDetailPage({ params }: { params: Promi
           phases.map((phase) => <BuildPackagePhaseCard key={phase.id} buildPackageId={id} phase={phase} canEdit={canEdit} />)
         )}
       </div>
+
+      {canEdit ? (
+        <DangerZone
+          itemLabel="this build package"
+          confirmMessage={deleteConfirmMessage}
+          deleteUrl={`/api/build-packages/${id}`}
+          redirectUrl="/build-packages"
+        />
+      ) : null}
     </div>
   );
 }
