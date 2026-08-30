@@ -19,7 +19,7 @@ export const ORG_TABS: OrgTab[] = [
 ];
 
 /** Tabs with a real page today (routed by their own folder, not the [tab] catch-all). */
-const BUILT_TAB_SLUGS = new Set(["", "contacts", "opportunities", "assessments", "build-packages", "projects", "tasks", "meetings"]);
+const BUILT_TAB_SLUGS = new Set(["", "contacts", "opportunities", "assessments", "build-packages", "projects", "tasks", "meetings", "support-tickets"]);
 
 /** Everything else renders the generic "comes later" stub via [tab]/page.tsx. */
 export const STUB_TAB_LABELS: Map<string, string> = new Map(

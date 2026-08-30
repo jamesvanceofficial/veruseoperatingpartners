@@ -682,6 +682,124 @@ task is not affected.
 are the first date+time (not just date) helpers in the app — meetings are
 the first record type that needed a real time, not just a day.
 
+## Support Tickets (Stage 29)
+
+`src/modules/support/` — extends the `support_tickets`/
+`support_ticket_replies` tables that already existed from the Stage 1
+foundation migrations but were never built on, rather than replacing
+them (see the Database tables entries above for the exact schema
+changes).
+
+**Response-time SLA, the actual point of the feature.** `sla.ts` is a
+pure-function module (no DB access, same convention as `scoring.ts`):
+`computeResponseDueDate(tier, createdAt)` maps a `SupportTier` to a real
+business-day-aware due timestamp — base: 2 business days, growth: next
+business day, pro: same business day (rolls to the next business day if
+submitted on a weekend), enterprise: a flat 4 hours (tighter than pro's
+own same-day promise, matching "same day, with a dedicated contact"),
+custom: `null` (no fixed SLA, "Defined per engagement" — never a guessed
+number). `getSlaState(dueAt, firstRespondedAt, now)` turns that into
+`overdue`/`due_soon` (<4h left)/`on_track`/`met`/`no_sla`, rendered
+everywhere by the one shared `SlaBadge.tsx` so a missed or approaching
+deadline reads identically on the list and the detail page. A ticket's
+SLA is "met" the moment `first_responded_at` is stamped — `addReply()` in
+`data.ts` stamps it automatically on a ticket's first non-internal STAFF
+reply (never on a client's own reply, never on an internal note), and
+once stamped a ticket can never show as overdue again regardless of
+`response_due_at`, even if the status later changes.
+
+**Resolving which tier to use — `subscriptions` has no creation UI yet.**
+`resolveSupportTierForOrg()` prefers the org's active subscription's own
+`support_tier` column (Stage 29, added to `subscriptions` for exactly
+this) since that's a real billing fact; with no subscription UI built yet
+that column is often empty, so it falls back to the org's most recently
+completed Full Assessment's EFFECTIVE support tier
+(`support_tier_override ?? recommended_support_tier`, the same
+override-or-recommended convention used everywhere else in the app). If
+neither source has a tier, the ticket gets `response_due_at: null` — "no
+SLA" is shown honestly rather than fabricating a due date from a guess.
+This was verified directly against the real seeded `Northline Mechanical`
+demo org (no subscription row, one completed Full Assessment) and
+correctly resolved to that assessment's recommended tier.
+
+**The first real client write access in the app.** Requirement drove a
+genuine, narrow exception to the "staff-write-only, no exceptions" rule
+stated in the Role model section above: `support_tickets_client_insert`
+lets a client open a ticket for their own org (`org_id = fn_my_org_id()`);
+`support_ticket_replies_client_insert` lets them reply to their own org's
+ticket but is blocked at the RLS `WITH CHECK` from ever setting
+`is_internal = true`. This is why the pre-existing `waiting_on_client`
+status can ever resolve — without a client reply path it would be a dead
+end. Status/priority/assignment changes and internal notes stay
+staff-only, exactly as asked; a client never gets an edit control for any
+of them. Because every mutation route goes through the admin client
+(bypasses RLS, per the standing "server checks role before touching the
+admin client" pattern), the `/api/support-tickets/[id]/replies` route
+does its own explicit org-match check for a non-staff caller before
+inserting — RLS alone doesn't protect an admin-client write, only a
+request-scoped one.
+
+**Internal notes share the replies table, not a second one** —
+`support_ticket_replies.is_internal` (default false) distinguishes a
+staff-only note from a real client-visible reply, rendered in visibly
+different treatments by `TicketThread.tsx` (an amber-bordered block with
+an "Internal Note" badge vs. a plain glass panel) so staff can never
+mistake one for the other while scanning a thread, and excluded from a
+client's own reads by `support_ticket_replies_isolation`'s RLS policy —
+verified directly (a real client session, authenticated via
+`signInWithPassword`, reading a ticket with one internal note and one
+real reply saw only the real one; an insert attempt with
+`is_internal: true` was rejected at the database with a permission-denied
+error, not just hidden by the app).
+
+**Pages**: `/support-tickets` (list — staff sees client/status/priority/
+assigned-staff filters and every ticket; a client sees only their own via
+RLS with no filter UI needed. The default view, no status filter chosen,
+shows only `new`/`open`/`waiting_on_client` tickets sorted by how close
+`response_due_at` is to now — Postgres can't sort by a computed SLA
+distance without a generated column, so the sort happens in the page
+after fetching), `/support-tickets/[id]` (detail — request text, the
+`SlaBadge`, staff-only `TicketControls` for status/priority/assignment
+that PATCH immediately per-field same as `TaskStatusSelect`, the thread,
+a reply form with an internal-note toggle staff-only sees, staff-only
+`DangerZone` delete naming the real reply count including internal
+notes), `/support-tickets/new` (one form, `TicketForm.tsx` — shows an org
+picker for staff, hidden entirely for a client since their own org is
+implicit; a `?org_id=` query param from an org's own tab page pre-selects
+it). Organizations gained a real `support-tickets` tab (the slug already
+existed in `ORG_TABS`, unbuilt until now — added to `BUILT_TAB_SLUGS`).
+The Dashboard (a Stage-1 empty shell until now) gained its first real
+content: an Open Tickets / Overdue stat pair reading
+`getOpenAndOverdueCounts()`, everything else on the page left as the
+honest "nothing else yet" placeholder — Stage 29 didn't touch anything
+beyond what was asked.
+
+**Email** (`notify.ts`) reuses the exact Resend infrastructure and env
+vars `marketing/notify.ts` already established (`RESEND_API_KEY`/
+`LEAD_NOTIFICATION_FROM`/`LEAD_NOTIFICATION_TO`) — `notifyNewSupportTicket`
+on creation (to James), `notifyClientOfReply` on a staff reply (to the
+ticket's `opened_by` profile's email, looked up at send time). Both
+follow the established convention exactly: logged and swallowed on
+failure, never blocks or fails the actual save.
+
+**Verified end-to-end directly against the database** (not just
+typecheck/build, per the standing verification rules — no browser
+involved, this is the same "script using the admin client and a real
+signed-in session" pattern already established for prior stages):
+created a real ticket for `Northline Mechanical`, confirmed
+`response_due_at` computed correctly for all four fixed tiers plus the
+weekend-rollover case for "same business day," confirmed a staff internal
+note plus a real reply both save with `first_responded_at` stamped only
+by the real one, confirmed a client's own authenticated session sees the
+real reply and never the internal note, confirmed that same session is
+blocked from inserting an internal note or reading another org's tickets,
+confirmed a client can self-service insert a ticket for their own org but
+is blocked from inserting one for a different org, confirmed the overdue
+SLA state and the dashboard's overdue count both pick up a backdated
+`response_due_at`, and confirmed status changes to `resolved` stamp
+`resolved_at`. All test tickets and temporary staff/client accounts were
+deleted after — nothing left behind in the database.
+
 ## The Public Website (Stage 18)
 
 `src/app/(marketing)/` — what paid traffic lands on: Home (`/`), What We
@@ -1149,9 +1267,12 @@ never hotlinked, per the standing rule from Stage 27.
 Default RLS shape (call out every deviation): **read** = staff see all
 rows, `client_owner`/`client_user` see only rows where `org_id =
 fn_my_org_id()`. **write** (insert/update/delete) = staff only
-(`fn_is_verus_staff()`). Client write access across the whole schema is
-deferred to Stage 17 (client portal) — every table below is staff-write-only
-today, no exceptions.
+(`fn_is_verus_staff()`). Client write access across the whole schema was
+deferred to Stage 17 (client portal) until Stage 29 opened the first,
+narrow exception: `support_tickets`/`support_ticket_replies` — a client
+can open a ticket and reply to their own org's ticket, nothing else
+(never update status/priority/assignment, never an internal note). Every
+other table below is still staff-write-only, no exceptions.
 
 - `organizations` — full CRM entity (Stage 3): name, type (prospect /
   active_client / former_client / referral_partner / vendor /
@@ -1335,7 +1456,13 @@ today, no exceptions.
   already-sold package's phases. See the "Build Packages (Stage 9)"
   section below for how phases/scope items are actually generated.
 - `subscriptions` — org_id, build_package_id, plan_name, status, seats,
-  start_date, renewal_date, cancelled_at. Never stores a price directly.
+  start_date, renewal_date, cancelled_at, `support_tier` (Stage 29,
+  nullable — base/growth/pro/enterprise/custom, matching the `SupportTier`
+  type everywhere else in the app; `plan_name` is a free-text display
+  label, never guaranteed to match it). Never stores a price directly.
+  This table still has no creation UI (a real gap, not built by Stage 29
+  — see the Support Tickets section's SLA note for how a ticket's
+  response-due time gets computed without one).
 - `subscription_line_items` — **where MRR lives**: monthly_price *
   quantity per priced component (base_plan/addon/module/upgrade), open
   `end_date` = still active. MRR per client = sum where `end_date is
@@ -1401,11 +1528,29 @@ today, no exceptions.
   factors (jsonb), notes. Staff-only read AND write — internal scoring
   tool, not shown to clients.
 - `support_tickets` — org_id, subscription_id (nullable), subject,
-  description, priority, status, opened_by, assigned_to, opened_at,
-  resolved_at, resolution_notes. Read = default org scoping (clients will
-  see their own once the portal ships); write = staff only for now.
-- `support_ticket_replies` — ticket_id, author, body — threaded replies on
-  a support ticket.
+  description, priority (low/medium/high/urgent), status (Stage 29
+  replaced the Stage 3 placeholder set — new/open/waiting_on_client/
+  resolved/closed, default `new`; table was empty in production so this
+  was a straight redefinition, not a data migration), opened_by,
+  assigned_to, opened_at, resolved_at, resolution_notes,
+  `response_due_at`/`first_responded_at` (Stage 29, see the Support
+  Tickets section). Read = default org scoping. Write: staff can do
+  anything; **the first real client write access in the app** — a client
+  can insert a ticket for their own org (`support_tickets_client_insert`)
+  but never update one (status/priority/assignment stay staff-only,
+  matching the request). This narrows, not removes, the "Client write
+  access... deferred to Stage 17... every table... staff-write-only, no
+  exceptions" line elsewhere in this doc — that statement is no longer
+  true for this one table and `support_ticket_replies` below; every other
+  table it was written about is unaffected.
+- `support_ticket_replies` — ticket_id, author, body, `is_internal`
+  (Stage 29, default false) — threaded replies AND staff-only internal
+  notes share this one table, distinguished by the flag rather than a
+  second table. Write: staff can insert either kind; a client can insert
+  a reply to their own org's ticket but is blocked at the RLS `WITH CHECK`
+  from ever setting `is_internal = true` — enforced in the database, not
+  just app code. Read: `support_ticket_replies_isolation` excludes
+  `is_internal` rows from a client viewer even on their own org's ticket.
 - `communication_log` — org_id, opportunity_id (nullable), contact_id
   (nullable), type (call/email/note), direction (inbound/outbound,
   nullable for notes), subject, body, occurred_at, logged_by. **Staff-only

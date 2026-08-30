@@ -18,6 +18,7 @@ export const NAV_REGISTRY: NavEntry[] = [
   { key: "projects", label: "Projects", href: "/projects" },
   { key: "tasks", label: "Tasks", href: "/tasks" },
   { key: "meetings", label: "Meetings", href: "/meetings" },
+  { key: "support-tickets", label: "Support Tickets", href: "/support-tickets" },
   { key: "kpis", label: "KPIs", href: "/kpis" },
   { key: "sop-library", label: "SOP Library", href: "/sop-library" },
   { key: "software-support", label: "Software & Support", href: "/software-support" },
