@@ -927,6 +927,93 @@ at that position or anywhere but the real footer, so this is a headless-
 Chromium tile-rendering quirk specific to unusually tall single-frame
 captures, not a rendering bug in the app.
 
+**Real imagery, motion, and logo wiring (Stage 27)** — the site had zero
+photography or real product screenshots before this stage; text-on-
+gradient was the entire visual language. Fixed without touching the
+locked tokens or positioning copy.
+
+*Product screenshots, never real client data.* A `Northline Mechanical`
+organization (obviously fictional, `notes` field states plainly it's a
+seeded demo org for marketing screenshots) got a real Full Assessment
+answered and completed through the actual data-layer functions
+(`createAssessment`/`saveAnswer`/`completeAssessment` in
+`assessments/data.ts`, not hand-written SQL), using the same category
+score targets as `sampleAssessment.ts` so the resulting score (45,
+Emerging Operator) matches the fictional data already shown live
+elsewhere on the site — one consistent illustrative story, not two
+disconnected ones. Two Playwright screenshots were captured against this
+real org and never any real client: the public share-link runner
+mid-question (`/assessment/[token]`, reachable with no auth) for the
+assessment-runner shot, and the real `ClientReportView` at
+`/business-assessments/[id]/report` — which required creating a
+temporary `verus_staff` auth user + profile row to log in as, screenshot,
+then delete immediately after (never left in the system). Both raw
+screenshots were cropped with `sharp` to just the relevant content (no
+dead margins, no confidential banner) and saved as optimized WebP under
+`public/images/product/`. `BrowserFrame.tsx` wraps both in a subtle
+title-bar mockup (three muted dots, a fake address pill) — never the
+cliché red/yellow/green traffic lights. `HeroReportVisual.tsx` shows the
+report screenshot at a real CSS 3D tilt (`perspective` + `rotateY/rotateX`
+on a nested div, separate from the outer parallax div — combining both
+transforms on one element would have one silently overwrite the other)
+with restrained scroll parallax; `RunnerScreenshotVisual.tsx` shows the
+runner screenshot flat, with a lighter parallax drift. Both replace what
+requirement 6 explicitly forbade building: neither is an interactive
+assessment on the marketing site, both are static images of the one real
+flow at `/scan`.
+
+*Photography.* Six free-to-use Unsplash photos (construction, warehouse,
+office, a road-work truck — verified as `images.unsplash.com/photo-...`,
+never a paid `plus.unsplash.com` Unsplash+ image) were downloaded,
+resized, desaturated and darkened with `sharp`
+(`saturation: 0.3, brightness: 0.75`), and saved as WebP under
+`public/images/photography/` — never hotlinked. `PhotoSection.tsx` is the
+one shared way any page uses one as a section background: a `92%` navy
+tint plus a top/bottom black gradient, strong enough that a bright source
+photo (the office desk shot originally left a face and shirt clearly
+visible right behind body text) still reads as pure atmosphere. Used on
+Home (`Who This Is For`/`Not For`, and the closing CTA) and once per case
+study in `caseStudies.ts`'s new `photo` field — a real, industry-
+appropriate atmosphere shot, never a photo implying it's the actual
+client or their real site.
+
+*Motion.* `useParallax.ts` (new, alongside the existing `useInView`/
+`FadeUp`/`AnimatedNumber`) mutates `style.transform` directly via `rAF`
+on scroll instead of a React state re-render, and is a no-op under
+`prefers-reduced-motion`. A new `.hover-lift` utility in `globals.css`
+(`translateY(-4px)` + a stronger shadow, transition-only — no motion
+under reduced-motion) is applied to every marketing card that reads as a
+scannable/clickable option: case study cards, build/support tier cards,
+and the "How It Works"/"Four Steps" step cards — not applied to purely
+informational single-panel cards (the score/gauge showcase, the fit
+lists), where a lift would signal interactivity that isn't there.
+
+*Logo, favicon, OG image.* The marketing header/footer already rendered
+the real uploaded `app_settings.logo_url` via `BrandMark` (built in
+Stage 18/23) — nothing to fix there. The favicon and OG image did not: a
+static `favicon.ico` can never reflect an uploaded logo, and
+`opengraph-image.tsx` only ever drew the text wordmark. Added
+`src/app/icon.tsx` — a dynamic favicon reading the same
+`app_settings.logo_url` (admin client, since a favicon request has no
+guaranteed cookie/session context) and falling back to a gold "V"
+monogram; updated `opengraph-image.tsx` to show the real logo image above
+the headline when one exists, falling back to the existing text wordmark
+otherwise. **Real bug this introduced, caught and fixed**: Next serves
+both as dynamic routes at `/icon` and `/opengraph-image-<hash>`, and the
+proxy's middleware matcher only ever excluded `_next/static`/`_next/image`/
+`favicon.ico`/`api` — every OTHER path falls through to the auth check
+unless explicitly listed. `/opengraph-image` was already covered by an
+existing `isMetadataPath` check; `/icon` was not, so the new favicon
+404'd into a login redirect for every single page load. Fixed by adding
+`/icon` to that same `isMetadataPath` check. **A second, separately
+caught instance of the identical bug**: the new `public/images/` photos
+and product screenshots hit the exact same gap (nothing in the matcher or
+`PUBLIC_PATHS` covers arbitrary `public/` files, only specific generated
+routes) — every image 404'd the same way before `/images` was added to
+`PUBLIC_PATHS`. Both were caught by literally curling the asset URLs
+after deploy and seeing 307-to-`/login`, not by reading the proxy code
+and assuming it was fine.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

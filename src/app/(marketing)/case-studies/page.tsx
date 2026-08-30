@@ -3,6 +3,7 @@ import { LinkButton } from "@/shared/ui/LinkButton";
 import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { SectionHeading } from "@/modules/marketing/SectionHeading";
+import { PhotoSection } from "@/modules/marketing/PhotoSection";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { CASE_STUDIES } from "@/modules/marketing/caseStudies";
 
@@ -33,7 +34,7 @@ export default function CaseStudiesPage() {
       </section>
 
       {CASE_STUDIES.map((cs, i) => (
-        <section key={cs.slug} className={i % 2 === 1 ? "border-y border-[var(--hairline)] bg-[var(--surface)]" : undefined}>
+        <PhotoSection key={cs.slug} src={cs.photo} className={i % 2 === 1 ? "border-y border-[var(--hairline)]" : undefined}>
           <div className="page-container flex flex-col gap-8 py-11 sm:py-14">
             <FadeUp>
               <div className="flex flex-wrap items-center gap-3">
@@ -61,7 +62,7 @@ export default function CaseStudiesPage() {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <FadeUp delayMs={120}>
-                <Card strong className="flex h-full flex-col gap-3">
+                <Card strong className="hover-lift flex h-full flex-col gap-3">
                   <p className="section-label text-[var(--gold-light)]">What Was Built</p>
                   <ul className="flex flex-col gap-2">
                     {cs.whatWasBuilt.map((item) => (
@@ -74,7 +75,7 @@ export default function CaseStudiesPage() {
                 </Card>
               </FadeUp>
               <FadeUp delayMs={180}>
-                <Card className="flex h-full flex-col gap-3">
+                <Card className="hover-lift flex h-full flex-col gap-3">
                   <p className="section-label">What Changed</p>
                   <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">{cs.whatChanged}</p>
                 </Card>
@@ -87,7 +88,7 @@ export default function CaseStudiesPage() {
               </div>
             </FadeUp>
           </div>
-        </section>
+        </PhotoSection>
       ))}
 
       <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">

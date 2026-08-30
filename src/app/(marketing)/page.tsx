@@ -7,7 +7,9 @@ import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { PullQuote } from "@/modules/marketing/PullQuote";
 import { StatBand } from "@/modules/marketing/StatBand";
 import { FaqAccordion } from "@/modules/marketing/FaqAccordion";
-import { ReportPreviewFrame } from "@/modules/marketing/ReportPreviewFrame";
+import { HeroReportVisual } from "@/modules/marketing/HeroReportVisual";
+import { RunnerScreenshotVisual } from "@/modules/marketing/RunnerScreenshotVisual";
+import { PhotoSection } from "@/modules/marketing/PhotoSection";
 import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { CategoryBars } from "@/modules/assessments/CategoryBars";
@@ -30,12 +32,12 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* HERO — text left, live report preview right */}
+      {/* HERO — text left, real report screenshot right */}
       <section className="page-container py-12 sm:py-16">
         <TwoColSection
           visual={
             <FadeUp>
-              <ReportPreviewFrame />
+              <HeroReportVisual />
             </FadeUp>
           }
         >
@@ -92,6 +94,28 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SEE THE REAL ASSESSMENT — screenshot right, text left, alternating from The Problem above */}
+      <section className="page-container py-11 sm:py-14">
+        <TwoColSection
+          reverse
+          visual={
+            <FadeUp>
+              <RunnerScreenshotVisual />
+            </FadeUp>
+          }
+        >
+          <FadeUp>
+            <SectionHeading eyebrow="See It" title="Real questions, a live score as you go" />
+          </FadeUp>
+          <FadeUp delayMs={80}>
+            <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
+              Every question uses the same 0-3 ladder, and your provisional score updates as you answer — no guessing where you stand
+              until the end. This is the actual assessment runner, not a mockup.
+            </p>
+          </FadeUp>
+        </TwoColSection>
+      </section>
+
       {/* WHAT VERUS BUILDS — full-width numbers band */}
       <section className="page-container flex flex-col gap-12 py-11 sm:py-14">
         <FadeUp>
@@ -128,7 +152,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_IT_WORKS_STEPS.map((s, i) => (
               <FadeUp key={s.step} delayMs={i * 80}>
-                <Card className="flex h-full flex-col gap-2">
+                <Card className="hover-lift flex h-full flex-col gap-2">
                   <span className="font-tabular text-[22px] font-semibold text-[var(--gold-light)]">{s.step}</span>
                   <h3 className="text-[14.5px] font-semibold text-[var(--cream)]">{s.title}</h3>
                   <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{s.description}</p>
@@ -208,7 +232,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           {CASE_STUDIES.map((cs, i) => (
             <FadeUp key={cs.slug} delayMs={i * 100}>
-              <Card strong className="flex h-full flex-col gap-3">
+              <Card strong className="hover-lift flex h-full flex-col gap-3">
                 <div>
                   <p className="text-[15px] font-semibold text-[var(--cream)]">{cs.client}</p>
                   <p className="text-[11.5px] text-[var(--muted)]">
@@ -225,8 +249,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* WHO THIS IS FOR / NOT FOR */}
-      <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
+      {/* WHO THIS IS FOR / NOT FOR — real photo background, restrained behind a strong navy overlay */}
+      <PhotoSection src="/images/photography/construction-workers.webp" alt="" className="border-y border-[var(--hairline)]">
         <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
             <SectionHeading eyebrow="Fit" title="Who this is for — and who it isn't" align="center" />
@@ -260,7 +284,7 @@ export default function HomePage() {
             </FadeUp>
           </div>
         </div>
-      </section>
+      </PhotoSection>
 
       {/* FAQ */}
       <section className="page-container flex flex-col gap-10 py-11 sm:py-14">
@@ -274,8 +298,8 @@ export default function HomePage() {
         </FadeUp>
       </section>
 
-      {/* FINAL CTA */}
-      <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
+      {/* FINAL CTA — photo background for a strong close */}
+      <PhotoSection src="/images/photography/warehouse-interior.webp" alt="" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
             <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
@@ -293,7 +317,7 @@ export default function HomePage() {
             </div>
           </FadeUp>
         </div>
-      </section>
+      </PhotoSection>
     </div>
   );
 }

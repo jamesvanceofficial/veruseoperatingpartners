@@ -1,10 +1,15 @@
 import { ImageResponse } from "next/og";
+import { createAdminClient } from "@/shared/supabase/admin";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/** Stage 18 — one shared branded OG image for every marketing page (Next's file convention inherits this across the whole (marketing) segment unless a page defines its own). Generated, not a static asset, so it never drifts from the locked palette in globals.css. */
-export default function OpengraphImage() {
+/** Stage 18 — one shared branded OG image for every marketing page (Next's file convention inherits this across the whole (marketing) segment unless a page defines its own). Generated, not a static asset, so it never drifts from the locked palette in globals.css. Stage 27: shows the real uploaded logo above the wordmark when one exists, same app_settings.logo_url every BrandMark render reads. */
+export default async function OpengraphImage() {
+  const admin = createAdminClient();
+  const { data } = await admin.from("app_settings").select("logo_url").eq("id", 1).maybeSingle();
+  const logoUrl = data?.logo_url ?? null;
+
   return new ImageResponse(
     (
       <div
@@ -20,17 +25,22 @@ export default function OpengraphImage() {
           fontFamily: "sans-serif",
         }}
       >
-        <div
-          style={{
-            fontSize: 20,
-            letterSpacing: 8,
-            textTransform: "uppercase",
-            color: "#f1d27a",
-            marginBottom: 28,
-          }}
-        >
-          VERUS Operating Company
-        </div>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="" height={56} style={{ objectFit: "contain", marginBottom: 28 }} />
+        ) : (
+          <div
+            style={{
+              fontSize: 20,
+              letterSpacing: 8,
+              textTransform: "uppercase",
+              color: "#f1d27a",
+              marginBottom: 28,
+            }}
+          >
+            VERUS Operating Company
+          </div>
+        )}
         <div
           style={{
             fontSize: 60,

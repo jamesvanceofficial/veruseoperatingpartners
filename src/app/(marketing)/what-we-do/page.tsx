@@ -177,7 +177,7 @@ export default function WhatWeDoPage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_IT_WORKS_STEPS.map((s, i) => (
               <FadeUp key={s.step} delayMs={i * 80}>
-                <Card className="flex h-full flex-col gap-2">
+                <Card className="hover-lift flex h-full flex-col gap-2">
                   <span className="font-tabular text-[22px] font-semibold text-[var(--gold-light)]">{s.step}</span>
                   <h3 className="text-[14.5px] font-semibold text-[var(--cream)]">{s.title}</h3>
                   <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{s.description}</p>

@@ -43,7 +43,7 @@ export default function BuildsPage() {
             const info = BUILD_TIER_INFO[tier];
             return (
               <FadeUp key={tier} delayMs={i * 100}>
-                <Card strong className="flex h-full flex-col gap-4">
+                <Card strong className="hover-lift flex h-full flex-col gap-4">
                   <div>
                     <p className="text-[18px] font-semibold text-[var(--gold-light)]">{info.label}</p>
                     <p className="mt-1 text-[12px] text-[var(--muted)]">{info.forCompanies}</p>

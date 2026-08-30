@@ -15,6 +15,11 @@ const PUBLIC_PATHS = [
   "/case-studies",
   "/about",
   "/contact",
+  // Stage 27 — static marketing imagery (product screenshots, photography)
+  // under public/images/, referenced by plain <img> tags on public pages;
+  // the middleware matcher only skips _next/static, not public/, so these
+  // need an explicit allow like every other public asset path here.
+  "/images",
 ];
 
 export async function proxy(request: NextRequest) {
@@ -46,7 +51,10 @@ export async function proxy(request: NextRequest) {
   // generated opengraph-image, which Next serves with a cache-busting
   // hash suffix like /opengraph-image-pwu6ef) must stay reachable by
   // crawlers/unfurlers with no session, same as any other public path.
-  const isMetadataPath = pathname === "/sitemap.xml" || pathname.startsWith("/opengraph-image");
+  // Stage 27 — the dynamic favicon (/icon, same cache-busting hash suffix
+  // pattern) needs the same treatment: every browser tab request for it
+  // arrives with no session.
+  const isMetadataPath = pathname === "/sitemap.xml" || pathname.startsWith("/opengraph-image") || pathname.startsWith("/icon");
   const isPublicPath = pathname === "/" || isMetadataPath || PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
   if (!user && !isPublicPath) {

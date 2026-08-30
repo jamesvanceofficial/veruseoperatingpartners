@@ -12,6 +12,8 @@ export type CaseStudy = {
   whatWasBuilt: string[];
   whatChanged: string;
   quotePlaceholder: string;
+  /** A real, locally-served, industry-appropriate atmosphere photo — never a photo of the actual client or their real site. */
+  photo: string;
 };
 
 export const CASE_STUDIES: CaseStudy[] = [
@@ -20,6 +22,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     client: "RBL Safety",
     location: "Denver, CO",
     industry: "Security Services",
+    photo: "/images/photography/service-van.webp",
     summary:
       "A security services company running dispatch, scheduling, and payroll by phone call, text, and spreadsheet — moved onto one real platform, with VAs trained to run it day to day.",
     situation:
@@ -39,6 +42,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     client: "Radiant Moments",
     location: "Local service business",
     industry: "Service",
+    photo: "/images/photography/office-desk.webp",
     summary:
       "A local service business with no real way to generate or close leads — given the website, advertising, lead generation, and sales process it needed to scale past word of mouth.",
     situation:

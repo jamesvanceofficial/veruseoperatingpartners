@@ -49,7 +49,7 @@ export default function SystemsAndSupportPage() {
           const info = SUPPORT_TIER_INFO[tier];
           return (
             <FadeUp key={tier} delayMs={i * 80}>
-              <Card strong className="flex flex-col gap-4">
+              <Card strong className="hover-lift flex flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-[17px] font-semibold text-[var(--gold-light)]">{info.label}</p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-[var(--muted)]">
