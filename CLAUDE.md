@@ -800,6 +800,143 @@ SLA state and the dashboard's overdue count both pick up a backdated
 `resolved_at`. All test tickets and temporary staff/client accounts were
 deleted after — nothing left behind in the database.
 
+## Subscriptions (Stage 30)
+
+`src/modules/subscriptions/` — extends the `subscriptions`/
+`subscription_line_items` tables that already existed from the Stage 1
+foundation migrations (see the Database tables entries below for the
+exact schema additions) rather than replacing them.
+
+**Created from a build package, one click, nothing retyped** —
+`CreateSubscriptionButton.tsx` on the build package detail page mirrors
+`CreateBuildPackageButton.tsx`'s exact pattern (plain POST, no
+intermediate form, lands on the new record's detail page).
+`createSubscriptionFromBuildPackage()` requires a real `handover_date` on
+the build package first ("at handover" is the trigger — there's nothing
+for `computeFirstBillingDate()` to compute from without one, so the
+button shows a "set a handover date first" message and staff-only control
+stays hidden until it exists) and is blocked from running twice on the
+same build package, same convention as Projects generation. It resolves
+the EFFECTIVE support tier from the build package's source assessment
+(`support_tier_override ?? recommended_support_tier`, same convention as
+everywhere else) — falling back to `DEFAULT_SUPPORT_TIER_FOR_BUILD[tier]`
+only if the build package has no assessment link — sets
+`first_billing_date` via the existing `computeFirstBillingDate()` in
+`assessments/buildTiers.ts` (never reimplemented), and creates exactly
+one `base_plan` line item at that tier's real price. Verified directly:
+created a real build package from Northline Mechanical's real completed
+assessment, confirmed creation is blocked with no handover date, confirmed
+the resolved tier/seats/first-billing-date/price all matched the
+assessment and `SUPPORT_TIER_INFO` exactly (90 days after a 2026-06-01
+handover landed on 2026-08-30), and confirmed a second creation attempt
+on the same build package is blocked.
+
+**The subscription header holds no price — every priced component is its
+own `subscription_line_items` row**, exactly as asked: description,
+`monthly_price`, `quantity`, `start_date`/`end_date` (`end_date is null`
+= currently active). `mrr.ts` is a pure-function module (no DB access,
+same convention as `sla.ts`/`scoring.ts`): `computeMRR()` sums
+`monthly_price * quantity` over every line item with a null `end_date` —
+literally, regardless of whether `start_date` is in the future, so a
+subscription created today during its 90-day stabilization window
+already counts toward live MRR (the request never asked for a
+start-date-aware exclusion, and adding one would be undocumented,
+invented behavior). `computeMRRByCategory()` splits that same sum by the
+new `revenue_category` column; `computeNewMRRThisMonth()` sums MRR from
+line items whose `start_date` falls in the current calendar month, the
+dashboard's "new MRR" proxy.
+
+**The locked add-on list lives in one place, `assessments/
+supportAddOns.ts`, already built in Stage 21 for the client report** —
+`addOnCatalog.ts` bridges it into ready-to-insert line-item shapes
+(`itemType`/`revenueCategory`/`monthlyPrice`/`billing`) rather than
+re-typing the eight add-ons a second time and risking drift from what the
+client report shows. Software vs. service is assigned explicitly per
+entry (seats/portal/automation builds/dev hours = software; marketing/
+SEO/social/bookkeeping = service — VA staffing is service too), never
+inferred from the description text at read time. "Additional user seats"
+prices itself from the SUBSCRIPTION's own tier
+(`SUPPORT_TIER_INFO[tier].extraSeatRate`) at add-time, not a fixed number.
+Two of the eight (`automation_build`, and implicitly the VA assignment
+fee below) are real one-time charges, not recurring revenue —
+`addCatalogLineItem()` closes those immediately (`end_date = start_date`
+on insert) so they show in billing history but are correctly excluded
+from `computeMRR()`'s "open line items only" definition, never
+double-counted as ongoing MRR.
+
+**VA placements are deliberately not a flat catalog entry** — the request
+called them out as "separate": a one-time $1,000 assignment fee (same
+immediate-close treatment as the automation-build one-time charge) plus a
+SECOND, open, recurring line item for the hourly work, where `quantity`
+IS the hours logged that month and `monthly_price` is the role's locked
+hourly rate from `VA_ROLES` — staff edits `quantity` directly in
+`LineItemsTable.tsx` each month as real hours come in, the same inline-
+edit-on-blur pattern the price field itself uses. Both lines get created
+in one `addVaPlacement()` call from `AddLineItemPanel.tsx`'s VA tab, so a
+placement is never half-added.
+
+**Requirement 8, verified directly, not assumed**: `support/data.ts`'s
+`resolveSupportTierForOrg()` was written in Stage 29 to already check
+`subscriptions.support_tier` before falling back to the assessment — no
+code change was needed here, only verification that it actually behaves
+that way now that real subscriptions exist. Confirmed: set a
+subscription's tier to `pro` while its org's assessment still recommended
+`growth`, and `resolveSupportTierForOrg()` correctly returned `pro`; then
+paused that same subscription (only an `active` one counts) and confirmed
+it correctly fell back to the assessment's `growth` recommendation — the
+fallback for a client with no subscription yet is intact, not removed.
+
+**Pages**: `/subscriptions` (list, filterable by status/tier — no create
+button beyond "New Subscription," since the one-click path lives on the
+build package itself), `/subscriptions/[id]` (detail — MRR/software-MRR/
+service-MRR/seats stat row, an inline staff-only status control same
+pattern as `TicketControls`, the line items table, and
+`AddLineItemPanel`'s three tabs: catalog / VA placement / a free-form
+custom line item for anything not in the locked list, e.g. the base plan
+itself if a subscription was started manually rather than from a build
+package), `/subscriptions/new` (manual path — org picker, no build
+package required, for a subscription that didn't originate from one),
+`/subscriptions/[id]/edit`. Organizations gained a real `subscription`
+tab (the slug already existed in `ORG_TABS`, unbuilt until now) showing
+every subscription for that org (almost always one) with its own line
+items and MRR inline, not just a summary. The old `/software-support`
+placeholder page (Stage 1, "Active support plans and their status will
+appear here") is exactly what this stage built — the sidebar nav entry
+now points at `/subscriptions` instead; the orphaned stub page file was
+left in place rather than deleted, since nothing links to it anymore and
+deleting an unrelated file wasn't asked for.
+
+**Dashboard** gained the six numbers asked for: Total MRR, New MRR This
+Month, Software MRR, Service MRR, Active Subscriptions, and Upcoming
+Renewals (active subscriptions with a `renewal_date` in the next 30
+days) as a stat row, plus a standalone past-due-accounts warning line
+that only renders when the count is actually above zero — never an empty
+"0 accounts past due" banner competing for attention on a normal day.
+
+**Line item removal**: `LineItemsTable.tsx` gives every open line item
+both an "End" action (sets `end_date` to today — stops it counting toward
+MRR going forward while preserving its billing history, the same
+"deactivate, don't erase" instinct as everywhere else in this app) and a
+"Remove" action (an actual `DELETE`, for a line item added by mistake) —
+each confirms via `window.confirm()` with wording that explains the
+difference, so a real monthly VA-hours adjustment doesn't get destroyed
+by the wrong button. Subscription delete itself is the standard
+staff-only `DangerZone`, confirm message naming the real line-item count.
+
+**Verified end-to-end directly against the database**, same "admin
+client + real records, not a browser" pattern as Stage 29: created a real
+build package from Northline Mechanical's real assessment, walked it
+through the blocked-without-handover-date case, real creation, the
+resolved tier/seats/price/first-billing-date, blocked duplicate creation,
+attaching three catalog add-ons plus a full VA placement and confirming
+the line item count and MRR (both total and by category) came out exactly
+right including the one-time charges correctly excluded, the Stage 29
+tier-resolution fallback chain in both directions (subscription present
+→ used; subscription paused → falls back to the assessment), and the
+dashboard metrics query. Everything created for the test — the
+subscription, its line items, and the test build package — was deleted
+afterward.
+
 ## The Public Website (Stage 18)
 
 `src/app/(marketing)/` — what paid traffic lands on: Home (`/`), What We
@@ -1459,14 +1596,23 @@ other table below is still staff-write-only, no exceptions.
   start_date, renewal_date, cancelled_at, `support_tier` (Stage 29,
   nullable — base/growth/pro/enterprise/custom, matching the `SupportTier`
   type everywhere else in the app; `plan_name` is a free-text display
-  label, never guaranteed to match it). Never stores a price directly.
-  This table still has no creation UI (a real gap, not built by Stage 29
-  — see the Support Tickets section's SLA note for how a ticket's
-  response-due time gets computed without one).
+  label, never guaranteed to match it), `first_billing_date` (Stage 30 —
+  the literal date from `computeFirstBillingDate()`, a snapshot taken
+  once at creation, never recomputed). Never stores a price directly —
+  see `subscription_line_items` below. Gained its first real creation UI
+  in Stage 30 (`/subscriptions/new`, and the one-click path from a build
+  package) — the "no creation UI yet" gap noted in the Support Tickets
+  section above is closed as of this stage.
 - `subscription_line_items` — **where MRR lives**: monthly_price *
   quantity per priced component (base_plan/addon/module/upgrade), open
   `end_date` = still active. MRR per client = sum where `end_date is
-  null`, grouped by the parent subscription's org_id.
+  null`, grouped by the parent subscription's org_id. `revenue_category`
+  (Stage 30, `software`/`service`, default `software`) — an explicit
+  column, not inferred from the description at read time, since the
+  locked add-on list mixes real software line items with agency services
+  (marketing/SEO/social/bookkeeping/VA staffing) and the dashboard needs
+  to split MRR between them honestly. See the Subscriptions section above
+  for the full add-on catalog and VA-placement billing shape.
 - `revenue_transactions` — append-only money ledger: assessment_fee /
   build_deposit / build_balance / subscription_charge / vendor_commission /
   refund, amount, direction (in/out), polymorphic `related_table` +

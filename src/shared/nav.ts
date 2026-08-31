@@ -21,7 +21,7 @@ export const NAV_REGISTRY: NavEntry[] = [
   { key: "support-tickets", label: "Support Tickets", href: "/support-tickets" },
   { key: "kpis", label: "KPIs", href: "/kpis" },
   { key: "sop-library", label: "SOP Library", href: "/sop-library" },
-  { key: "software-support", label: "Software & Support", href: "/software-support" },
+  { key: "subscriptions", label: "Subscriptions", href: "/subscriptions" },
   { key: "website-funnel-builds", label: "Website & Funnel Builds", href: "/website-funnel-builds" },
   { key: "client-health", label: "Client Health", href: "/client-health" },
   { key: "documents", label: "Documents", href: "/documents" },

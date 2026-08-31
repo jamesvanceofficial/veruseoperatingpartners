@@ -11,6 +11,8 @@ import { ASSESSMENT_TYPE_LABELS } from "@/modules/assessments/labels";
 import { listProjectsForBuildPackage } from "@/modules/projects/data";
 import { PROJECT_STATUS_LABELS, PROJECT_STATUS_TONE } from "@/modules/projects/labels";
 import { GenerateProjectsButton } from "@/modules/projects/GenerateProjectsButton";
+import { getSubscriptionByBuildPackageId } from "@/modules/subscriptions/data";
+import { CreateSubscriptionButton } from "@/modules/subscriptions/CreateSubscriptionButton";
 import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { Stat } from "@/shared/ui/Stat";
@@ -42,6 +44,7 @@ export default async function BuildPackageDetailPage({ params }: { params: Promi
   const canEdit = profileResult.status === "ok" && isVerusStaff(profileResult.profile.role);
 
   const generatedProjects = await listProjectsForBuildPackage(supabase, id);
+  const existingSubscription = await getSubscriptionByBuildPackageId(supabase, id);
 
   let deleteConfirmMessage = "";
   if (canEdit) {
@@ -150,6 +153,27 @@ export default async function BuildPackageDetailPage({ params }: { params: Promi
             ))}
           </Card>
         )}
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <h2 className="text-[14px] font-semibold text-[var(--cream)]">Subscription</h2>
+        <Card className="flex items-center justify-between gap-3">
+          {existingSubscription ? (
+            <>
+              <p className="text-[12.5px] text-[var(--muted)]">This build package already has a subscription.</p>
+              <LinkButton href={`/subscriptions/${existingSubscription.id}`}>View subscription →</LinkButton>
+            </>
+          ) : (
+            <>
+              <p className="text-[12.5px] text-[var(--muted)]">
+                {buildPackage.handover_date
+                  ? "Create the ongoing Software, Systems & Support subscription for this client."
+                  : "Set a handover date above before creating this build's subscription."}
+              </p>
+              {canEdit && buildPackage.handover_date ? <CreateSubscriptionButton buildPackageId={id} /> : null}
+            </>
+          )}
+        </Card>
       </div>
 
       {canEdit ? (
