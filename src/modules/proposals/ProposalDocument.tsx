@@ -1,5 +1,6 @@
 import { Card } from "@/shared/ui/Card";
 import { BrandMark } from "@/shared/ui/BrandMark";
+import { CompassRose } from "@/shared/ui/CompassRose";
 import { formatCurrency, formatDate } from "@/shared/format";
 import { BUILD_TIER_INFO } from "@/modules/assessments/buildTiers";
 import { PAYMENT_TERMS_LABELS } from "./labels";
@@ -40,15 +41,20 @@ export function ProposalDocument({ proposal, preparedByName }: { proposal: Propo
   return (
     <div className="flex flex-col gap-10">
       {/* COVER */}
-      <section className="cr-cover cr-avoid-break flex flex-col items-center justify-center gap-6 py-16 text-center">
-        <span className="section-label text-[var(--muted)]">Confidential</span>
-        <BrandMark size="cover" />
-        <div>
-          <p className="section-label text-[var(--gold-light)]">Proposal</p>
-          <h1 className="mt-2 text-[30px] font-semibold text-[var(--cream)]">{proposal.company_name}</h1>
+      <section className="cr-cover cr-avoid-break relative flex flex-col items-center justify-center gap-6 overflow-hidden py-16 text-center">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+          <CompassRose className="h-[640px] w-[640px]" opacity={0.07} />
         </div>
-        <p className="text-[13px] text-[var(--muted)]">{formatDate(proposal.proposal_date)}</p>
-        {preparedByName ? <p className="text-[12px] text-[var(--muted)]">Prepared by {preparedByName}</p> : null}
+        <div className="relative flex flex-col items-center gap-6">
+          <span className="section-label text-[var(--muted)]">Confidential</span>
+          <BrandMark size="cover" />
+          <div>
+            <p className="section-label text-[var(--gold-light)]">Proposal</p>
+            <h1 className="mt-2 text-[30px] font-semibold text-[var(--cream)]">{proposal.company_name}</h1>
+          </div>
+          <p className="text-[13px] text-[var(--muted)]">{formatDate(proposal.proposal_date)}</p>
+          {preparedByName ? <p className="text-[12px] text-[var(--muted)]">Prepared by {preparedByName}</p> : null}
+        </div>
       </section>
 
       {/* WHERE THINGS STAND */}

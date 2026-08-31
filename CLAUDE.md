@@ -1420,6 +1420,95 @@ routes) — every image 404'd the same way before `/images` was added to
 after deploy and seeing 307-to-`/login`, not by reading the proxy code
 and assuming it was fine.
 
+**Compass rose motif and general visual depth pass (Stage 32)** —
+targeted feedback that the site read "flat and safe." `CompassRose.tsx`
+(`src/shared/ui/`, shared across marketing/assessments/proposals — not
+`modules/marketing/` — since it's used from all three) draws a real
+16-point mariner's compass rose entirely in SVG, generated
+programmatically from trig (no static asset): 4 primary points (N/E/S/W),
+4 intercardinal, 8 secondary intercardinal, each a faceted kite split
+into a lit half (`--gold-light`) and a shadowed half (`--gold` at lower
+opacity, always on the same side, implying one consistent light source),
+a degree ring with minor/major tick marks, and three fine concentric
+rings — every color one of the locked tokens, `opacity` the one knob
+callers use to push it down to watermark level.
+
+`CompassHeroBackground.tsx` (marketing-only, `"use client"`) is the hero
+centerpiece: rotates a full turn every 5 minutes (`compass-spin-slow` in
+globals.css, `prefers-reduced-motion` disables it) and drifts with the
+existing `useParallax` hook. **A real bug caught only by screenshotting
+and zooming in, not by reading the code**: the first version centered the
+rose behind the whole hero, and at 1440px its dense central hub — where
+every spike converges — sat directly behind the headline, with one spike
+visibly slicing through the text. Fixed by moving the rose toward the
+LEFT side (mostly behind the opaque report-screenshot mockup, which
+hides the busy hub entirely) and adding a `mask-image` linear-gradient
+fade on the container itself (`black` through 48%, `transparent` by
+68%) — the mask guarantees the text column is clear by construction,
+not by hoping the positioning math stays clear of it as copy changes.
+Took four rounds of screenshot-and-crop to land on: big enough to bleed
+off the hero's top/bottom/left edges, positioned so its visible slice
+falls in the gap between the mockup and the masked-out text column, and
+opacity/spike-width tuned up twice after the first two passes read as
+generic radiating lines rather than a recognizable compass (spikes
+widened, ring/tick opacity dropped slightly relative to them so the star
+reads as the dominant shape). `CompassDivider.tsx` is the quieter reuse
+on two section dividers (the Pull Quote and Proof Points sections) — a
+static, non-rotating partial rose bleeding off one edge at ~0.09 opacity;
+the Proof Points one was first placed on the LEFT, directly behind that
+section's own opaque bottleneck-list card (invisible), and was moved to
+the RIGHT (behind the plain-background text column, like Pull Quote)
+once that was noticed in the same screenshot pass. The same
+`CompassRose` also appears as a faint static watermark (`opacity={0.07}`,
+no animation) behind the cover of both `ClientReportView.tsx` and
+`ProposalDocument.tsx` — verified on screen AND in the actual print PDF
+output (Playwright's `page.pdf()`), where it correctly adopts the
+print-safe palette `.client-report` already redefines, since it's drawn
+from the same CSS custom properties as everything else on the page.
+
+**Other depth/flare, all additive and scoped to avoid regressing the
+internal CRM app's existing look**: a `.grain-overlay` fixed noise
+texture (an inline SVG `feTurbulence` data URI, `mix-blend-mode:
+overlay`, 3.5% opacity) applied only via the `(marketing)` layout —
+deliberately not on `body` globally, since nobody asked for the dense
+internal tables/forms to look different. `.glow-gold-idle` gives primary
+buttons (and only primary — `Button`/`LinkButton` everywhere, app and
+marketing both) a resting glow that intensifies on hover, layered on
+top of the existing shared `.glow-gold-hover` rather than changing it,
+so secondary/ghost buttons are untouched. `.glass-panel-elevated` is an
+opt-in deeper-shadow modifier (used so far only on the home page's
+score-gauge card) rather than a rewrite of the shared `.glass-panel`/
+`.glass-panel-strong` every screen in the app already depends on — a
+global shadow change was a bigger blast radius than this feedback, which
+was clearly about the public-facing site, actually asked for. `.gold-
+hairline` (a center-faded 1px gradient line) fills the one home-page
+section boundary that had no separator at all; every other transition
+already had one via the pre-existing `border-y border-[var(--hairline)]`
+pattern, which is itself already gold-tinted. `.hero-light-sweep` is a
+single non-looping diagonal light pass on hero load (plain CSS
+`animation`, no JS, `both` fill-mode holds the invisible end state).
+`ScoreGauge.tsx` (the real gauge — Quick Scan, client report, and this
+marketing sample all share it) gained a blurred "ghost" arc on a slower
+`stroke-dashoffset` transition (900ms vs. the real arc's 500ms) behind
+the real one — the lag between the two while animating is what reads as
+a comet trail; invisible at rest since both arcs converge to the same
+offset once the sweep settles, so it's a no-op everywhere the gauge
+doesn't animate.
+
+**Verified via Playwright screenshots at 1440px and 375px, iterated
+across four rounds** per the explicit request (the standing no-Playwright
+rule is scoped to allow this for visual/design judgment specifically) —
+the hero-overlap bug above was the real finding; also confirmed the
+compass reads correctly at 375px (confined to roughly the first
+viewport-height of the hero rather than centered in the much-taller
+mobile stacked layout, which would have put it far below the fold), the
+button glow renders on `/scan`'s real submit button, the grain class is
+present on marketing HTML and absent from `/dashboard`'s, and the
+internal `/business-assessments/[id]/report` page (via a temporary
+`verus_staff` account created, screenshotted, and deleted immediately
+after — the same precedent as Stage 27) and a real public proposal share
+link both show the cover watermark correctly on screen and in print.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

@@ -10,7 +10,7 @@ import { BrandMark } from "@/shared/ui/BrandMark";
  */
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="grain-overlay flex min-h-screen flex-col">
       <MarketingHeader brand={<BrandMark size="md" />} />
       <main className="flex-1">{children}</main>
       <MarketingFooter />

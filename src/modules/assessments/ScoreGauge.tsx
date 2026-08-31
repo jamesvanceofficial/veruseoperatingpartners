@@ -21,6 +21,23 @@ export function ScoreGauge({ score, className }: { score: number; className?: st
     <div className={cn("relative mx-auto aspect-square w-40 sm:w-52", className)}>
       <svg viewBox={`0 0 ${size} ${size}`} className="h-full w-full -rotate-90">
         <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--hairline-strong)" strokeWidth={strokeWidth} />
+        {/* A faint, blurred "ghost" arc on a slower transition than the
+            real one below — the lag between the two, both driven by the
+            same offset, is what reads as a comet trail while the gauge
+            sweeps up. Invisible at rest, since both arcs converge to the
+            same offset once the sweep settles. */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={gaugeColor(clamped)}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{ opacity: 0.35, filter: "blur(6px)", transition: "stroke-dashoffset 900ms ease-out" }}
+        />
         <circle
           cx={center}
           cy={center}

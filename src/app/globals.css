@@ -280,6 +280,128 @@ h1, h2, h3, h4 {
 }
 
 /* ===========================================================
+   Compass rose motion — a full rotation over several minutes, barely
+   perceptible frame to frame, used by CompassHeroBackground. Static
+   under prefers-reduced-motion rather than a slower spin, matching every
+   other motion primitive in this app.
+   =========================================================== */
+@keyframes compass-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.compass-spin-slow {
+  animation: compass-spin 300s linear infinite;
+  transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .compass-spin-slow {
+    animation: none;
+  }
+}
+
+/* ===========================================================
+   Hero light sweep — a single soft diagonal pass of light on load, never
+   looping. Lives on a plain absolutely-positioned div inside a
+   `relative overflow-hidden` hero wrapper; runs once because the
+   animation has no infinite/loop and `both` holds the post-animation
+   (invisible) state afterward instead of snapping back.
+   =========================================================== */
+@keyframes hero-sweep {
+  0% {
+    transform: translateX(-60%) skewX(-12deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.5;
+  }
+  55% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateX(60%) skewX(-12deg);
+    opacity: 0;
+  }
+}
+.hero-light-sweep {
+  position: absolute;
+  inset: -20% 35% -20% -35%;
+  background: linear-gradient(100deg, transparent 42%, color-mix(in srgb, var(--gold-light) 45%, transparent) 50%, transparent 58%);
+  animation: hero-sweep 2.2s ease-out 0.2s 1 both;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-light-sweep {
+    display: none;
+  }
+}
+
+/* Primary-button-only idle + hover glow — deliberately its own class
+   rather than intensifying the shared .glow-gold-hover (used by every
+   secondary/ghost button in the app too). Declared after .glow-gold-hover
+   so its :hover box-shadow wins on elements carrying both classes. */
+.glow-gold-idle {
+  box-shadow: 0 0 20px -8px color-mix(in srgb, var(--gold) 65%, transparent);
+}
+.glow-gold-idle:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--gold) 60%, transparent),
+    0 0 32px -6px color-mix(in srgb, var(--gold) 85%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .glow-gold-idle,
+  .glow-gold-idle:hover {
+    transition: none;
+  }
+}
+
+/* A deeper elevation step above .glass-panel/.glass-panel-strong, opt-in
+   only — used sparingly on marketing hero/feature surfaces that should
+   read as sitting clearly above their neighbors, not a global redefinition
+   of the shared card shadow every internal screen already relies on. */
+.glass-panel-elevated {
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--gold-light) 65%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--black) 45%, transparent),
+    0 4px 0 0 color-mix(in srgb, var(--gold) 12%, transparent),
+    0 48px 90px -20px color-mix(in srgb, var(--black) 90%, transparent),
+    0 10px 30px -10px color-mix(in srgb, var(--black) 70%, transparent);
+}
+
+/* ===========================================================
+   Grain — a faint fixed noise texture over the marketing site and the
+   client-facing report/proposal documents, to kill the flat digital
+   look those surfaces were reading with. Screen-only (print already has
+   its own dedicated light palette and this would just read as dirt on
+   paper); scoped to an opt-in wrapper class rather than `body` so the
+   dense internal CRM tables/forms aren't affected by a texture nobody
+   asked to change there.
+   =========================================================== */
+@media screen {
+  .grain-overlay {
+    position: relative;
+  }
+  .grain-overlay::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+}
+
+/* A fine gold hairline that fades at both ends, for separating major
+   sections where a full-width border would read too heavy. */
+.gold-hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--hairline-strong) 50%, transparent 100%);
+}
+
+/* ===========================================================
    Section labels — every eyebrow/field-label/column-header in the app
    uses this one rule, so hierarchy stays consistent by construction
    instead of by convention. Small, letterspaced, muted; the numbers and

@@ -9,6 +9,8 @@ import { StatBand } from "@/modules/marketing/StatBand";
 import { FaqAccordion } from "@/modules/marketing/FaqAccordion";
 import { ScreenshotVisual } from "@/modules/marketing/ScreenshotVisual";
 import { PhotoSection } from "@/modules/marketing/PhotoSection";
+import { CompassHeroBackground } from "@/modules/marketing/CompassHeroBackground";
+import { CompassDivider } from "@/modules/marketing/CompassDivider";
 import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { CategoryBars } from "@/modules/assessments/CategoryBars";
@@ -31,43 +33,48 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* HERO — text left, real report screenshot right */}
-      <section className="page-container py-12 sm:py-16">
-        <TwoColSection
-          visual={
+      {/* HERO — text left, real report screenshot right, a large rotating
+          compass rose bleeding off every edge behind both */}
+      <section className="relative overflow-hidden">
+        <CompassHeroBackground />
+        <div className="hero-light-sweep" />
+        <div className="page-container relative py-12 sm:py-16">
+          <TwoColSection
+            visual={
+              <FadeUp>
+                <ScreenshotVisual
+                  tilt
+                  src="/images/product/report-screenshot.webp"
+                  alt="A completed VERUS business assessment report showing an enterprise score, category breakdown, and ranked bottleneck list"
+                />
+              </FadeUp>
+            }
+          >
             <FadeUp>
-              <ScreenshotVisual
-                tilt
-                src="/images/product/report-screenshot.webp"
-                alt="A completed VERUS business assessment report showing an enterprise score, category breakdown, and ranked bottleneck list"
-              />
+              <span className="section-label text-[var(--gold-light)]">VERUS Operating Company</span>
             </FadeUp>
-          }
-        >
-          <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">VERUS Operating Company</span>
-          </FadeUp>
-          <FadeUp delayMs={80}>
-            <h1 className="text-[32px] font-semibold leading-[1.1] text-[var(--cream)] sm:text-[46px]">
-              From founder-led chaos to system-driven growth.
-            </h1>
-          </FadeUp>
-          <FadeUp delayMs={160}>
-            <p className="max-w-lg text-[14.5px] leading-relaxed text-[var(--muted)] sm:text-[16px]">
-              We find what&apos;s actually holding your company back, then build the systems and processes to fix it.
-            </p>
-          </FadeUp>
-          <FadeUp delayMs={240}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <LinkButton href="/scan" variant="primary" className="px-6 py-3 text-[14px]">
-                Get Your Free Score
-              </LinkButton>
-              <LinkButton href="/contact" variant="secondary" className="px-6 py-3 text-[14px]">
-                Book a Call
-              </LinkButton>
-            </div>
-          </FadeUp>
-        </TwoColSection>
+            <FadeUp delayMs={80}>
+              <h1 className="text-[32px] font-semibold leading-[1.1] text-[var(--cream)] sm:text-[46px]">
+                From founder-led chaos to system-driven growth.
+              </h1>
+            </FadeUp>
+            <FadeUp delayMs={160}>
+              <p className="max-w-lg text-[14.5px] leading-relaxed text-[var(--muted)] sm:text-[16px]">
+                We find what&apos;s actually holding your company back, then build the systems and processes to fix it.
+              </p>
+            </FadeUp>
+            <FadeUp delayMs={240}>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <LinkButton href="/scan" variant="primary" className="px-6 py-3 text-[14px]">
+                  Get Your Free Score
+                </LinkButton>
+                <LinkButton href="/contact" variant="secondary" className="px-6 py-3 text-[14px]">
+                  Book a Call
+                </LinkButton>
+              </div>
+            </FadeUp>
+          </TwoColSection>
+        </div>
       </section>
 
       {/* THE PROBLEM — visual left (real category bars), text right */}
@@ -124,6 +131,10 @@ export default function HomePage() {
         </TwoColSection>
       </section>
 
+      <div className="page-container">
+        <div className="gold-hairline" />
+      </div>
+
       {/* WHAT VERUS BUILDS — full-width numbers band */}
       <section className="page-container flex flex-col gap-12 py-11 sm:py-14">
         <FadeUp>
@@ -177,7 +188,7 @@ export default function HomePage() {
           reverse
           visual={
             <FadeUp>
-              <Card strong className="flex flex-col gap-4">
+              <Card strong className="glass-panel-elevated flex flex-col gap-4">
                 <div className="flex flex-col items-center gap-1 text-center">
                   <AnimatedScoreGauge score={SAMPLE_SCORE} className="w-28 sm:w-32" />
                 </div>
@@ -208,9 +219,10 @@ export default function HomePage() {
         </TwoColSection>
       </section>
 
-      {/* PULL QUOTE */}
-      <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container py-11 sm:py-14">
+      {/* PULL QUOTE — a partial compass bleeds off the right edge, quiet */}
+      <section className="relative overflow-hidden border-y border-[var(--hairline)] bg-[var(--surface)]">
+        <CompassDivider side="right" opacity={0.09} />
+        <div className="page-container relative py-11 sm:py-14">
           <FadeUp>
             <PullQuote>{POSITIONING.approach}</PullQuote>
           </FadeUp>
@@ -218,7 +230,9 @@ export default function HomePage() {
       </section>
 
       {/* PROOF POINTS — visual left (ranked bottleneck list), case studies below */}
-      <section className="page-container flex flex-col gap-10 py-11 sm:py-14">
+      <section className="relative overflow-hidden">
+        <CompassDivider side="right" opacity={0.09} />
+        <div className="page-container relative flex flex-col gap-10 py-11 sm:py-14">
         <TwoColSection
           visual={
             <FadeUp>
@@ -254,6 +268,7 @@ export default function HomePage() {
               </Card>
             </FadeUp>
           ))}
+        </div>
         </div>
       </section>
 

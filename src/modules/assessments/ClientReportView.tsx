@@ -1,6 +1,7 @@
 import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { BrandMark } from "@/shared/ui/BrandMark";
+import { CompassRose } from "@/shared/ui/CompassRose";
 import { cn } from "@/shared/ui/cn";
 import { formatCurrency, formatDate, formatNumber } from "@/shared/format";
 import { categoryScoreTone } from "./scoreTone";
@@ -113,9 +114,12 @@ export function ClientReportView({
       </div>
 
       {/* 1. COVER */}
-      <section className="cr-cover cr-avoid-break flex min-h-[700px] flex-col text-center">
-        <p className="section-label pt-1">Confidential</p>
-        <div className="flex flex-1 flex-col items-center justify-center gap-8">
+      <section className="cr-cover cr-avoid-break relative flex min-h-[700px] flex-col overflow-hidden text-center">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+          <CompassRose className="h-[640px] w-[640px]" opacity={0.07} />
+        </div>
+        <p className="section-label relative pt-1">Confidential</p>
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-8">
           <BrandMark size="cover" />
           <div className="flex flex-col items-center gap-3">
             <h1 className="text-[38px] font-semibold leading-tight text-[var(--cream)]">Business Assessment</h1>
