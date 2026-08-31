@@ -1556,6 +1556,74 @@ diagram panel to `min-h-36` with `h-auto` on `sm:`, so it fills exactly
 as tall as its row's content on every card, confirmed by re-screenshotting
 and checking each card's icon-panel and text-column bottom edges align.
 
+**The Assessment: real fixes over stock imagery and flat data (Stage
+34)** — three specific problems, all confirmed by direct inspection of
+`dashboard-laptop.webp` before touching anything, not assumed from its
+filename: it was a literal generic analytics-dashboard stock photo with
+meaningless numbers ("57.1%", "479K", "17min") sitting behind the exact
+section arguing VERUS produces real measurement, not generic dashboards.
+Removed entirely (the file deleted, not just unreferenced — it was
+explicitly the subject of the complaint, unlike an incidentally-orphaned
+file elsewhere in this app that gets left in place). The section's
+`PhotoSection` wrapper is now a plain `bg-[var(--surface)]` band with a
+`CompassDivider` for brand texture instead — reusing Stage 32's motif
+rather than inventing a new treatment.
+
+**Audited every marketing page's photography for the same mistake and
+found no other offender** — every other `PhotoSection`/`PhotoFrame` src
+was opened and confirmed to be a real work/people photo (construction,
+warehouse, a handshake, a whiteboard discussion, someone's actual desk,
+a checklist being filled in by hand) rather than staged business-stock
+imagery, so nothing else needed to change.
+
+**Hero fixed with a reusable "stage" pattern, not just a bigger image**:
+`ScreenshotStage.tsx` (new) wraps the existing, unmodified
+`ScreenshotVisual` in a `.diagram-screen` backdrop (the same textured
+panel What We Do's category diagrams use — Stage 33) sized to the full
+column height (`min-h-[480px]` on `sm:`) with a soft gold glow and a
+faint compass watermark behind it, so the screenshot sits on a designed
+surface instead of floating in empty space that happens to be however
+tall the text column next to it is. The screenshot itself also grew
+(`max-w-md` → `max-w-xl`).
+
+**The category-weight section, previously ten identical flat rows with a
+number, now makes the weighting the point**: `CategoryWeightChart.tsx`
+(new, `"use client"`) draws one bar per category with LENGTH
+proportional to weight — Operations (20) draws a bar four times the
+length of Vision (5), the exact ratio named in the brief — plus bolder,
+larger type on the top two categories for a second layer of hierarchy,
+and each bar animates from zero width once scrolled into view via the
+same `useInView` hook every other reveal on the site uses. This is a
+new, purpose-built component, not a repurposing of `CategoryBars.tsx`
+(the real client-report component one section down on this same page) —
+that one's bar is tied to a category's live SCORE with red/yellow/green
+tone, a completely different meaning from a STATIC weight distribution,
+and reusing it would have misrepresented what the bar means.
+
+**Extended the exact same "flat panel → textured stage" fix to
+`DiagramHero.tsx`** (used by Builds, Systems & Support, About, and What
+We Do's own top hero) once it became clear, screenshotting those pages
+side by side with the newly-upgraded assessment hero, that they now read
+as comparatively flat by the bar this stage had just raised — one shared
+component change fixed all four pages' heroes consistently rather than
+leaving the site visually inconsistent. Audited every other page for a
+flat list where the underlying data has real hierarchy worth showing
+(requirement 4's third check) and found none — build/support tier cards
+compare different products side by side, not a shared magnitude scale,
+so a bar-length treatment there would misrepresent them; `RankedBottleneckList`
+is a real client-report component shared with the internal app and was
+left untouched, since redesigning it wasn't asked for and would affect
+what an actual client sees, not just this marketing page.
+
+**Verified via Playwright screenshots at 1440px and 375px**: the compass
+divider was first placed on the same side as the now-opaque weight-chart
+card (invisible behind it, the identical mistake Stage 32 made and fixed
+once already) — caught by the same zoomed-crop technique and moved to
+the text-column side, where it's actually visible. Confirmed live: zero
+references to the deleted stock photo remain in the rendered HTML of any
+page, and the weight chart's bar-length ratios read correctly against
+the real seeded category weights (20 down to 2) at both breakpoints.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

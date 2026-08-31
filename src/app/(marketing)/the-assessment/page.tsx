@@ -6,8 +6,9 @@ import { SectionHeading } from "@/modules/marketing/SectionHeading";
 import { TwoColSection } from "@/modules/marketing/TwoColSection";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
-import { ScreenshotVisual } from "@/modules/marketing/ScreenshotVisual";
-import { PhotoSection } from "@/modules/marketing/PhotoSection";
+import { ScreenshotStage } from "@/modules/marketing/ScreenshotStage";
+import { CompassDivider } from "@/modules/marketing/CompassDivider";
+import { CategoryWeightChart } from "@/modules/marketing/CategoryWeightChart";
 import { BandScale } from "@/modules/assessments/BandScale";
 import { RankedBottleneckList } from "@/modules/assessments/RankedBottleneckList";
 import { SAMPLE_SCORE, SAMPLE_BAND_LABEL, SAMPLE_BANDS, SAMPLE_BOTTLENECKS, SAMPLE_QUESTION } from "@/modules/marketing/sampleAssessment";
@@ -43,9 +44,8 @@ export default async function TheAssessmentPage() {
         <TwoColSection
           visual={
             <FadeUp>
-              <ScreenshotVisual
-                tilt
-                maxWidthClassName="max-w-md"
+              <ScreenshotStage
+                maxWidthClassName="max-w-xl"
                 src="/images/product/runner-screenshot.webp"
                 alt="The VERUS assessment runner mid-question, showing answer choices and a live provisional score"
               />
@@ -80,30 +80,29 @@ export default async function TheAssessmentPage() {
       </section>
 
       {categories.length > 0 ? (
-        <PhotoSection src="/images/photography/dashboard-laptop.webp" className="border-y border-[var(--hairline)]">
-          <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
-            <FadeUp>
-              <SectionHeading
-                eyebrow="What It Covers"
-                title="Every part of the business, weighted by what actually matters"
-                description="The categories below are weighted — Operations and Systems carry more weight than Vision or Marketing, because that's where founder-led businesses are usually actually bottlenecked."
-              />
-            </FadeUp>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categories
-                .slice()
-                .sort((a, b) => b.weight - a.weight)
-                .map((c, i) => (
-                  <FadeUp key={c.id} delayMs={Math.min(i * 40, 320)}>
-                    <Card className="hover-lift flex items-center justify-between gap-3 py-3.5">
-                      <span className="text-[13px] text-[var(--cream)]">{c.name}</span>
-                      <span className="font-tabular text-[12px] text-[var(--gold-light)]">weight {c.weight}</span>
-                    </Card>
-                  </FadeUp>
-                ))}
-            </div>
+        <section className="relative overflow-hidden border-y border-[var(--hairline)] bg-[var(--surface)]">
+          <CompassDivider side="left" opacity={0.08} />
+          <div className="page-container relative py-11 sm:py-14">
+            <TwoColSection
+              reverse
+              visual={
+                <FadeUp>
+                  <Card strong className="glass-panel-elevated">
+                    <CategoryWeightChart categories={categories.map((c) => ({ id: c.id, name: c.name, weight: c.weight }))} />
+                  </Card>
+                </FadeUp>
+              }
+            >
+              <FadeUp>
+                <SectionHeading
+                  eyebrow="What It Covers"
+                  title="Every part of the business, weighted by what actually matters"
+                  description="Operations carries four times the weight of Vision — because that's where founder-led businesses are usually actually bottlenecked, not because of an arbitrary point scale."
+                />
+              </FadeUp>
+            </TwoColSection>
           </div>
-        </PhotoSection>
+        </section>
       ) : null}
 
       {/* HOW SCORING WORKS — a real sample question, visual left */}
