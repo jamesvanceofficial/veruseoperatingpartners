@@ -937,6 +937,157 @@ dashboard metrics query. Everything created for the test — the
 subscription, its line items, and the test build package — was deleted
 afterward.
 
+## Proposals (Stage 31)
+
+The document that gets signed — the step between the client report and
+the money. A brand new `proposals` table (unlike Stages 29/30, which
+extended existing empty tables), staff-only RLS with no client policy at
+all: unlike a support ticket or subscription, a proposal recipient is
+often a prospect with no login yet, so the public share-link token is the
+only legitimate client-facing path — same precedent as
+`communication_log`'s "staff-only read AND write," not the default
+org-scoped-client-read shape most tables use.
+
+**Generated from an assessment, one click, nothing retyped**
+(`generateProposalContent()` in `generate.ts`, called from
+`createProposalFromAssessment()` in `data.ts`): client name, enterprise
+score, band, the top three bottlenecks (same `bottleneckRank`-ascending
+`top3` derivation `ClientReportView.tsx` already uses) written out in
+plain language via the existing `CATEGORY_BOTTLENECK_COPY`/
+`CATEGORY_TYPICAL_COST`/`CATEGORY_FIX_INVOLVES` copy, the effective build
+tier and price, the effective scope (`getEffectiveBuildScope()`,
+portal/automation needs included), the scope-of-work phases
+(`computeScopeOfWork()`) written out as per-phase text blocks, the
+effective support tier, and the combined first-year value
+(`buildPrice + supportPrice * 9`, the same formula used everywhere else
+this number appears) — all resolved through the same override-or-
+recommended convention every other stage already uses
+(`build_tier_override ?? recommended_build_tier`, support tier falling
+back through `DEFAULT_SUPPORT_TIER_FOR_BUILD` when neither an override
+nor a recommendation exists). A "Proposal" button on the assessment
+detail page (`GenerateProposalButton.tsx`) generates one and lands on its
+detail page; a second click from the same assessment is allowed (no
+one-per-assessment block, matching the build-package precedent for a
+genuine re-proposal), with the button becoming "View proposal →" once one
+exists (`getProposalByAssessmentId()`, most-recent-first).
+
+**Every section is plain, freely-editable `text`, never JSONB** — this
+app's established convention for user-editable prose (meetings'
+`agenda`/`notes`/`decisions` are the precedent) over a rigid schema for
+content that's explicitly supposed to be adjusted per client (requirement
+3). Generated content is bulleted (`• item`) or blocked
+(`Phase Name (Weeks X-Y)\n• deliverable...`) plain text, edited via
+textareas in `ProposalForm.tsx` — nothing here writes back to the source
+assessment; the assessment's own recommendation snapshot is untouched by
+any edit made here, same "generate once, then diverges" pattern as a
+build package's phases being a snapshot rather than a live link.
+
+**Payment terms** (`payment_terms`: paid_in_full / half_upfront) drive a
+computed `deposit_amount`/`balance_amount` split
+(`computePaymentSplit()`), recomputed automatically whenever either the
+terms or the build price changes (`updateProposal()` in `data.ts` fetches
+whichever of the two didn't change from the current row before
+recomputing, so changing just one never leaves the other stale).
+
+**Status** (draft/sent/accepted/declined) with real timestamps:
+`markProposalSent()` stamps `sent_at`; `recordProposalAcceptance()`
+stamps `accepted_at` plus the typed `signed_name`/`signed_title`, and —
+if the proposal has a linked opportunity — moves it to
+`build_package_sold` through the existing `transitionStage()` helper,
+logged in `opportunity_stage_history` exactly like any other stage
+change. `recordProposalDecline()` stamps `declined_at` plus an optional
+`decline_reason`. **`transitionStage()`'s `changedBy` parameter was
+widened from `string` to `string | null`** to support this — a client
+accepting via the public share link has no staff profile behind the
+transition, and `opportunity_stage_history.changed_by` was already
+nullable at the DB level (verified via `psql \d` before making the
+change, not assumed).
+
+**Share link** — token, expiry, and revocation follow the exact assessment
+share-link pattern (`randomBytes(24).toString("base64url")`, the same
+revoked-then-expired check order in `getProposalByToken()`), scoped to
+`/proposal/[token]` (singular, distinct from the internal `/proposals`
+list) and added to `proxy.ts`'s public-path allowlist alongside
+`/assessment`.
+
+**The public page** (`/app/proposal/[token]/page.tsx`) renders the same
+`ProposalDocument` component the internal detail page previews — one
+document, two audiences, matching the Client Report precedent of a
+single shared presentational component — wrapped in the existing
+`.client-report` print class (reused exactly as-is, no new print
+stylesheet) with a `PrintButton`. No internal control of any kind lives
+in `ProposalDocument` itself; the only interactivity on the public page
+is `ProposalAcceptDeclineWidget` (a separate client component, `no-print`
+by class so it never appears in a Save-as-PDF), which only renders when
+`status === "sent"` — a sticky-header "Jump to Accept / Decline ↓" link
+appears only in that state too. **Verified visually via Playwright**
+(screenshot + `page.pdf()`, since this stage explicitly asked for it —
+the standing no-Playwright rule is scoped to routine functional
+verification, not this): the first pass had the accept/decline banner
+sitting above the cover, before the client had read anything: moved it
+to sit directly after the Acceptance/Signature section instead, so the
+call-to-action follows naturally from having just read the whole
+document, with the header link as a shortcut for anyone who wants to skip
+straight there. The same PDF pass caught two real copy bugs in
+`generate.ts`, both now fixed: the timeline text appended ", from kickoff
+to handover" onto `BuildTierInfo.timeline`, which already ends in "from
+kickoff to handover" on every tier, producing a visible duplicate
+("6-9 weeks from kickoff to handover, from kickoff to handover"); and the
+recommendation text spliced `BuildTierInfo.forCompanies` (a standalone
+label like "Most clients.") in as its own sentence between two others,
+reading as a sentence fragment — reworked to weave it into the first
+sentence instead ("...built for most clients.").
+
+**On acceptance**, the proposal detail page offers one-click build
+package creation reusing the existing `CreateBuildPackageButton` as-is
+(pointed at the proposal's own `assessment_id` — no new component or
+logic needed), shown once `status === "accepted"` and gated on the same
+`getBuildPackageByAssessmentId()` check the assessment detail page
+already uses, so it can't offer to create a second package once one
+exists.
+
+**Pages**: `/proposals` (list, filterable by org/status — same pattern as
+every other filterable list in this app), `/proposals/[id]` (detail —
+status/tier header, share-link panel, the accepted-state build-package
+offer or the declined-state reason, a read-only preview of the full
+document, staff-only `DangerZone`), `/proposals/[id]/edit` (one
+`ProposalForm`, every generated text/number field editable, org/
+assessment/tier shown read-only since they're what the content was
+generated from), and the public `/proposal/[token]`. No manual "create
+from scratch" page — per the request, the only creation path is
+generation from a completed Full Assessment, and requirement 9's page
+list doesn't call for one either.
+
+**Delete** is staff-only `DangerZone`, confirming with the real company
+name and current status — a plain delete with no follow-up logic (unlike
+a build package's delete, which moves its opportunity back a stage);
+deleting a proposal never touches the opportunity a prior acceptance may
+have already transitioned, since that transition is a real, independent
+fact about the CRM pipeline that happened, not something scoped to the
+proposal record's own lifecycle.
+
+**Verified end-to-end against the database**, same "admin client + real
+records, not a browser" pattern as Stages 29/30 — but here using a fully
+throwaway org/opportunity/completed-Full-Assessment fixture (rather than
+mutating a real client's real opportunity stage) specifically because
+acceptance has a real side effect on the linked opportunity that a
+delete does not undo: generated a proposal and confirmed every carried-
+over field matched the source report exactly, confirmed the paid-in-full
+and half-upfront payment splits (including recomputation when only the
+price changes), confirmed share-link generation/resolution/revocation
+(including a garbage token and a revoked token both correctly resolving
+to nothing), confirmed acceptance stamps the signed name/title and moves
+the linked opportunity to `build_package_sold` with a null-`changed_by`
+row in its stage history, confirmed decline on a second proposal from the
+same assessment stamps its reason, confirmed an anon client sees zero
+rows against the staff-only `proposals` table, then deleted the throwaway
+organization and confirmed the cascade took the opportunity, assessment,
+category scores, stage history, and both test proposals with it — nothing
+left behind. Separately confirmed live over curl: `/proposals`
+unauthenticated redirects to login (307), `/proposal/<bad-token>` 404s,
+an unauthenticated `POST /api/proposals` is rejected (401), and an
+unauthenticated `POST /api/public/proposal/<bad-token>/accept` 404s.
+
 ## The Public Website (Stage 18)
 
 `src/app/(marketing)/` — what paid traffic lands on: Home (`/`), What We
@@ -1558,6 +1709,25 @@ other table below is still staff-write-only, no exceptions.
   in the sidebar — and the report shows it via `BusinessProfilePanels.tsx`,
   which renders each of the three panels only if something was actually
   saved for it.
+- `proposals` (Stage 31) — a brand new table, not an extension of an
+  existing one. org_id, `assessment_id` (nullable FK assessments, `on
+  delete set null` — the source it was generated FROM), `opportunity_id`
+  (nullable FK opportunities, `on delete set null`), status (draft/sent/
+  accepted/declined), `prepared_by` (nullable FK profiles, `on delete set
+  null`), proposal_date, company_name, then every generated section as
+  its own plain-text/number column (never JSONB — see the Proposals
+  section): enterprise_score, band_label, constraints_text, build_tier,
+  recommendation_text, scope_of_work_text, included_text, excluded_text,
+  timeline_text, build_price, payment_terms (paid_in_full/half_upfront),
+  deposit_amount, balance_amount, support_tier, support_price_label,
+  first_year_value, investment_notes, verus_responsibilities_text,
+  client_responsibilities_text, next_steps_text, signed_name, signed_title,
+  sent_at, accepted_at, declined_at, decline_reason, and the same
+  share_token/share_token_expires_at/share_token_revoked_at triple every
+  other share-linked record uses. RLS is staff-only read AND write, no
+  client policy at all — see the Proposals section for why (a prospect at
+  this stage often has no login yet; the public share-link token is the
+  real client-facing channel, same reasoning as `communication_log`).
 - `build_packages` — org_id, opportunity_id, `assessment_id` (Stage 9 — the
   source assessment it was created FROM, nullable FK, `on delete set
   null`), tier (foundation/growth/enterprise/custom), status (proposed/

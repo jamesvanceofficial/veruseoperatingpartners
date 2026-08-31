@@ -5,14 +5,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * drag-and-drop endpoint and the full edit form's PATCH route, so a stage
  * change is always logged exactly once, however it happened. No-ops if
  * the stage didn't actually change (editing other fields shouldn't touch
- * stage_changed_at or write a no-op history row).
+ * stage_changed_at or write a no-op history row). changedBy is null for a
+ * transition with no staff actor behind it — a client accepting a
+ * proposal via its public share link, for instance; the column itself is
+ * nullable for exactly this case.
  */
 export async function transitionStage(
   admin: SupabaseClient,
   opportunityId: string,
   fromStage: string | null,
   toStage: string,
-  changedBy: string
+  changedBy: string | null
 ): Promise<void> {
   if (fromStage === toStage) return;
 

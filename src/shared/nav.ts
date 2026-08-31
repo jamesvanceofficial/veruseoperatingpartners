@@ -14,6 +14,7 @@ export const NAV_REGISTRY: NavEntry[] = [
   { key: "crm-pipeline", label: "CRM Pipeline", href: "/crm-pipeline" },
   { key: "organizations", label: "Organizations", href: "/organizations" },
   { key: "business-assessments", label: "Business Assessments", href: "/business-assessments" },
+  { key: "proposals", label: "Proposals", href: "/proposals" },
   { key: "build-packages", label: "Build Packages", href: "/build-packages" },
   { key: "projects", label: "Projects", href: "/projects" },
   { key: "tasks", label: "Tasks", href: "/tasks" },

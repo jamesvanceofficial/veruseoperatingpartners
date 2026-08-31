@@ -14,6 +14,8 @@ import { ShareLinkPanel } from "@/modules/assessments/ShareLinkPanel";
 import { PricingReleaseControl } from "@/modules/assessments/PricingReleaseControl";
 import { getBuildPackageByAssessmentId } from "@/modules/buildPackages/data";
 import { CreateBuildPackageButton } from "@/modules/buildPackages/CreateBuildPackageButton";
+import { getProposalByAssessmentId } from "@/modules/proposals/data";
+import { GenerateProposalButton, ViewProposalLink } from "@/modules/proposals/GenerateProposalButton";
 import { Badge } from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import { DangerZone } from "@/shared/ui/DangerZone";
@@ -41,6 +43,7 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
   const effectiveBuildTier = assessment.build_tier_override ?? assessment.recommended_build_tier;
   const isCompletedFull = assessment.status === "completed" && assessment.assessment_type === "full";
   const existingBuildPackage = canEdit && isCompletedFull ? await getBuildPackageByAssessmentId(supabase, id) : null;
+  const existingProposal = canEdit && isCompletedFull ? await getProposalByAssessmentId(supabase, id) : null;
 
   return (
     <div className="page-container flex flex-1 flex-col gap-6 py-8">
@@ -62,6 +65,9 @@ export default async function AssessmentDetailPage({ params }: { params: Promise
             <LinkButton href={`/business-assessments/${id}/report`} variant="primary" target="_blank">
               Client report ↗
             </LinkButton>
+          ) : null}
+          {canEdit && isCompletedFull && effectiveBuildTier ? (
+            existingProposal ? <ViewProposalLink proposalId={existingProposal.id} /> : <GenerateProposalButton assessmentId={id} />
           ) : null}
           {canEdit && isCompletedFull && effectiveBuildTier ? (
             existingBuildPackage ? (
