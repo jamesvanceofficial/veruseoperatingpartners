@@ -9,6 +9,7 @@ import { POSITIONING, HOW_IT_WORKS_STEPS } from "@/modules/marketing/positioning
 import { DiagramHero } from "@/modules/marketing/DiagramHero";
 import { PhotoSection } from "@/modules/marketing/PhotoSection";
 import { SystemsMapDiagram } from "@/modules/marketing/PageHeroIcons";
+import { IconReveal } from "@/modules/marketing/IconReveal";
 import {
   WebsiteIcon,
   SoftwareIcon,
@@ -146,39 +147,37 @@ export default function WhatWeDoPage() {
         </div>
       </section>
 
-      {/* PER-CATEGORY BUILD BREAKDOWN — alternating sides */}
-      <div className="page-container flex flex-col gap-10 py-14 sm:py-16">
-        {BUILD_CATEGORIES.map((cat, i) => (
-          <TwoColSection
-            key={cat.title}
-            reverse={i % 2 === 1}
-            visual={
-              <FadeUp>
-                <div className="glass-panel relative flex aspect-square max-w-[240px] flex-col items-center justify-center p-8 sm:mx-0 mx-auto">
-                  <span className="absolute left-4 top-4 font-tabular text-[12px] text-[var(--gold-light)]">{cat.index}</span>
-                  <cat.icon className="h-28 w-28" />
+      {/* PER-CATEGORY BUILD BREAKDOWN — dense 2-up grid, diagram and text
+          sharing one card so they read as a pair, not two ends of the
+          screen. The last (Ongoing Support) spans full width as a close. */}
+      <div className="page-container py-10 sm:py-12">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+          {BUILD_CATEGORIES.map((cat, i) => (
+            <FadeUp key={cat.title} delayMs={(i % 2) * 60} className={i === BUILD_CATEGORIES.length - 1 ? "sm:col-span-2" : undefined}>
+              <div className="glass-panel-strong flex h-full flex-col gap-4 p-5 sm:flex-row sm:items-stretch sm:gap-6 sm:p-6">
+                <div className="diagram-screen relative mx-auto flex h-36 w-36 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--hairline)] sm:mx-0 sm:h-auto sm:min-h-36">
+                  <span className="absolute left-3 top-3 z-10 font-tabular text-[11px] text-[var(--gold-light)]">{cat.index}</span>
+                  <div className="absolute h-20 w-20 rounded-full bg-[var(--gold)] opacity-25 blur-2xl" aria-hidden="true" />
+                  <IconReveal className="relative flex items-center justify-center">
+                    <cat.icon className="h-24 w-24 sm:h-28 sm:w-28" />
+                  </IconReveal>
                 </div>
-              </FadeUp>
-            }
-          >
-            <FadeUp>
-              <h2 className="text-[20px] font-semibold text-[var(--cream)]">{cat.title}</h2>
+                <div className="flex flex-1 flex-col gap-2">
+                  <h2 className="text-[16.5px] font-semibold text-[var(--cream)]">{cat.title}</h2>
+                  <p className="text-[13px] leading-relaxed text-[var(--muted)]">{cat.description}</p>
+                  <ul className="flex flex-col gap-1.5 pt-1">
+                    {cat.includes.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-[12.5px] leading-relaxed text-[var(--cream)]">
+                        <span className="text-[var(--green)]">✓</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </FadeUp>
-            <FadeUp delayMs={60}>
-              <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">{cat.description}</p>
-            </FadeUp>
-            <FadeUp delayMs={120}>
-              <ul className="flex flex-col gap-2">
-                {cat.includes.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-[13px] leading-relaxed text-[var(--cream)]">
-                    <span className="text-[var(--green)]">✓</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </FadeUp>
-          </TwoColSection>
-        ))}
+          ))}
+        </div>
       </div>
 
       <PhotoSection src="/images/photography/whiteboard-discussion.webp" className="border-t border-[var(--hairline)]">

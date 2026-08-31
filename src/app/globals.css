@@ -402,6 +402,66 @@ h1, h2, h3, h4 {
 }
 
 /* ===========================================================
+   Diagram screen — the richer, textured background a hand-drawn SVG
+   diagram sits on, replacing a flat panel fill: a warm radial glow plus a
+   fine graph-paper grid, so the panel itself reads as a designed surface
+   (a device screen) rather than empty fill around a small icon.
+   =========================================================== */
+.diagram-screen {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 24%, color-mix(in srgb, var(--gold) 16%, transparent) 0%, transparent 58%),
+    linear-gradient(165deg, color-mix(in srgb, var(--navy-2) 92%, var(--muted) 8%) 0%, var(--navy) 100%);
+}
+.diagram-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--gold) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--gold) 9%, transparent) 1px, transparent 1px);
+  background-size: 16px 16px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Icon reveal — each direct child of the SVG fades/rises into place in a
+   fast staggered sequence once `.in-view` is added (see IconReveal.tsx).
+   Targets `> svg > *` generically so it works across every hand-drawn
+   icon's own mix of element types with no per-icon markup changes. */
+.icon-draw-in > svg > * {
+  opacity: 0;
+  transform: translateY(5px) scale(0.94);
+  transition: opacity 360ms ease-out, transform 360ms ease-out;
+  transform-origin: center;
+}
+.icon-draw-in.in-view > svg > * {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.icon-draw-in > svg > *:nth-child(1) { transition-delay: 0ms; }
+.icon-draw-in > svg > *:nth-child(2) { transition-delay: 30ms; }
+.icon-draw-in > svg > *:nth-child(3) { transition-delay: 60ms; }
+.icon-draw-in > svg > *:nth-child(4) { transition-delay: 90ms; }
+.icon-draw-in > svg > *:nth-child(5) { transition-delay: 120ms; }
+.icon-draw-in > svg > *:nth-child(6) { transition-delay: 150ms; }
+.icon-draw-in > svg > *:nth-child(7) { transition-delay: 180ms; }
+.icon-draw-in > svg > *:nth-child(8) { transition-delay: 210ms; }
+.icon-draw-in > svg > *:nth-child(9) { transition-delay: 240ms; }
+.icon-draw-in > svg > *:nth-child(10) { transition-delay: 270ms; }
+.icon-draw-in > svg > *:nth-child(11) { transition-delay: 300ms; }
+.icon-draw-in > svg > *:nth-child(12) { transition-delay: 330ms; }
+.icon-draw-in > svg > *:nth-child(n+13) { transition-delay: 360ms; }
+@media (prefers-reduced-motion: reduce) {
+  .icon-draw-in > svg > * {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===========================================================
    Section labels — every eyebrow/field-label/column-header in the app
    uses this one rule, so hierarchy stays consistent by construction
    instead of by convention. Small, letterspaced, muted; the numbers and

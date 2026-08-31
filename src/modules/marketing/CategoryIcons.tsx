@@ -94,12 +94,15 @@ export function AutomationIcon({ className }: IconProps) {
 export function DocumentationIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 120 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22 24h40l16 16v68a4 4 0 01-4 4H22a4 4 0 01-4-4V28a4 4 0 014-4z" stroke="var(--muted)" strokeWidth="2" opacity="0.5" />
       <path d="M30 16h44l16 16v72a4 4 0 01-4 4H30a4 4 0 01-4-4V20a4 4 0 014-4z" stroke="var(--gold-light)" strokeWidth="2.5" fill="var(--navy-2)" />
       <path d="M74 16v16h16" stroke="var(--gold-light)" strokeWidth="2.5" strokeLinejoin="round" />
+      <circle cx="41" cy="42" r="3" fill="var(--gold)" />
       <line x1="36" y1="52" x2="82" y2="52" stroke="var(--cream)" strokeWidth="2" opacity="0.9" />
       <line x1="36" y1="64" x2="82" y2="64" stroke="var(--muted)" strokeWidth="1.6" />
       <line x1="36" y1="76" x2="68" y2="76" stroke="var(--muted)" strokeWidth="1.6" />
       <line x1="36" y1="88" x2="74" y2="88" stroke="var(--muted)" strokeWidth="1.6" />
+      <path d="M84 90l3 3 6-7" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -108,12 +111,22 @@ export function SupportIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 120 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
+        d="M60 10c17 6.5 30 6.5 30 6.5v36c0 23-14 38-30 47-16-9-30-24-30-47v-36S43 16.5 60 10z"
+        stroke="var(--muted)"
+        strokeWidth="1.6"
+        opacity="0.4"
+      />
+      <path
         d="M60 18c16 6 28 6 28 6v34c0 22-13 36-28 44-15-8-28-22-28-44V24s12 0 28-6z"
         stroke="var(--gold-light)"
         strokeWidth="2.5"
         fill="var(--navy-2)"
       />
+      <circle cx="60" cy="52" r="19" stroke="var(--gold)" strokeWidth="1.4" opacity="0.5" />
       <polyline points="42,60 53,71 80,44" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="27" cy="26" r="3" fill="var(--gold)" opacity="0.8" />
+      <circle cx="93" cy="26" r="3" fill="var(--gold)" opacity="0.8" />
+      <line x1="60" y1="82" x2="60" y2="94" stroke="var(--muted)" strokeWidth="1.6" opacity="0.6" />
     </svg>
   );
 }

@@ -1509,6 +1509,53 @@ internal `/business-assessments/[id]/report` page (via a temporary
 after — the same precedent as Stage 27) and a real public proposal share
 link both show the cover watermark correctly on screen and in print.
 
+**What We Do density fix (Stage 33)** — direct feedback that the seven
+build-category diagrams sat as small squares in oversized columns, with
+a large dead gap to their own text. `what-we-do/page.tsx`'s per-category
+section was restructured from seven full-width alternating
+`TwoColSection` rows into a dense 2-up `grid` where each category is ONE
+`glass-panel-strong` card holding both the diagram and its text side by
+side (stacked on mobile) — the fix is structural, not just a size bump:
+diagram and text can no longer be at opposite ends of the screen because
+they share a card. The seventh (Ongoing Support) spans both columns as a
+closing row. Page height dropped from 3847px to 2857px at 1440px width
+(a ~26% reduction) from tightening the section's own vertical padding
+and the grid gap alone. Each diagram sits in a new `.diagram-screen`
+panel (globals.css) — a warm radial glow plus a fine graph-paper grid
+background, replacing the old flat panel fill — plus a soft blurred gold
+glow behind the icon itself, and is rendered larger relative to its now
+properly-sized container. `IconReveal.tsx` (new, in `modules/marketing/`)
+wraps each icon and toggles an `.icon-draw-in`/`.in-view` class pair via
+the existing `useInView` hook; the CSS targets `> svg > *` generically
+with staggered `transition-delay`s per `nth-child`, so every hand-drawn
+icon's own mix of rect/line/circle/path elements fades up in sequence on
+scroll with zero per-icon markup changes. `SupportIcon` and
+`DocumentationIcon` (the two sparsest of the seven, at 2 and 6 elements)
+gained a few extra details each (a secondary offset outline, corner
+accent dots, an inner ring, a small checkmark) so they read as
+comparably rich to the other five.
+
+**Audited every other marketing page for the same "small element in an
+oversized container" pattern (requirement 6) and found none** — Builds
+and Systems & Support's hero `DiagramHero` (a 380px square) sits well
+matched against its text column; Case Studies' large real photos next to
+shorter paragraph text is normal editorial pacing, not a broken layout;
+The Assessment, About, and Contact all pair real content of comparable
+visual weight. Verified by screenshotting all seven marketing pages
+full-page at 1440px and comparing page heights/proportions before
+concluding only What We Do's category section actually had the defect —
+not by assuming the rest were fine.
+
+**Verified via Playwright screenshots at 1440px and 375px, iterated
+across two rounds**: the first pass fixed the diagram/text pairing and
+texture but left a residual gap — the diagram panel's fixed height
+didn't match its row's actual text height in cards with more bullet
+points (SOPs, Automations), leaving dead space at the bottom of the
+diagram column. Fixed by switching the card to `items-stretch` and the
+diagram panel to `min-h-36` with `h-auto` on `sm:`, so it fills exactly
+as tall as its row's content on every card, confirmed by re-screenshotting
+and checking each card's icon-panel and text-column bottom edges align.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under
