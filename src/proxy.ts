@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/update-password",
   "/scan",
+  "/start",
   "/assessment",
   // Stage 31 — the public proposal share link, same pattern as /assessment.
   "/proposal",

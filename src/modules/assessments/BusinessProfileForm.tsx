@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
 import { FormField, Input, Select, Textarea } from "@/shared/ui/FormField";
+import { PrivacyNote } from "@/shared/ui/PrivacyNote";
 import {
   PHYSICAL_LOCATION_OPTIONS,
   PHYSICAL_LOCATION_LABELS,
@@ -353,10 +354,11 @@ export function BusinessProfileForm({
 
       {error ? <p className="text-[12.5px] text-[var(--red)]">{error}</p> : null}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3">
         <Button type="submit" variant="primary" loading={submitting} className="w-full py-3.5 sm:w-auto">
           Continue to questions
         </Button>
+        <PrivacyNote />
       </div>
     </form>
   );

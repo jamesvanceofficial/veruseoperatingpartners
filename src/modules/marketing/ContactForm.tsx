@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
 import { FormField, Input, Select, Textarea } from "@/shared/ui/FormField";
+import { PrivacyNote } from "@/shared/ui/PrivacyNote";
 import { INDUSTRY_OPTIONS, REVENUE_RANGE_OPTIONS, TIMELINE_OPTIONS } from "./formOptions";
 
 function FormSection({ index, title, children }: { index: string; title: string; children: React.ReactNode }) {
@@ -139,9 +140,12 @@ export function ContactForm() {
 
       {error ? <p className="text-[12.5px] text-[var(--red)]">{error}</p> : null}
 
-      <Button type="submit" variant="primary" loading={submitting} className="self-start px-6 py-3 text-[14px]">
-        Submit
-      </Button>
+      <div className="flex flex-col gap-3">
+        <Button type="submit" variant="primary" loading={submitting} className="self-start px-6 py-3 text-[14px]">
+          Submit
+        </Button>
+        <PrivacyNote />
+      </div>
     </form>
   );
 }

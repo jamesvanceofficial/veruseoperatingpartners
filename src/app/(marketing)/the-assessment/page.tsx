@@ -4,6 +4,7 @@ import { Card } from "@/shared/ui/Card";
 import { Badge } from "@/shared/ui/Badge";
 import { SectionHeading } from "@/modules/marketing/SectionHeading";
 import { TwoColSection } from "@/modules/marketing/TwoColSection";
+import { FaqAccordion } from "@/modules/marketing/FaqAccordion";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
 import { ScreenshotStage } from "@/modules/marketing/ScreenshotStage";
@@ -24,6 +25,29 @@ export const metadata: Metadata = {
     description: "A $2,500 diagnostic that finds your worst bottleneck and ranks what it's actually costing you.",
   },
 };
+
+const OBJECTIONS = [
+  {
+    question: "Why not just hire a consultant?",
+    answer:
+      "A consultant tells you what's wrong and hands you a plan to execute yourself — the follow-through is still on you. VERUS diagnoses the same way, then actually builds the fix and stays embedded running it. You're not left holding a slide deck and a to-do list nobody has time for.",
+  },
+  {
+    question: "I already have software.",
+    answer:
+      "The assessment accounts for what you already have. Sometimes the right build connects and fixes what exists rather than replacing it — the point is fixing the actual bottleneck, not selling a rebuild you don't need.",
+  },
+  {
+    question: "I don't have time for this.",
+    answer:
+      "It's 120 questions you answer at your own pace through a private link — no meeting to schedule, no consultant sitting across from you. Most owners finish it in one sitting between other things. And every week you run on a bottleneck you haven't measured costs more time than this takes.",
+  },
+  {
+    question: "How do I know it's worth $2,500?",
+    answer:
+      "You get a full, ranked diagnostic of your business — your score, your band, and every bottleneck weighted by what it's actually costing you — whether or not you ever build anything with us. Most owners have never had a real, measured answer to what's holding them back. This is that answer.",
+  },
+] as const;
 
 export default async function TheAssessmentPage() {
   // assessment_categories is RLS-scoped `to authenticated` only (real
@@ -189,6 +213,20 @@ export default async function TheAssessmentPage() {
               </div>
             </FadeUp>
           </TwoColSection>
+        </div>
+      </section>
+
+      {/* OBJECTIONS — honest, brief answers to what actually stops an owner from booking */}
+      <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
+        <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
+          <FadeUp>
+            <SectionHeading eyebrow="Before You Decide" title="What Owners Actually Ask Before Booking" align="center" />
+          </FadeUp>
+          <FadeUp>
+            <div className="mx-auto w-full max-w-2xl">
+              <FaqAccordion items={OBJECTIONS} />
+            </div>
+          </FadeUp>
         </div>
       </section>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/shared/ui/Card";
 import { Button } from "@/shared/ui/Button";
 import { FormField, Input, Select } from "@/shared/ui/FormField";
+import { PrivacyNote } from "@/shared/ui/PrivacyNote";
 import { REVENUE_RANGES } from "./labels";
 import { QuickScanResult } from "./QuickScanResult";
 import { AnswerOptionButton } from "./AnswerOptionButton";
@@ -155,6 +156,7 @@ export function QuickScanWizard({ questions }: { questions: Question[] }) {
         <Button type="submit" variant="primary" className="w-full px-6 py-3.5 text-[13.5px] sm:w-auto">
           Start the Quick Scan
         </Button>
+        <PrivacyNote />
       </form>
     );
   }
