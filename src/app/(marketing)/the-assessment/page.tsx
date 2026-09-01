@@ -57,7 +57,7 @@ export default async function TheAssessmentPage() {
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[28px] font-semibold leading-tight text-[var(--cream)] sm:text-[38px]">
-              A real diagnostic, not a sales pitch dressed up as one.
+              A Real Diagnostic, Not a Sales Pitch Dressed Up As One.
             </h1>
           </FadeUp>
           <FadeUp delayMs={160}>
@@ -96,7 +96,7 @@ export default async function TheAssessmentPage() {
               <FadeUp>
                 <SectionHeading
                   eyebrow="What It Covers"
-                  title="Every part of the business, weighted by what actually matters"
+                  title="Every Part of the Business, Weighted By What Actually Matters"
                   description="Operations carries four times the weight of Vision — because that's where founder-led businesses are usually actually bottlenecked, not because of an arbitrary point scale."
                 />
               </FadeUp>
@@ -129,7 +129,7 @@ export default async function TheAssessmentPage() {
           }
         >
           <FadeUp>
-            <SectionHeading eyebrow="The Format" title="Every question uses the same 0-3 ladder" />
+            <SectionHeading eyebrow="The Format" title="Every Question Uses the Same 0-3 Ladder" />
           </FadeUp>
           <FadeUp delayMs={80}>
             <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
@@ -158,7 +158,7 @@ export default async function TheAssessmentPage() {
             }
           >
             <FadeUp>
-              <SectionHeading eyebrow="The Result" title="A score, a band, and a ranked list of what to fix first" />
+              <SectionHeading eyebrow="The Result" title="A Score, a Band, and a Ranked List of What to Fix First" />
             </FadeUp>
             <FadeUp delayMs={80}>
               <div className="flex items-center gap-4">
@@ -195,7 +195,7 @@ export default async function TheAssessmentPage() {
       <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
-            Not ready for the full assessment? Start with the free scan.
+            Not Ready for the Full Assessment? Start with the Free Scan.
           </h2>
         </FadeUp>
         <FadeUp delayMs={100}>

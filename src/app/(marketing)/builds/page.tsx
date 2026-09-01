@@ -37,7 +37,7 @@ export default function BuildsPage() {
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-              Scoped to your business, not a template.
+              Scoped to Your Business, Not a Template.
             </h1>
           </FadeUp>
           <FadeUp delayMs={160}>
@@ -93,7 +93,7 @@ export default function BuildsPage() {
       <section className="border-t border-[var(--hairline)] bg-[var(--surface)]">
         <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
-            <SectionHeading eyebrow="Every Build Includes" title="Support and systems that keep running after handover" align="center" />
+            <SectionHeading eyebrow="Every Build Includes" title="Support and Systems That Keep Running After Handover" align="center" />
           </FadeUp>
           <FadeUp delayMs={80}>
             <Badge tone="gold">Every build bundles a Software, Systems & Support subscription</Badge>
@@ -109,7 +109,7 @@ export default function BuildsPage() {
       <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
           <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
-            Your exact tier and price come from your Business Assessment.
+            Your Exact Tier and Price Come From Your Business Assessment.
           </h2>
         </FadeUp>
         <FadeUp delayMs={100}>

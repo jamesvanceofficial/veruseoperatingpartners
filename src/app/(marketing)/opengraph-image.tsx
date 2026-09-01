@@ -51,7 +51,7 @@ export default async function OpengraphImage() {
             color: "#f7f5ef",
           }}
         >
-          From founder-led chaos to system-driven growth.
+          From Founder-Led Chaos to System-Driven Growth.
         </div>
         <div
           style={{

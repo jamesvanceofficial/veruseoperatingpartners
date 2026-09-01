@@ -127,7 +127,7 @@ export default function WhatWeDoPage() {
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-              We diagnose. We build. We stay embedded running it.
+              We Diagnose. We Build. We Stay Embedded Running It.
             </h1>
           </FadeUp>
           <FadeUp delayMs={160}>
@@ -183,7 +183,7 @@ export default function WhatWeDoPage() {
       <PhotoSection src="/images/photography/whiteboard-discussion.webp" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
-            <SectionHeading eyebrow="How We Work" title="Worst bottleneck first" align="center" />
+            <SectionHeading eyebrow="How We Work" title="Worst Bottleneck First" align="center" />
           </FadeUp>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_IT_WORKS_STEPS.map((s, i) => (
@@ -201,7 +201,7 @@ export default function WhatWeDoPage() {
 
       <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
-          <SectionHeading eyebrow="Who We Serve" title="Founder-led, $1M–$25M, industry agnostic" align="center" />
+          <SectionHeading eyebrow="Who We Serve" title="Founder-Led, $1M–$25M, Industry Agnostic" align="center" />
         </FadeUp>
         <FadeUp delayMs={80}>
           <p className="max-w-2xl text-[13.5px] leading-relaxed text-[var(--muted)]">{POSITIONING.whoWeServe}</p>

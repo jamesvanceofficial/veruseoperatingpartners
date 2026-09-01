@@ -38,17 +38,17 @@ export const HOW_IT_WORKS_STEPS = [
 
 export const PROBLEM_BLOCKS = [
   {
-    title: "The owner is the bottleneck",
+    title: "The Owner Is the Bottleneck",
     description:
       "Every decision, every exception, every new hire's questions — all of it routes through you. The business can't grow past what you personally can hold in your head.",
   },
   {
-    title: "Growth breaks the company",
+    title: "Growth Breaks the Company",
     description:
       "What worked at half the size doesn't work now. More revenue means more chaos, not more margin, because nothing was built to scale in the first place.",
   },
   {
-    title: "Everything runs on memory instead of systems",
+    title: "Everything Runs on Memory Instead of Systems",
     description:
       "Pricing, process, who-does-what — it all lives in someone's head, not in a system anyone else can run. When that person is out, things stop.",
   },

@@ -44,7 +44,7 @@ export default function SystemsAndSupportPage() {
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-              What we build doesn&apos;t stop working the day we hand it over.
+              What We Build Doesn&apos;t Stop Working the Day We Hand It Over.
             </h1>
           </FadeUp>
           <FadeUp delayMs={160}>
@@ -101,7 +101,7 @@ export default function SystemsAndSupportPage() {
       <PhotoSection src="/images/photography/warehouse-interior.webp" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
-            <SectionHeading eyebrow="Included With Every Build" title="Support tier is scoped by the Business Assessment" align="center" />
+            <SectionHeading eyebrow="Included with Every Build" title="Support Tier Is Scoped By the Business Assessment" align="center" />
           </FadeUp>
           <FadeUp delayMs={80}>
             <p className="max-w-xl text-[13.5px] leading-relaxed text-[var(--muted)]">

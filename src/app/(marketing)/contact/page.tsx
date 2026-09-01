@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 };
 
 const NEXT_STEPS = [
-  { step: "01", title: "We review it", description: "Every submission goes to a real person, not a queue." },
-  { step: "02", title: "We schedule a call", description: "A short conversation to understand the business before anything is proposed." },
-  { step: "03", title: "We scope it honestly", description: "If it's not a fit, we'll say so — no pressure to move forward." },
+  { step: "01", title: "We Review It", description: "Every submission goes to a real person, not a queue." },
+  { step: "02", title: "We Schedule a Call", description: "A short conversation to understand the business before anything is proposed." },
+  { step: "03", title: "We Scope It Honestly", description: "If it's not a fit, we'll say so — no pressure to move forward." },
 ];
 
 export default function ContactPage() {
@@ -37,7 +37,7 @@ export default function ContactPage() {
             <span className="section-label text-[var(--gold-light)]">Contact</span>
           </FadeUp>
           <FadeUp delayMs={80}>
-            <h1 className="text-[28px] font-semibold leading-tight text-[var(--cream)] sm:text-[36px]">Tell us about your business.</h1>
+            <h1 className="text-[28px] font-semibold leading-tight text-[var(--cream)] sm:text-[36px]">Tell Us About Your Business.</h1>
           </FadeUp>
           <FadeUp delayMs={160}>
             <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
@@ -63,7 +63,7 @@ export default function ContactPage() {
       <PhotoSection src="/images/photography/whiteboard-discussion.webp" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col gap-8 py-11 sm:py-14">
           <FadeUp>
-            <SectionHeading eyebrow="What Happens Next" title="No black box after you hit submit" align="center" />
+            <SectionHeading eyebrow="What Happens Next" title="No Black Box After You Hit Submit" align="center" />
           </FadeUp>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
             {NEXT_STEPS.map((s, i) => (

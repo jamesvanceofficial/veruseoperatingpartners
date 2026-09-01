@@ -12,7 +12,7 @@ export default function ContactThankYouPage() {
     <section className="page-container flex flex-col items-center gap-6 py-24 text-center">
       <Card strong className="fade-scale-in flex max-w-lg flex-col items-center gap-5 px-8 py-12">
         <span className="section-label text-[var(--gold-light)]">Thank You</span>
-        <h1 className="text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[28px]">We&apos;ve got it.</h1>
+        <h1 className="text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[28px]">We&apos;ve Got It.</h1>
         <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
           We&apos;ll follow up to schedule a call. While you wait, take the free scan — it takes a few minutes and gives you a real
           score for your business right now.

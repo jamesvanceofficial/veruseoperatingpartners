@@ -55,7 +55,7 @@ export default function HomePage() {
             </FadeUp>
             <FadeUp delayMs={80}>
               <h1 className="text-[32px] font-semibold leading-[1.1] text-[var(--cream)] sm:text-[46px]">
-                From founder-led chaos to system-driven growth.
+                From Founder-Led Chaos to System-Driven Growth.
               </h1>
             </FadeUp>
             <FadeUp delayMs={160}>
@@ -88,7 +88,7 @@ export default function HomePage() {
             }
           >
             <FadeUp>
-              <SectionHeading eyebrow="The Problem" title="What's actually holding the business back" />
+              <SectionHeading eyebrow="The Problem" title="What's Actually Holding the Business Back" />
             </FadeUp>
             <div className="flex flex-col gap-4">
               {PROBLEM_BLOCKS.map((block, i) => (
@@ -120,7 +120,7 @@ export default function HomePage() {
           }
         >
           <FadeUp>
-            <SectionHeading eyebrow="See It" title="Real questions, a live score as you go" />
+            <SectionHeading eyebrow="See It" title="Real Questions, a Live Score As You Go" />
           </FadeUp>
           <FadeUp delayMs={80}>
             <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
@@ -138,7 +138,7 @@ export default function HomePage() {
       {/* WHAT VERUS BUILDS — full-width numbers band */}
       <section className="page-container flex flex-col gap-12 py-11 sm:py-14">
         <FadeUp>
-          <SectionHeading eyebrow="What VERUS Builds" title="Systems and processes — always both" align="center" />
+          <SectionHeading eyebrow="What VERUS Builds" title="Systems and Processes — Always Both" align="center" />
         </FadeUp>
         <FadeUp>
           <StatBand
@@ -166,7 +166,7 @@ export default function HomePage() {
       <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
         <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
-            <SectionHeading eyebrow="How It Works" title="Four steps, start to finish" />
+            <SectionHeading eyebrow="How It Works" title="Four Steps, Start to Finish" />
           </FadeUp>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {HOW_IT_WORKS_STEPS.map((s, i) => (
@@ -202,7 +202,7 @@ export default function HomePage() {
           </FadeUp>
           <FadeUp delayMs={80}>
             <h2 className="text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
-              Every engagement starts with knowing exactly what&apos;s costing you.
+              Every Engagement Starts with Knowing Exactly What&apos;s Costing You.
             </h2>
           </FadeUp>
           <FadeUp delayMs={160}>
@@ -241,7 +241,7 @@ export default function HomePage() {
           }
         >
           <FadeUp>
-            <SectionHeading eyebrow="Proof" title="Built and running, not just proposed" />
+            <SectionHeading eyebrow="Proof" title="Built and Running, Not Just Proposed" />
           </FadeUp>
           <FadeUp delayMs={80}>
             <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
@@ -276,12 +276,12 @@ export default function HomePage() {
       <PhotoSection src="/images/photography/construction-workers.webp" alt="" className="border-y border-[var(--hairline)]">
         <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
-            <SectionHeading eyebrow="Fit" title="Who this is for — and who it isn't" align="center" />
+            <SectionHeading eyebrow="Fit" title="Who This Is for — and Who It Isn't" align="center" />
           </FadeUp>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <FadeUp>
               <Card className="flex h-full flex-col gap-3">
-                <p className="section-label text-[var(--green)]">This Is For You If</p>
+                <p className="section-label text-[var(--green)]">This Is for You If</p>
                 <ul className="flex flex-col gap-2.5">
                   {WHO_THIS_IS_FOR.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[13px] leading-relaxed text-[var(--cream)]">
@@ -294,7 +294,7 @@ export default function HomePage() {
             </FadeUp>
             <FadeUp delayMs={100}>
               <Card className="flex h-full flex-col gap-3">
-                <p className="section-label text-[var(--red)]">This Isn&apos;t For You If</p>
+                <p className="section-label text-[var(--red)]">This Isn&apos;t for You If</p>
                 <ul className="flex flex-col gap-2.5">
                   {WHO_THIS_IS_NOT_FOR.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-[13px] leading-relaxed text-[var(--cream)]">
@@ -312,7 +312,7 @@ export default function HomePage() {
       {/* FAQ */}
       <section className="page-container flex flex-col gap-10 py-11 sm:py-14">
         <FadeUp>
-          <SectionHeading eyebrow="Questions" title="Straight answers" align="center" />
+          <SectionHeading eyebrow="Questions" title="Straight Answers" align="center" />
         </FadeUp>
         <FadeUp>
           <div className="mx-auto w-full max-w-2xl">
@@ -326,7 +326,7 @@ export default function HomePage() {
         <div className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
           <FadeUp>
             <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
-              Find out what&apos;s actually holding your company back.
+              Find Out What&apos;s Actually Holding Your Company Back.
             </h2>
           </FadeUp>
           <FadeUp delayMs={100}>

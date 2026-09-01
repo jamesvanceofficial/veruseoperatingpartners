@@ -28,7 +28,7 @@ export default function CaseStudiesPage() {
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
-              What was built, and what changed.
+              What Was Built, and What Changed.
             </h1>
           </FadeUp>
           <FadeUp delayMs={160}>
@@ -105,7 +105,7 @@ export default function CaseStudiesPage() {
 
       <section className="page-container flex flex-col items-center gap-6 py-11 text-center sm:py-14">
         <FadeUp>
-          <SectionHeading eyebrow="Next" title="Want to know what a build looks like for your business?" align="center" />
+          <SectionHeading eyebrow="Next" title="Want to Know What a Build Looks Like for Your Business?" align="center" />
         </FadeUp>
         <FadeUp delayMs={100}>
           <div className="flex flex-col gap-3 sm:flex-row">

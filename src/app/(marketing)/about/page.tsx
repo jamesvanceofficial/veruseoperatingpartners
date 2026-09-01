@@ -112,7 +112,7 @@ export default function AboutPage() {
       <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
           <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
-            Start with a real look at what&apos;s holding your business back.
+            Start with a Real Look at What&apos;s Holding Your Business Back.
           </h2>
         </FadeUp>
         <FadeUp delayMs={100}>
