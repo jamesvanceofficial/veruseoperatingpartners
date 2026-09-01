@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/shared/supabase/admin";
 import { getQuestionsForType, submitQuickScan } from "@/modules/assessments/data";
+import { notifyQuickScanCompleted } from "@/modules/assessments/notify";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -48,6 +49,20 @@ export async function POST(request: Request) {
       revenueRange: typeof body?.revenue_range === "string" ? body.revenue_range.trim() : "",
       answers,
     });
+
+    const origin = new URL(request.url).origin;
+    const topBottleneck = [...result.categoryScores].sort((a, b) => a.bottleneckRank - b.bottleneckRank)[0] ?? null;
+    await notifyQuickScanCompleted({
+      companyName,
+      fullName,
+      email,
+      phone: typeof body?.phone === "string" ? body.phone.trim() : "",
+      enterpriseScore: result.enterpriseScore,
+      bandLabel: result.bandLabel,
+      topBottleneckCategory: topBottleneck?.categoryName ?? null,
+      assessmentUrl: `${origin}/business-assessments/${result.assessmentId}`,
+    });
+
     return NextResponse.json({ data: result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong submitting your scan.";

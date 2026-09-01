@@ -15,7 +15,7 @@ export async function notifyNewSupportTicket(input: { orgName: string; subject: 
 
   try {
     const resend = new Resend(apiKey);
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from,
       to,
       subject: `New support ticket: ${input.orgName} — ${input.subject}`,
@@ -31,6 +31,7 @@ export async function notifyNewSupportTicket(input: { orgName: string; subject: 
         `View it: ${input.ticketUrl}`,
       ].join("\n"),
     });
+    if (error) console.error("notifyNewSupportTicket: Resend rejected the send", error);
   } catch (err) {
     console.error("notifyNewSupportTicket: failed to send via Resend", err);
   }
@@ -43,12 +44,13 @@ export async function notifyClientOfReply(input: { clientEmail: string; orgName:
 
   try {
     const resend = new Resend(apiKey);
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from,
       to: input.clientEmail,
       subject: `New reply on your support ticket: ${input.subject}`,
       text: [`There's a new reply on your support ticket for ${input.orgName}.`, ``, input.replyBody, ``, `View it: ${input.ticketUrl}`].join("\n"),
     });
+    if (error) console.error("notifyClientOfReply: Resend rejected the send", error);
   } catch (err) {
     console.error("notifyClientOfReply: failed to send via Resend", err);
   }

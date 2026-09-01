@@ -37,7 +37,8 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   try {
     const result = await submitContactInquiry(admin, input);
-    await notifyNewLead(input);
+    const origin = new URL(request.url).origin;
+    await notifyNewLead(input, `${origin}/organizations/${result.organizationId}`);
     return NextResponse.json({ data: result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong submitting the form.";

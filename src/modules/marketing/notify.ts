@@ -10,7 +10,7 @@ import type { ContactInquiryInput } from "./data";
  * LEAD_NOTIFICATION_TO aren't set yet — same "app works without every
  * optional integration configured" convention as everywhere else.
  */
-export async function notifyNewLead(input: ContactInquiryInput): Promise<void> {
+export async function notifyNewLead(input: ContactInquiryInput, orgUrl: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.LEAD_NOTIFICATION_FROM;
   const to = process.env.LEAD_NOTIFICATION_TO;
@@ -18,7 +18,7 @@ export async function notifyNewLead(input: ContactInquiryInput): Promise<void> {
 
   try {
     const resend = new Resend(apiKey);
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from,
       to,
       subject: `New website inquiry: ${input.companyName}`,
@@ -40,8 +40,11 @@ export async function notifyNewLead(input: ContactInquiryInput): Promise<void> {
         ``,
         `What they want built:`,
         input.whatTheyWantBuilt || "—",
+        ``,
+        `View in COMPASS: ${orgUrl}`,
       ].join("\n"),
     });
+    if (error) console.error("notifyNewLead: Resend rejected the send", error);
   } catch (err) {
     // Logged, not thrown — see the doc comment above.
     console.error("notifyNewLead: failed to send via Resend", err);
