@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 const BASE_URL = "https://verusoperatingpartners.com";
 
-const MARKETING_ROUTES = ["", "/what-we-do", "/the-assessment", "/builds", "/systems-and-support", "/case-studies", "/about", "/contact", "/scan"];
+const MARKETING_ROUTES = ["", "/what-we-do", "/the-assessment", "/builds", "/systems-and-support", "/services", "/case-studies", "/about", "/contact", "/scan"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

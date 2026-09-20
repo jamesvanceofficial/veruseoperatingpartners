@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/the-assessment", label: "The Assessment" },
   { href: "/builds", label: "Build Packages" },
   { href: "/systems-and-support", label: "Systems & Support" },
+  { href: "/services", label: "Services" },
   { href: "/case-studies", label: "Case Studies" },
   { href: "/about", label: "About" },
 ];

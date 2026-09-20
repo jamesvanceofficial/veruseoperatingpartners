@@ -15,6 +15,8 @@ const PUBLIC_PATHS = [
   "/the-assessment",
   "/builds",
   "/systems-and-support",
+  // Stage 38 — the Services page.
+  "/services",
   "/case-studies",
   "/about",
   "/contact",

@@ -1624,6 +1624,42 @@ references to the deleted stock photo remain in the rendered HTML of any
 page, and the weight chart's bar-length ratios read correctly against
 the real seeded category weights (20 down to 2) at both breakpoints.
 
+**Services page (Stage 38)** — `/services` (`(marketing)/services/page.tsx`),
+in the header nav and footer between Systems & Support and Case Studies,
+plus `proxy.ts`'s `PUBLIC_PATHS` and `sitemap.ts`. Content lives in
+`marketing/services.ts` (`SERVICE_AREAS`, `WHY_THROUGH_VERUS`,
+`SERVICE_TIMING`, `SERVICES_PRICING_NOTE`) — the four areas (Marketing/
+SEO/Paid Advertising, Personal Assistants, Administration, Virtual
+Assistance) with the supplied copy. **Every service name that also exists
+in the client report's add-on config is pulled from
+`assessments/supportAddOns.ts` by reference**, never retyped: the three
+marketing add-ons and Bookkeeping via `addOnName()`, the VA roles via
+`vaRoleName()`/`VA_ROLES`, and the 20-hr/week minimum via
+`VA_MINIMUM_HOURS_PER_WEEK` — both lookups throw if the configured name
+no longer exists, so a rename in the config fails the page loudly rather
+than silently dropping a chip. Prices from that config are deliberately
+never read (no `priceLabel`, no `hourlyRate`, and `VA_TERMS` is not
+rendered because one of its lines quotes a local-hire hourly rate) — the
+page shows no price list, same stance as Builds and Systems & Support,
+and says pricing is confirmed on the call or in the assessment. Timing
+is stated exactly as given and nowhere else: virtual assistance and
+administration follow a completed build, marketing can start any time;
+Personal Assistants carries no timing claim since none was supplied.
+Four new SVG diagrams in `marketing/ServiceIcons.tsx` (same line-art
+style/tokens as `CategoryIcons.tsx`), mapped by slug in
+`serviceIconMap.tsx` so `services.ts` stays a JSX-free data module, plus
+a `StaffedSystemDiagram` hero in `PageHeroIcons.tsx`. Layout is the
+site's standard alternating `TwoColSection` rows with alternating
+`--surface` bands, `FadeUp`/`IconReveal` motion, a `PhotoSection` "why
+through VERUS" band, a `CompassDivider` timing section, and a
+`PhotoSection` pricing/CTA close. Home gained a "Services" block (after
+How It Works) — four linked cards reading the same `SERVICE_AREAS` data
+and icons, pointing at `/services#<slug>`. Verified via Playwright
+screenshots at 1440px and 375px over two rounds: the only fix needed was
+the Home cards' icon panels, which at 96px tall made the icons read small
+in a wide panel (the Stage 33 "small element in an oversized container"
+pattern) — enlarged to 128px panels with 112px icons.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

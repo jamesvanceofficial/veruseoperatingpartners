@@ -19,6 +19,9 @@ import { RankedBottleneckList } from "@/modules/assessments/RankedBottleneckList
 import { SAMPLE_CATEGORIES, SAMPLE_BANDS, SAMPLE_SCORE, SAMPLE_BOTTLENECKS } from "@/modules/marketing/sampleAssessment";
 import { PROBLEM_BLOCKS, WHAT_VERUS_BUILDS, HOW_IT_WORKS_STEPS, POSITIONING, WHO_THIS_IS_FOR, WHO_THIS_IS_NOT_FOR, FAQ_ITEMS } from "@/modules/marketing/positioning";
 import { CASE_STUDIES } from "@/modules/marketing/caseStudies";
+import { SERVICE_AREAS } from "@/modules/marketing/services";
+import { SERVICE_ICONS } from "@/modules/marketing/serviceIconMap";
+import { IconReveal } from "@/modules/marketing/IconReveal";
 
 export const metadata: Metadata = {
   title: "VERUS Operating Company — Systems for Founder-Led Businesses",
@@ -181,6 +184,48 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* SERVICES — the four ongoing service areas, pointing at /services */}
+      <section className="page-container flex flex-col gap-10 py-11 sm:py-14">
+        <FadeUp>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <SectionHeading
+              eyebrow="Services"
+              title="The Work That Keeps Running After the Build"
+              description="VERUS doesn't just build the systems — we staff and run the work inside them."
+            />
+            <Link href="/services" className="shrink-0 text-[12.5px] font-medium text-[var(--gold-light)] hover:underline">
+              See all services →
+            </Link>
+          </div>
+        </FadeUp>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {SERVICE_AREAS.map((s, i) => {
+            const Icon = SERVICE_ICONS[s.slug];
+            return (
+              <FadeUp key={s.slug} delayMs={i * 80}>
+                <Link href={`/services#${s.slug}`} className="block h-full">
+                  <Card strong className="hover-lift flex h-full flex-col gap-3">
+                    <div className="diagram-screen relative flex h-32 items-center justify-center rounded-[var(--radius-md)] border border-[var(--hairline)]">
+                      <span className="absolute left-3 top-2.5 font-tabular text-[11px] text-[var(--gold-light)]">{s.index}</span>
+                      <div className="absolute h-20 w-20 rounded-full bg-[var(--gold)] opacity-25 blur-2xl" aria-hidden="true" />
+                      <IconReveal className="relative flex items-center justify-center">
+                        <Icon className="h-28 w-28" />
+                      </IconReveal>
+                    </div>
+                    <h3 className="text-[14.5px] font-semibold text-[var(--cream)]">{s.title}</h3>
+                    <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{s.lead}</p>
+                  </Card>
+                </Link>
+              </FadeUp>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="page-container">
+        <div className="gold-hairline" />
+      </div>
 
       {/* THE ASSESSMENT AS ENTRY POINT — text left, band scale right */}
       <section className="page-container py-11 sm:py-14">
