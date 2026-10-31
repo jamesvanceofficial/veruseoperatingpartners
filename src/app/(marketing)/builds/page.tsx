@@ -33,7 +33,7 @@ export default function BuildsPage() {
           }
         >
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">Build Packages</span>
+            <span className="section-eyebrow">Build Packages</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">

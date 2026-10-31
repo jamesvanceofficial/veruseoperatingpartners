@@ -5,6 +5,7 @@ import { QuickScanWizard } from "@/modules/assessments/QuickScanWizard";
 import { PhotoSection } from "@/modules/marketing/PhotoSection";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { StatBand } from "@/modules/marketing/StatBand";
+import { CompassMark } from "@/shared/ui/CompassMark";
 
 // Public, unauthenticated — reads go through the admin client since RLS
 // on assessment_questions/categories is scoped `to authenticated` only.
@@ -25,7 +26,10 @@ export default async function ScanPage() {
         <div className="page-container flex flex-col gap-10 py-10">
           <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 text-center">
             <FadeUp>
-              <span className="section-label text-[var(--gold-light)]">Free Quick Scan</span>
+              <span className="flex items-center gap-2.5">
+                <CompassMark className="h-6 w-6" />
+                <span className="section-eyebrow">Free Quick Scan</span>
+              </span>
             </FadeUp>
             <FadeUp delayMs={60}>
               <h1 className="text-[26px] font-semibold leading-tight text-[var(--cream)] sm:text-[32px]">

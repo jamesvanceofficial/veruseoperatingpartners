@@ -6,7 +6,7 @@ export function PullQuote({ children, attribution }: { children: React.ReactNode
         &ldquo;
       </span>
       <blockquote className="mx-auto max-w-3xl text-[22px] font-semibold leading-snug text-[var(--cream)] sm:text-[30px]">{children}</blockquote>
-      {attribution ? <span className="section-label text-[var(--gold-light)]">{attribution}</span> : null}
+      {attribution ? <span className="section-eyebrow">{attribution}</span> : null}
     </div>
   );
 }

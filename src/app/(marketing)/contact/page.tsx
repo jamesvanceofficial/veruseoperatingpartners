@@ -42,7 +42,7 @@ export default function ContactPage() {
           }
         >
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">Contact</span>
+            <span className="section-eyebrow">Contact</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[28px] font-semibold leading-tight text-[var(--cream)] sm:text-[36px]">Tell Us About Your Business.</h1>
@@ -77,7 +77,7 @@ export default function ContactPage() {
                 <Card strong className="flex flex-col gap-4">
                   {CALL_FACTS.map((f) => (
                     <div key={f.label} className="flex flex-col gap-1 border-b border-[var(--hairline)] pb-4 last:border-b-0 last:pb-0">
-                      <span className="section-label text-[var(--gold-light)]">{f.label}</span>
+                      <span className="section-eyebrow">{f.label}</span>
                       <p className="text-[13px] leading-relaxed text-[var(--cream)]">{f.detail}</p>
                     </div>
                   ))}
@@ -86,7 +86,7 @@ export default function ContactPage() {
             }
           >
             <FadeUp>
-              <span className="section-label text-[var(--gold-light)]">The Call</span>
+              <span className="section-eyebrow">The Call</span>
             </FadeUp>
             <FadeUp delayMs={80}>
               <h2 className="text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">

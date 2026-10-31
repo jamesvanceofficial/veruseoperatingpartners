@@ -30,13 +30,13 @@ export type CategoryBarItem = {
  * — never a re-implementation that could drift from what a client
  * actually receives.
  */
-export function CategoryBars({ categories }: { categories: CategoryBarItem[] }) {
+export function CategoryBars({ categories, strong = false }: { categories: CategoryBarItem[]; /** Denser card plane — the marketing home page uses it so every card on that page shares one treatment. */ strong?: boolean }) {
   return (
     <div className="flex flex-col gap-3">
       {categories.map((c) => {
         const tone = categoryScoreTone(c.rawScore);
         return (
-          <Card key={c.categoryId} className="cr-avoid-break flex flex-col gap-2">
+          <Card key={c.categoryId} strong={strong} className="cr-avoid-break flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-[13.5px] font-semibold text-[var(--cream)]">{c.categoryName}</span>

@@ -40,7 +40,7 @@ export default function SystemsAndSupportPage() {
           }
         >
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">{SUPPORT_SUBSCRIPTION_NAME}</span>
+            <span className="section-eyebrow">{SUPPORT_SUBSCRIPTION_NAME}</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">

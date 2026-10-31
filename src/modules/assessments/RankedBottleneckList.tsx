@@ -11,9 +11,18 @@ export type RankedBottleneckItem = {
 };
 
 /** The real ranked-bottleneck list from the internal assessment report, extracted so the marketing site can show exactly this against sample data. */
-export function RankedBottleneckList({ items, title = "Ranked Bottlenecks" }: { items: RankedBottleneckItem[]; title?: string }) {
+export function RankedBottleneckList({
+  items,
+  title = "Ranked Bottlenecks",
+  strong = false,
+}: {
+  items: RankedBottleneckItem[];
+  title?: string;
+  /** Denser card plane — the marketing home page uses it so every card on that page shares one treatment. */
+  strong?: boolean;
+}) {
   return (
-    <Card className="flex flex-col gap-1">
+    <Card strong={strong} className="flex flex-col gap-1">
       <p className="mb-1 section-label">{title}</p>
       <p className="mb-1 text-[11.5px] text-[var(--muted)]">Biggest weighted opportunity for improvement first.</p>
       <div className="flex flex-col divide-y divide-[var(--hairline)]">

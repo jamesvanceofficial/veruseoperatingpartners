@@ -123,7 +123,7 @@ export default function WhatWeDoPage() {
           }
         >
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">What We Do</span>
+            <span className="section-eyebrow">What We Do</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">

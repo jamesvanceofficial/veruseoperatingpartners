@@ -9,6 +9,7 @@ import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
 import { ScreenshotStage } from "@/modules/marketing/ScreenshotStage";
 import { CompassDivider } from "@/modules/marketing/CompassDivider";
+import { CompassMark } from "@/shared/ui/CompassMark";
 import { CategoryWeightChart } from "@/modules/marketing/CategoryWeightChart";
 import { BandScale } from "@/modules/assessments/BandScale";
 import { RankedBottleneckList } from "@/modules/assessments/RankedBottleneckList";
@@ -77,7 +78,10 @@ export default async function TheAssessmentPage() {
           }
         >
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">The Business Assessment</span>
+            <span className="flex items-center gap-2.5">
+              <CompassMark className="h-6 w-6" />
+              <span className="section-eyebrow">The Business Assessment</span>
+            </span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[28px] font-semibold leading-tight text-[var(--cream)] sm:text-[38px]">

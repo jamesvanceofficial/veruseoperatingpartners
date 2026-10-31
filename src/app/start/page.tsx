@@ -103,7 +103,7 @@ export default function StartPage() {
         <div className="hero-light-sweep" />
         <div className="page-container relative flex flex-col items-center gap-6 py-10 text-center sm:py-16">
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">For Founder-Led Businesses</span>
+            <span className="section-eyebrow">For Founder-Led Businesses</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="max-w-3xl text-[30px] font-semibold leading-[1.15] text-[var(--cream)] sm:text-[48px]">

@@ -50,7 +50,7 @@ export default function AboutPage() {
           }
         >
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">About</span>
+            <span className="section-eyebrow">About</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[32px] font-semibold leading-tight text-[var(--cream)] sm:text-[44px]">James Vance</h1>
@@ -77,7 +77,7 @@ export default function AboutPage() {
       {/* SECTOR EXPERIENCE */}
       <section className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
         <FadeUp>
-          <span className="section-label text-[var(--gold-light)]">Experience Across</span>
+          <span className="section-eyebrow">Experience Across</span>
         </FadeUp>
         <FadeUp delayMs={60}>
           <div className="flex flex-wrap justify-center gap-3">
@@ -94,7 +94,7 @@ export default function AboutPage() {
       <PhotoSection src="/images/photography/handshake.webp" className="border-t border-[var(--hairline)]">
         <div className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">Core Capabilities</span>
+            <span className="section-eyebrow">Core Capabilities</span>
           </FadeUp>
           <FadeUp delayMs={60}>
             <div className="flex flex-wrap justify-center gap-3">

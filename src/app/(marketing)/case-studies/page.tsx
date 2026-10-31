@@ -24,7 +24,7 @@ export default function CaseStudiesPage() {
       <PhotoSection src="/images/photography/construction-workers.webp">
         <div className="page-container flex flex-col items-center gap-6 py-12 text-center sm:py-16">
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">Case Studies</span>
+            <span className="section-eyebrow">Case Studies</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="max-w-3xl text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
@@ -75,7 +75,7 @@ export default function CaseStudiesPage() {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <FadeUp delayMs={120}>
                 <Card strong className="hover-lift flex h-full flex-col gap-3">
-                  <p className="section-label text-[var(--gold-light)]">What Was Built</p>
+                  <p className="section-eyebrow">What Was Built</p>
                   <ul className="flex flex-col gap-2">
                     {cs.whatWasBuilt.map((item) => (
                       <li key={item} className="flex items-start gap-2 text-[13px] leading-relaxed text-[var(--cream)]">

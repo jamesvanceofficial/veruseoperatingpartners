@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { BrandMark } from "@/shared/ui/BrandMark";
+import { CompassMark } from "@/shared/ui/CompassMark";
 import { Badge } from "@/shared/ui/Badge";
 import { createAdminClient } from "@/shared/supabase/admin";
 import { getAssessmentByToken, getAssessmentReport, getCategories, getQuestionsForType, getAnswersMap, getCarriedForwardMap, getNotApplicableIds } from "@/modules/assessments/data";
@@ -34,7 +35,10 @@ export default async function PublicAssessmentPage({ params }: { params: Promise
 
       <main className="page-container flex flex-1 flex-col gap-6 pb-16">
         <div>
-          <h1 className="text-[19px] font-semibold text-[var(--cream)]">Business Assessment for {orgName}</h1>
+          <h1 className="flex items-center gap-2.5 text-[19px] font-semibold text-[var(--cream)]">
+            <CompassMark className="h-6 w-6" />
+            Business Assessment for {orgName}
+          </h1>
           <p className="text-[12.5px] text-[var(--muted)]">Answer honestly — the choice you pick is the score, nothing gets judged in between.</p>
         </div>
 

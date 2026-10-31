@@ -281,7 +281,7 @@ h1, h2, h3, h4 {
 
 /* ===========================================================
    Compass rose motion — a full rotation over several minutes, barely
-   perceptible frame to frame, used by CompassHeroBackground. Static
+   perceptible frame to frame, used by HeroCompassStage. Static
    under prefers-reduced-motion rather than a slower spin, matching every
    other motion primitive in this app.
    =========================================================== */
@@ -473,6 +473,61 @@ h1, h2, h3, h4 {
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/* The marketing-site section eyebrow ("The Problem", "Services", "Proof"
+   ...) — one class so size, weight, tracking, colour and the gap to the
+   headline below are identical everywhere. A separate class rather than
+   `section-label text-[var(--gold-light)]`: .section-label is unlayered,
+   so its `color: var(--muted)` silently beat the layered Tailwind colour
+   utility and every "gold" eyebrow on the site actually rendered grey. */
+.section-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+}
+
+/* Home-page section rhythm — every section uses the same vertical padding
+   and the same gap between its heading block and its content, so nothing
+   crowds and nothing gaps. */
+.section-y {
+  padding-block: 3.5rem;
+}
+.section-stack {
+  gap: 2.5rem;
+}
+@media (min-width: 640px) {
+  .section-y {
+    padding-block: 4.5rem;
+  }
+  .section-stack {
+    gap: 3rem;
+  }
+}
+
+/* A section handoff — fading hairline, the small compass mark, fading
+   hairline. The quiet recurring compass through-line between two sections
+   that share a background (where no band change already marks the turn). */
+.compass-handoff {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.compass-handoff::before,
+.compass-handoff::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+}
+.compass-handoff::before {
+  background: linear-gradient(90deg, transparent 0%, var(--hairline-strong) 100%);
+}
+.compass-handoff::after {
+  background: linear-gradient(90deg, var(--hairline-strong) 0%, transparent 100%);
 }
 
 /* ===========================================================

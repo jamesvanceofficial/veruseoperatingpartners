@@ -1660,6 +1660,36 @@ the Home cards' icon panels, which at 96px tall made the icons read small
 in a wide panel (the Stage 33 "small element in an oversized container"
 pattern) — enlarged to 128px panels with 112px icons.
 
+**Compass as the guiding visual + home page flow (Stage 39)** — visual/
+layout only; no copy, pricing, structure or nav changes. The home hero's
+`CompassHeroBackground` (a 175vw rose bleeding off the edge behind a
+right-fade mask) was replaced by `HeroCompassStage.tsx`: the same
+`CompassRose` drawn whole and uncropped in a square stage sized to the
+visual column, at much higher contrast, with the real report screenshot
+laid over its lower-right quadrant so the hub and N/W/S points stay in
+view. It never sits behind the text column, and on a phone the same full
+rose just scales down. `src/shared/ui/CompassMark.tsx` is the small
+scaled-down mark (same `CompassRose`, no new artwork): `CompassHandoff`
+(hairline, mark, hairline) replaces the home page's two `gold-hairline`
+dividers, and the mark sits beside the eyebrow on `/scan` and
+`/the-assessment` and beside the title on `/assessment/[token]`. The two
+large bleeding `CompassDivider`s on home were removed (other pages keep
+theirs). Home now alternates text/visual sides strictly down the page
+(hero text-left, Problem visual-left, See It text-left, Start Here
+visual-left, Proof text-left). Every home section uses `.section-y`
+padding and `.section-stack` gaps (globals.css), and every card on the
+page is `Card strong` (`CategoryBars`/`RankedBottleneckList` gained an
+opt-in `strong` prop, default unchanged for the client report); the stat
+row now sits in a card too. Services cards on home are typographic only
+(index, title, lead), with no icon panel, until real screenshots are
+supplied. **Real bug fixed**: `.section-label` is unlayered CSS, so its
+`color: var(--muted)` beat Tailwind's layered `text-[var(--gold-light)]`
+utility and every "gold" eyebrow on the site rendered grey (confirmed
+via computed style). Marketing eyebrows now use `.section-eyebrow`
+(11px/600/0.14em, gold-light); the home Fit cards' green/red labels use
+the `!` important modifier for the same reason. Internal-app uses of
+`section-label` are untouched.
+
 ## Migrations rule
 
 **Every schema change lands as a numbered SQL file under

@@ -43,7 +43,7 @@ export default function ServicesPage() {
           }
         >
           <FadeUp>
-            <span className="section-label text-[var(--gold-light)]">Services</span>
+            <span className="section-eyebrow">Services</span>
           </FadeUp>
           <FadeUp delayMs={80}>
             <h1 className="text-[30px] font-semibold leading-tight text-[var(--cream)] sm:text-[40px]">
@@ -98,7 +98,7 @@ export default function ServicesPage() {
               >
                 <FadeUp>
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="section-label text-[var(--gold-light)]">Service {service.index}</span>
+                    <span className="section-eyebrow">Service {service.index}</span>
                     {service.timing ? (
                       <span className="rounded-full border border-[var(--hairline-strong)] px-2.5 py-0.5 text-[10.5px] font-medium uppercase tracking-[0.08em] text-[var(--muted)]">
                         {TIMING_LABEL[service.timing]}
@@ -184,7 +184,7 @@ export default function ServicesPage() {
             {SERVICE_TIMING.map((t, i) => (
               <FadeUp key={t.label} delayMs={i * 80}>
                 <Card strong className="flex h-full flex-col gap-2">
-                  <p className="section-label text-[var(--gold-light)]">{t.label}</p>
+                  <p className="section-eyebrow">{t.label}</p>
                   <h3 className="text-[15px] font-semibold text-[var(--cream)]">{t.services}</h3>
                   <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{t.description}</p>
                 </Card>
