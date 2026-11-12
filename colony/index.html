@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Frank Colony</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a station seen from above — MegaFRANK on the overwatch tower at the top, one sector per
+   business below, joined by hallways and an overwatch lift. Each sector holds that business's agents. */
+:root{
+  color-scheme: dark;
+  --bg:#04060A; --bg2:#020304;
+  --panel:#070F0C; --panel-2:#0A1711;
+  --ui:#1F7A4A; --ui-b:#4FD98A; --ui-h:#9BFFCB;
+  --fg:#CFE6DA; --fg-dim:#7E9A8B; --fg-faint:#4E675A;
+  --eye:#E3B35A;
+  --work:#35E47F; --learn:#56C8FF; --sleep:#5E7486; --stall:#FF9E2C; --dead:#FF4F4F;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;font-family:var(--sans);color:var(--fg);
+  background:radial-gradient(ellipse at 50% 22%, #061210 0%, var(--bg) 62%, var(--bg2) 100%);
+  background-attachment:fixed}
+.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:20px 40px;max-width:1440px;margin:0 auto}
+
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 28px;border-bottom:1px solid var(--ui);padding-bottom:14px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ui-b);margin:0 0 6px}
+h1{font-family:var(--mono);font-size:clamp(20px,4vw,28px);line-height:1.05;margin:0;font-weight:600;
+  letter-spacing:.04em;color:var(--ui-h);text-transform:uppercase}
+.sub{margin:8px 0 0;color:var(--fg-dim);font-size:13px;max-width:68ch;line-height:1.55}
+
+.notice{display:flex;gap:10px;margin-top:14px;padding:9px 12px;background:rgba(255,158,44,.07);
+  border:1px solid rgba(255,158,44,.3);border-radius:2px;font-size:12.5px;color:#F2CE9B;line-height:1.5}
+.notice b{color:var(--stall);font-weight:600}
+
+.stage{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
+@media (max-width:980px){.stage{grid-template-columns:minmax(0,1fr)}}
+
+.card{background:var(--panel);border:1px solid var(--ui);border-radius:2px;min-width:0;overflow:hidden;
+  box-shadow:inset 0 0 40px rgba(31,122,74,.08)}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;
+  border-bottom:1px solid var(--ui);background:var(--panel-2)}
+.cardhead h2{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ui-b);font-weight:500}
+.watching{font-family:var(--mono);font-size:10px;color:var(--fg-faint);letter-spacing:.1em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.watching b{color:var(--eye);font-weight:600}
+#floor{display:block;width:100%;height:auto;background:#04060A}
+.floorfoot{display:flex;flex-wrap:wrap;gap:10px 16px;padding:8px 12px;border-top:1px solid var(--ui);
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-faint)}
+.floorfoot i{display:inline-block;width:7px;height:7px;margin-right:5px;vertical-align:middle}
+
+.pbody{padding:14px 14px 16px}
+.pcode{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  padding:3px 7px;border:1px solid var(--ui);color:var(--ui-b);margin-bottom:11px}
+.pname{margin:0;font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:.02em;line-height:1.2;text-transform:uppercase;text-wrap:balance}
+.prole{margin:7px 0 0;color:var(--fg-dim);font-size:12.5px;line-height:1.55}
+.pstate{display:flex;align-items:center;gap:8px;margin:14px 0 0;padding:9px 11px;background:var(--panel-2);border:1px solid var(--ui)}
+.pstate i{width:8px;height:8px;flex:0 0 auto}
+.pstate .word{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+.pstate .why{font-family:var(--mono);font-size:10px;color:var(--fg-faint);margin-left:auto;text-align:right;line-height:1.4}
+.task{margin:12px 0 0;border:1px solid var(--ui);background:var(--panel-2)}
+.task div{display:flex;gap:10px;padding:8px 11px;font-size:12.5px;line-height:1.45}
+.task div+div{border-top:1px solid rgba(31,122,74,.55)}
+.task b{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--fg-faint);flex:0 0 38px;padding-top:2px}
+.task .now{color:var(--ui-h)} .task .nxt{color:var(--fg-dim)}
+.rows{margin:12px 0 0;border-top:1px solid rgba(31,122,74,.5)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:8px 0;border-bottom:1px solid rgba(31,122,74,.5)}
+.row dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-faint);flex:0 0 auto}
+.row dd{margin:0;font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;min-width:0}
+.row dd.mono{font-family:var(--mono);font-size:12px;color:var(--ui-h)}
+.row dd.cash{font-family:var(--mono);font-size:14px;color:var(--eye);font-weight:600}
+.fnote{margin:13px 0 0;padding:10px 11px;border-left:2px solid var(--eye);background:rgba(227,179,90,.06);
+  font-size:12.5px;line-height:1.55;color:#E0CBA2}
+.fnote strong{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--eye);display:block;margin-bottom:5px;font-weight:600}
+
+.crew{margin:12px 0 0;display:flex;flex-direction:column;gap:6px}
+.crew button{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 11px;
+  background:var(--panel-2);border:1px solid var(--ui);font-size:12.5px;line-height:1.4}
+.crew button:hover{border-color:var(--ui-b)}
+.crew button:focus-visible{outline:2px solid var(--eye);outline-offset:2px}
+.crew i{width:8px;height:8px;flex:0 0 auto}
+.crew .cc{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--fg-faint);flex:0 0 34px}
+.crew .cn{flex:1;min-width:0}
+.crew .cn small{display:block;color:var(--fg-dim);font-size:11.5px}
+.crew .cs{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.back{all:unset;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ui-b);margin:0 0 12px;display:inline-block}
+.back:hover{color:var(--ui-h)}
+.back:focus-visible{outline:2px solid var(--eye);outline-offset:2px}
+
+.legend{margin-top:18px}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:1px;background:var(--ui)}
+.lcell{background:var(--panel);padding:12px 13px}
+.lhead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.lhead i{width:8px;height:8px}
+.lhead span{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+.lcell p{margin:0;font-size:12px;color:var(--fg-dim);line-height:1.5}
+
+.strip{margin-top:18px}
+.scroll{overflow-x:auto}
+.sgrid{min-width:680px;padding:13px}
+.hours,.srow{display:grid;grid-template-columns:170px repeat(24,1fr)}
+.hours{align-items:end;margin-bottom:6px}
+.hours b{font-family:var(--mono);font-size:9px;color:var(--fg-faint);text-align:center;font-weight:400;font-variant-numeric:tabular-nums}
+.srow{align-items:center;height:20px}
+.slabel{font-family:var(--mono);font-size:10px;color:var(--fg-dim);letter-spacing:.06em;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;padding-right:9px;text-transform:uppercase}
+.slabel em{font-style:normal;color:var(--fg-faint)}
+.cell{height:10px;border-right:1px solid rgba(4,6,10,.9)}
+.cell.w{background:rgba(53,228,127,.72)} .cell.l{background:rgba(86,200,255,.6)}
+.cell.s{background:rgba(94,116,134,.3)} .cell.x{background:rgba(255,79,79,.18)}
+.skey{display:flex;flex-wrap:wrap;gap:16px;padding:0 13px 13px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--fg-faint)}
+.skey i{display:inline-block;width:16px;height:7px;margin-right:6px;vertical-align:middle}
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Frank&nbsp;OS · VERUS Operating Partners</p>
+      <h1>The Colony</h1>
+      <p class="sub">This station runs VERUS Operating Partners. Affiliate offers and business ideas arrive at the Intake Dock, and each one gets its own project bay with an agent that makes it work. Headquarters sits straight under MegaFRANK's overwatch tower. MegaFRANK holds every agent on its task and says out loud when one stops working.</p>
+    </div>
+  </header>
+
+  <div class="notice" id="link"><div>Connecting to Frank…</div></div>
+
+  <div class="stage">
+    <section class="card">
+      <div class="cardhead">
+        <h2>Station · overwatch view</h2>
+        <div class="watching" id="watching"></div>
+      </div>
+      <canvas id="floor" width="1320" height="1290" role="img"
+        aria-label="Station map: MegaFRANK on the overwatch tower above VERUS Operating Partners headquarters nine open project bays and the Intake Dock, joined by hallways"></canvas>
+      <div class="floorfoot">
+        <span><i style="background:var(--work)"></i>Working</span>
+        <span><i style="background:var(--learn)"></i>Learning</span>
+        <span><i style="background:var(--sleep)"></i>Sleeping</span>
+        <span><i style="background:var(--stall)"></i>Stalled</span>
+        <span><i style="background:var(--dead)"></i>Sealed</span>
+        <span style="margin-left:auto;color:var(--ui-b)">Click HQ, a bay, the dock or an agent</span>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="cardhead"><h2 id="dhead">Overwatch</h2></div>
+      <div class="pbody" id="detail"></div>
+    </aside>
+  </div>
+
+  <section class="card legend">
+    <div class="cardhead"><h2>How an offer or idea becomes a working bay</h2></div>
+    <div class="lgrid flow">
+      <div class="lcell"><div class="lhead"><span style="color:var(--eye)">01 · Arrives</span></div>
+        <p>An affiliate offer or business idea lands at the Intake Dock.</p></div>
+      <div class="lcell"><div class="lhead"><span style="color:var(--eye)">02 · Your press</span></div>
+        <p>You sign up for the program. Applications need your name, W-9 and bank details.</p></div>
+      <div class="lcell"><div class="lhead"><span style="color:var(--ui-b)">03 · Bay opens</span></div>
+        <p>MegaFRANK gives it a bay and one agent that owns it from then on.</p></div>
+      <div class="lcell"><div class="lhead"><span style="color:var(--work)">04 · Agent builds</span></div>
+        <p>Verifies the terms, builds the funnel page on its own subdomain, writes the promotion.</p></div>
+      <div class="lcell"><div class="lhead"><span style="color:var(--eye)">05 · Your press</span></div>
+        <p>The agent stages the ads. You approve any spend before a dollar goes out.</p></div>
+      <div class="lcell"><div class="lhead"><span style="color:var(--work)">06 · Live</span></div>
+        <p>Every click runs through your own tracked link. The agent reports daily to MegaFRANK.</p></div>
+      <div class="lcell"><div class="lhead"><span style="color:var(--dead)">Kill rule</span></div>
+        <p>Zero clicks for 14 days and the bay is sealed, reported like any win.</p></div>
+    </div>
+  </section>
+
+  <section class="card legend">
+    <div class="cardhead"><h2>What each state means — and what proves it</h2></div>
+    <div class="lgrid">
+      <div class="lcell"><div class="lhead"><i style="background:var(--work)"></i><span style="color:var(--work)">Working</span></div>
+        <p>Produced real output in the last 15 minutes. Moving around its own sector.</p></div>
+      <div class="lcell"><div class="lhead"><i style="background:var(--learn)"></i><span style="color:var(--learn)">Learning</span></div>
+        <p>Cleared down the hallway to the archive to read and file. Counts as alive, not as work.</p></div>
+      <div class="lcell"><div class="lhead"><i style="background:var(--sleep)"></i><span style="color:var(--sleep)">Sleeping</span></div>
+        <p>Off by schedule, not by failure. Its sector goes dark, next wake time known.</p></div>
+      <div class="lcell"><div class="lhead"><i style="background:var(--stall)"></i><span style="color:var(--stall)">Stalled</span></div>
+        <p>Was due to run and produced nothing. Stands still and MegaFRANK's optic locks onto it.</p></div>
+      <div class="lcell"><div class="lhead"><i style="background:var(--dead)"></i><span style="color:var(--dead)">Sealed</span></div>
+        <p>Failing every attempt, or silent 14 days. Agent removed, its bay welded shut.</p></div>
+    </div>
+  </section>
+
+  <section class="card strip">
+    <div class="cardhead"><h2>The day — when each agent works, learns and sleeps</h2></div>
+    <div class="scroll"><div class="sgrid" id="sgrid"></div></div>
+    <div class="skey">
+      <span><i style="background:rgba(53,228,127,.72)"></i>Working</span>
+      <span><i style="background:rgba(86,200,255,.6)"></i>Learning</span>
+      <span><i style="background:rgba(94,116,134,.3)"></i>Sleeping</span>
+      <span><i style="background:rgba(255,79,79,.18)"></i>Sealed — no schedule</span>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const W='work', L='learn', S='sleep', T='stall', D='dead';
+
+let AGENTS = [];
+// SAMPLE is shown ONLY in the design preview (any host that isn't Frank's). The live site shows Frank's data or nothing.
+const SAMPLE = {hq:{agent:{code:'VOP', slot:4,  tag:'consulting', name:'VERUS Operating Partners', state:T, mrr:3000,
+   role:'Assessments, proposals, the CRM pipeline and client follow-up.',
+   now:'Nothing — no leads to work', next:'Blocked until the site gets traffic',
+   last:'3 days ago', output:'nothing produced', nextrun:'was due 09:00', week:'0 actions',
+   note:'Stalled with nothing to work on — the site is still not indexed and has no analytics. This is the one costing you money.',
+   day:'ssssssssssssssssssssssss'}}, bays:[], intake:{offers:0,ideas:0,signups:0,spend:0}};
+const LIVE_HOST = /(^|\.)verusoperatingpartners\.com$/.test(location.hostname);
+
+const ST = {
+  work: {word:'Working',  hex:'#35E47F', why:'produced output<br>4 min ago'},
+  learn:{word:'Learning', hex:'#56C8FF', why:'filing knowledge<br>not producing'},
+  sleep:{word:'Sleeping', hex:'#5E7486', why:'off by schedule<br>not by failure'},
+  stall:{word:'Stalled',  hex:'#FF9E2C', why:'was due to run<br>produced nothing'},
+  dead: {word:'Sealed',   hex:'#FF4F4F', why:'failing every<br>attempt'}
+};
+
+/* ---------------- station plan ---------------- */
+const cv=document.getElementById('floor'), ctx=cv.getContext('2d');
+const LW=1320, LH=1290;
+const OW={x:60,y:70,w:1200,h:322};                 // MegaFRANK's overwatch tower
+const HULL={x:44,y:400,w:1232,h:878};
+const HALLS=[
+  {x:422,y:412,w:36,h:858,dir:'v'},                // west hallway
+  {x:862,y:412,w:36,h:858,dir:'v'},                // east hallway
+  {x:60, y:412,w:1200,h:36,dir:'h'},               // upper concourse
+  {x:60, y:742,w:1200,h:36,dir:'h'},               // main spine
+];
+const LIFT={x:642,y:392,w:36,h:20};                // overwatch lift: tower down to HQ's door
+
+const HQ={id:'VOP',name:'VERUS Operating Partners',kind:'Headquarters',art:'vop',x:466,y:456,w:388,h:278,side:'N',agents:[],list:[],fy:.55};
+let SECTORS=[HQ];
+// open bays: each one becomes a sector, with its own room and agents, when a VOP project starts
+const BASE_BAYS=[
+ {x:60, y:456,w:354,h:140,side:'E'}, {x:60, y:606,w:172,h:128,side:'S'}, {x:242,y:606,w:172,h:128,side:'S'},
+ {x:906,y:456,w:354,h:170,side:'W'}, {x:60, y:786,w:354,h:230,side:'N'}, {x:466,y:786,w:388,h:260,side:'N'},
+ {x:906,y:786,w:354,h:204,side:'N'}, {x:60, y:1026,w:354,h:236,side:'E'}, {x:906,y:1000,w:354,h:262,side:'W'},
+].map((b,k)=>({...b,id:'B'+String(k+1).padStart(2,'0'),art:'bay'}));
+let BAYS=BASE_BAYS.slice();
+let INTAKE={offers:0,ideas:0,signups:0,spend:0}, LINK={ok:false,sample:false,at:null};
+const ARCHIVE={id:'ARC',name:'Archive',art:'archive',x:906,y:636,w:354,h:98,side:'W',accent:'#56C8FF',sub:'KNOWLEDGE'};
+const DOCK={id:'DCK',name:'Intake Dock',art:'dock',x:466,y:1056,w:388,h:206,side:'W',accent:'#E3B35A',sub:'NOTHING ARRIVED YET'};
+
+const SPR_H=44;
+function doorOf(r){
+  if(r.side==='N') return {side:'N',x:r.x+r.w/2,y:r.y,       ox:r.x+r.w/2,oy:r.y-26};
+  if(r.side==='S') return {side:'S',x:r.x+r.w/2,y:r.y+r.h,   ox:r.x+r.w/2,oy:r.y+r.h+26};
+  if(r.side==='E') return {side:'E',x:r.x+r.w,  y:r.y+r.h/2, ox:r.x+r.w+26,oy:r.y+r.h/2};
+  return                  {side:'W',x:r.x,      y:r.y+r.h/2, ox:r.x-26,    oy:r.y+r.h/2};
+}
+const BY={};
+[...BASE_BAYS,HQ,ARCHIVE,DOCK].forEach(r=>{ r.door=doorOf(r); r.plateH = r.w<200 ? 32 : 20; });
+function zone(r){ return {x0:r.x+22, x1:r.x+r.w-22, y0:r.y+8+r.plateH+2+SPR_H, y1:r.y+r.h-30}; }
+function spot(r){ const z=zone(r); return {x:z.x0+Math.random()*(z.x1-z.x0), y:z.y0+Math.random()*Math.max(0,z.y1-z.y0)}; }
+function placeAgents(prev){
+  Object.keys(BY).forEach(k=>delete BY[k]); AGENTS.forEach(a=>BY[a.code]=a);
+  SECTORS.forEach(sec=>{
+    sec.list=sec.agents.map(c=>BY[c]).filter(Boolean);
+    const live=sec.list.filter(a=>a.state!==D), z=zone(sec);
+    sec.list.forEach(a=>{ a.sec=sec; });
+    live.forEach((a,k)=>{
+      const p=prev[a.code];
+      if(p && p.sec===sec.id){ Object.assign(a,{x:p.x,y:p.y,phase:p.phase,step:p.step,facing:p.facing}); }
+      else { a.x=z.x0+(k+1)/(live.length+1)*(z.x1-z.x0); a.y=z.y1-Math.random()*Math.max(0,z.y1-z.y0)*.6;
+        a.phase=Math.random()*Math.PI*2; a.step=Math.random()*10; a.facing=Math.random()<.5?1:-1; }
+      a.path=null; a.pi=0; a.mode='idle'; a.timer=1+Math.random()*5;
+    });
+  });
+}
+// take one snapshot from Frank: HQ's agent, any bays that hold a project, and what's at the Intake Dock
+function applyData(d){
+  const prev={}; AGENTS.forEach(a=>{ if(a.sec) prev[a.code]={sec:a.sec.id,x:a.x,y:a.y,phase:a.phase,step:a.step,facing:a.facing}; });
+  AGENTS=[]; HQ.agents=[]; SECTORS=[HQ]; BAYS=BASE_BAYS.slice();
+  if(d.hq&&d.hq.agent){ AGENTS.push(d.hq.agent); HQ.agents=[d.hq.agent.code]; }
+  (d.bays||[]).forEach(p=>{
+    const b=BASE_BAYS.find(x=>x.id===p.id); if(!b||!p.status||p.status==='open') return;
+    const agents=(p.agents||[]).filter(a=>a&&a.code);
+    SECTORS.push({...b,name:p.name||('Project '+b.id),kind:p.kind||'Project',agents:agents.map(a=>a.code),project:p});
+    agents.forEach(a=>AGENTS.push(a));
+    BAYS=BAYS.filter(x=>x!==b);
+  });
+  INTAKE=Object.assign({offers:0,ideas:0,signups:0,spend:0},d.intake||{});
+  const waiting=INTAKE.offers+INTAKE.ideas, onYou=INTAKE.signups+INTAKE.spend;
+  DOCK.sub = onYou ? onYou+' WAITING ON YOU' : (waiting ? waiting+' WAITING TO LAUNCH' : 'NOTHING ARRIVED YET');
+  placeAgents(prev);
+  TOTAL=AGENTS.reduce((n,a)=>n+(+a.mrr||0),0);
+  counts={}; AGENTS.forEach(a=>counts[a.state]=(counts[a.state]||0)+1);
+  if(!eyeOn || !BY[eyeOn]){ eyeOn=null; eyeTimer=0; }
+  buildStrip();
+  if(sel.type==='sector' && SECTORS.find(s=>s.id===sel.id)) showSector(sel.id);
+  else if(sel.type==='agent' && BY[sel.id]) showAgent(sel.id);
+  else if(sel.type==='bay' && BAYS.find(b=>b.id===sel.id)) showBay(sel.id);
+  else if(sel.type==='dock') showDock();
+  else showFrank();
+}
+function setLink(){
+  const el=document.getElementById('link');
+  const t=LINK.at?LINK.at.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+  if(LINK.ok){ el.style.cssText='background:rgba(53,228,127,.06);border-color:rgba(53,228,127,.3);color:#BFEBD0';
+    el.innerHTML='<div><b style="color:var(--work)">Live from Frank.</b> Every state on this station is worked out from what each agent actually produced. Updated '+t+', refreshes every minute.</div>'; }
+  else if(LINK.sample){ el.innerHTML='<div><b>Design preview.</b> This copy isn\'t connected to Frank, so it shows sample data. The live station at frankos.verusoperatingpartners.com shows only Frank\'s real data.</div>'; }
+  else { el.innerHTML='<div><b>Can\'t reach Frank right now.</b> The station shows nothing rather than guess. It will try again in a minute.</div>'; }
+}
+async function loadColony(){
+  try{
+    const r=await fetch('/api/colony',{cache:'no-store',credentials:'same-origin'});
+    if(!r.ok) throw new Error(r.status);
+    applyData(await r.json()); LINK={ok:true,sample:false,at:new Date()};
+  }catch(e){
+    if(!LIVE_HOST){ applyData(SAMPLE); LINK={ok:false,sample:true,at:null}; }
+    else { applyData({}); LINK={ok:false,sample:false,at:null}; }
+  }
+  setLink(); render(t0);
+}
+const ETX=null;
+
+function secState(sec){
+  const s=sec.list.map(a=>a.state);
+  if(!s.length) return S;
+  if(s.includes(T)) return T;
+  if(s.every(x=>x===D)) return D;
+  if(s.includes(W)) return W;
+  if(s.includes(L)) return L;
+  return S;
+}
+const secMrr = sec => sec.list.reduce((n,a)=>n+a.mrr,0);
+
+/* ---------------- generated art (kie.ai) ---------------- */
+const ART={};
+let t0=0, dpr=1;
+['space','mega','hall','worker','archive','dock','bay',...SECTORS.map(s=>s.art)].forEach(k=>{
+  const im=new Image(); im.decoding='async';
+  im.onload=()=>{ ART[k]=im; render(t0); };
+  im.src='art/'+k+(k==='worker'?'.png':'.jpg');
+});
+function cover(im,x,y,w,h,fx,fy){
+  const s=Math.max(w/im.width,h/im.height), dw=im.width*s, dh=im.height*s;
+  const ox=x-(dw-w)*(fx??.5), oy=y-(dh-h)*(fy??.5);
+  ctx.drawImage(im,ox,oy,dw,dh); return {s,ox,oy};
+}
+
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let eyeTarget={x:660,y:700}, eyeOn=null, eyeTimer=0, sel={type:'frank'}, hover=null;
+let TOTAL=0;
+let OPTIC={x:640,y:120};
+
+const STARS=[];
+(function(){ let s=7; for(let i=0;i<160;i++){ s=(s*16807)%2147483647;
+  STARS.push({x:(s%LW), y:((s>>7)%LH), r:((s>>11)%100)/100*1.1+.3, a:((s>>5)%100)/100*.6+.2}); } })();
+
+/* ---------------- helpers ---------------- */
+function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+function money(n){return '$'+n.toLocaleString('en-US');}
+function clip(str,n){return str.length>n?str.slice(0,n-1)+'…':str;}
+const MONO='"IBM Plex Mono",monospace';
+
+/* ---------------- drawing ---------------- */
+function drawSpace(t){
+  ctx.fillStyle='#04060A'; ctx.fillRect(0,0,LW,LH);
+  if(ART.space) cover(ART.space,0,0,LW,LH,.5,.5);
+  STARS.forEach((st,i)=>{ const tw=.5+.5*Math.sin(t*1.3+i);
+    ctx.globalAlpha=st.a*tw; ctx.fillStyle='#DCEBFF';
+    ctx.beginPath(); ctx.arc(st.x,st.y,st.r,0,Math.PI*2); ctx.fill(); });
+  ctx.globalAlpha=1;
+}
+
+function drawOverwatch(t){
+  const sel_=sel.type==='frank', hov=hover==='FRANK';
+  ctx.save();
+  rrect(OW.x,OW.y,OW.w,OW.h,8); ctx.fillStyle='#05080B'; ctx.fill();
+  ctx.save(); rrect(OW.x,OW.y,OW.w,OW.h,8); ctx.clip();
+  if(ART.mega){
+    const drift=Math.sin(t*.25)*4;                       // slow camera drift
+    const m=cover(ART.mega,OW.x-6+drift,OW.y,OW.w+12,OW.h,.5,.05);
+    OPTIC={x:m.ox+645/1344*ART.mega.width*m.s, y:m.oy+82/768*ART.mega.height*m.s};
+    // fade into the station below
+    const g=ctx.createLinearGradient(0,OW.y+OW.h-110,0,OW.y+OW.h);
+    g.addColorStop(0,'rgba(4,6,10,0)'); g.addColorStop(1,'rgba(4,6,10,.9)');
+    ctx.fillStyle=g; ctx.fillRect(OW.x,OW.y+OW.h-110,OW.w,110);
+    // the optic breathes
+    const p=.55+.45*Math.abs(Math.sin(t*1.8));
+    const og=ctx.createRadialGradient(OPTIC.x,OPTIC.y,1,OPTIC.x,OPTIC.y,34);
+    og.addColorStop(0,'rgba(255,220,150,'+(.85*p)+')'); og.addColorStop(1,'rgba(227,179,90,0)');
+    ctx.globalCompositeOperation='lighter'; ctx.fillStyle=og;
+    ctx.beginPath(); ctx.arc(OPTIC.x,OPTIC.y,34,0,Math.PI*2); ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+  }
+  ctx.restore();
+  ctx.strokeStyle=sel_?'#FFD58A':(hov?'#F2C97A':'rgba(227,179,90,.8)'); ctx.lineWidth=sel_?2.6:2;
+  rrect(OW.x,OW.y,OW.w,OW.h,8); ctx.stroke();
+  ctx.strokeStyle='rgba(227,179,90,.25)'; ctx.lineWidth=1; rrect(OW.x+6,OW.y+6,OW.w-12,OW.h-12,6); ctx.stroke();
+  // plate
+  ctx.textAlign='left';
+  ctx.fillStyle='#E3B35A'; ctx.font='600 18px '+MONO; ctx.fillText('M E G A F R A N K', OW.x+22, OW.y+OW.h-42);
+  ctx.fillStyle='#B08E4A'; ctx.font='400 10px '+MONO;
+  ctx.fillText('OVERWATCH TOWER · VERUS OPERATING PARTNERS · SWEEP 15 MIN · '+BAYS.length+' OPEN PROJECT BAYS', OW.x+22, OW.y+OW.h-22);
+  const on=AGENTS.find(a=>a.code===eyeOn);
+  if(on){ ctx.textAlign='right';
+    ctx.fillStyle='#7E6A3E'; ctx.font='400 9.5px '+MONO; ctx.fillText('OPTIC LOCKED ON', OW.x+OW.w-22, OW.y+OW.h-42);
+    ctx.fillStyle=on.state===T?'#FF9E2C':'#E3B35A'; ctx.font='600 13px '+MONO;
+    ctx.fillText(on.sec.name.toUpperCase()+' · '+on.code, OW.x+OW.w-22, OW.y+OW.h-22); }
+  ctx.restore();
+}
+
+function drawHull(){
+  ctx.save();
+  rrect(HULL.x,HULL.y,HULL.w,HULL.h,16);
+  ctx.fillStyle='rgba(6,10,13,.94)'; ctx.fill();
+  ctx.strokeStyle='rgba(96,150,168,.6)'; ctx.lineWidth=2.4; ctx.stroke();
+  rrect(HULL.x+6,HULL.y+6,HULL.w-12,HULL.h-12,12);
+  ctx.strokeStyle='rgba(31,122,74,.45)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.restore();
+}
+
+function drawHall(hl){
+  ctx.save(); ctx.beginPath(); ctx.rect(hl.x,hl.y,hl.w,hl.h); ctx.clip();
+  ctx.fillStyle='#0B1216'; ctx.fillRect(hl.x,hl.y,hl.w,hl.h);
+  if(ART.hall){
+    const im=ART.hall;
+    if(hl.dir==='h'){ const th=hl.h, tw=im.width*th/im.height;
+      for(let x=hl.x;x<hl.x+hl.w;x+=tw) ctx.drawImage(im,x,hl.y,tw,th); }
+    else { ctx.translate(hl.x+hl.w,hl.y); ctx.rotate(Math.PI/2);
+      const th=hl.w, tw=im.width*th/im.height;
+      for(let x=0;x<hl.h;x+=tw) ctx.drawImage(im,x,0,tw,th); }
+  }
+  ctx.restore();
+  ctx.strokeStyle='rgba(96,150,168,.4)'; ctx.lineWidth=1; ctx.strokeRect(hl.x+.5,hl.y+.5,hl.w-1,hl.h-1);
+}
+
+function drawLift(t){
+  const l=LIFT;
+  ctx.save(); ctx.beginPath(); ctx.rect(l.x,l.y,l.w,l.h); ctx.clip();
+  ctx.fillStyle='#120E06'; ctx.fillRect(l.x,l.y,l.w,l.h);
+  ctx.strokeStyle='rgba(227,179,90,.18)'; ctx.lineWidth=1;
+  for(let y=l.y;y<l.y+l.h;y+=10){ctx.beginPath();ctx.moveTo(l.x,y);ctx.lineTo(l.x+l.w,y);ctx.stroke();}
+  // chevrons running down: overwatch reaching the floor
+  ctx.fillStyle='rgba(227,179,90,.55)';
+  const off=(t*40)%28;
+  for(let y=l.y-28+off;y<l.y+l.h;y+=28){
+    ctx.beginPath(); ctx.moveTo(l.x+8,y); ctx.lineTo(l.x+l.w/2,y+9); ctx.lineTo(l.x+l.w-8,y);
+    ctx.lineTo(l.x+l.w-8,y+4); ctx.lineTo(l.x+l.w/2,y+13); ctx.lineTo(l.x+8,y+4); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  ctx.strokeStyle='rgba(227,179,90,.75)'; ctx.lineWidth=1.4; ctx.strokeRect(l.x+.5,l.y+.5,l.w-1,l.h-1);
+}
+
+function drawJunctions(){
+  ctx.fillStyle='rgba(79,217,138,.35)';
+  [[440,430],[880,430],[440,760],[880,760],[660,430],[660,760]].forEach(([x,y])=>{ctx.fillRect(x-4,y-4,8,8);});
+}
+
+function drawAirlock(d,col,sealed,t,open){
+  const horiz=(d.side==='N'||d.side==='S'), G=34;
+  ctx.save(); ctx.translate(d.x,d.y); if(!horiz) ctx.rotate(Math.PI/2);
+  ctx.fillStyle=sealed?'rgba(50,10,10,.95)':'rgba(6,18,16,.95)'; ctx.fillRect(-G/2,-5,G,10);
+  const gap=open?10:0.5;
+  ctx.fillStyle=sealed?'rgba(90,26,26,.9)':'rgba(34,62,66,.95)';
+  ctx.fillRect(-G/2,-4.5,G/2-gap,9); ctx.fillRect(gap,-4.5,G/2-gap,9);
+  ctx.strokeStyle=sealed?'rgba(255,79,79,.75)':col; ctx.lineWidth=1.3; ctx.globalAlpha=.85;
+  ctx.strokeRect(-G/2+.5,-4.5,G/2-gap,9); ctx.strokeRect(gap+.5,-4.5,G/2-gap,9); ctx.globalAlpha=1;
+  ctx.beginPath(); ctx.arc(0,-10,2.4,0,Math.PI*2); ctx.fillStyle=sealed?'#FF4F4F':col;
+  ctx.globalAlpha=sealed?.9:(.45+.55*Math.abs(Math.sin(t*2.4))); ctx.fill(); ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function plate(r,name,right,rightCol,leftCol){
+  const two=r.plateH>20;
+  ctx.fillStyle='rgba(4,12,11,.88)'; ctx.fillRect(r.x+8,r.y+8,r.w-16,r.plateH);
+  ctx.strokeStyle='rgba(31,122,74,.7)'; ctx.lineWidth=1; ctx.strokeRect(r.x+8.5,r.y+8.5,r.w-17,r.plateH-1);
+  ctx.textAlign='left'; ctx.fillStyle=leftCol; ctx.font='600 10.5px '+MONO;
+  ctx.fillText(name, r.x+14, r.y+22);
+  ctx.font=(right.startsWith('$')?'600 10.5px ':'400 8.5px ')+MONO; ctx.fillStyle=rightCol;
+  if(two){ ctx.fillText(right, r.x+14, r.y+35); }
+  else { ctx.textAlign='right'; ctx.fillText(right, r.x+r.w-14, r.y+22); }
+}
+
+function drawSector(sec,t,i){
+  const st=secState(sec), c=ST[st].hex, isSel=sel.type==='sector'&&sel.id===sec.id, hov=hover===sec.id;
+  const allSleep=st===S, dead=st===D;
+  ctx.save();
+  rrect(sec.x,sec.y,sec.w,sec.h,6); ctx.fillStyle='#06100E'; ctx.fill();
+  ctx.save(); rrect(sec.x,sec.y,sec.w,sec.h,6); ctx.clip();
+  if(ART[sec.art]) cover(ART[sec.art],sec.x,sec.y,sec.w,sec.h,.5,sec.fy??.5);
+  ctx.fillStyle = dead?'rgba(28,4,4,.78)':(allSleep?'rgba(2,5,8,.55)':'rgba(2,6,8,.2)');
+  ctx.fillRect(sec.x,sec.y,sec.w,sec.h);
+  if(!allSleep && !dead){
+    const pulse=.08+.07*Math.abs(Math.sin(t*1.4+i));
+    const g=ctx.createRadialGradient(sec.x+sec.w/2,sec.y+sec.h/2,10,sec.x+sec.w/2,sec.y+sec.h/2,Math.max(sec.w,sec.h)*.7);
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,c);
+    ctx.globalAlpha=pulse; ctx.fillStyle=g; ctx.fillRect(sec.x,sec.y,sec.w,sec.h); ctx.globalAlpha=1;
+  }
+  ctx.restore();
+  // bulkhead
+  ctx.strokeStyle=isSel?'#E3B35A':(hov?'#9BFFCB':c);
+  ctx.lineWidth=isSel?2.6:1.7; ctx.globalAlpha=allSleep?.6:.95;
+  rrect(sec.x,sec.y,sec.w,sec.h,6); ctx.stroke(); ctx.globalAlpha=1;
+  ctx.strokeStyle=isSel?'#E3B35A':c; ctx.lineWidth=2.2; ctx.globalAlpha=.9;
+  [[sec.x,sec.y,1,1],[sec.x+sec.w,sec.y,-1,1],[sec.x,sec.y+sec.h,1,-1],[sec.x+sec.w,sec.y+sec.h,-1,-1]].forEach(([px,py,sx,sy])=>{
+    ctx.beginPath(); ctx.moveTo(px+sx*18,py); ctx.lineTo(px,py); ctx.lineTo(px,py+sy*18); ctx.stroke();});
+  ctx.globalAlpha=1;
+  // name plate: sector + what it earns
+  const m=secMrr(sec);
+  plate(sec,(sec.short||sec.name).toUpperCase(), m>0?money(m)+'/mo':'NO REVENUE YET', m>0?'#E3B35A':'#6E8A7B', isSel?'#E3B35A':'#9BFFCB');
+  // task strip
+  ctx.fillStyle='rgba(4,12,11,.88)'; ctx.fillRect(sec.x+8,sec.y+sec.h-26,sec.w-16,18);
+  ctx.strokeStyle='rgba(31,122,74,.5)'; ctx.lineWidth=1; ctx.strokeRect(sec.x+8.5,sec.y+sec.h-25.5,sec.w-17,17);
+  ctx.textAlign='left'; ctx.font='400 8.5px '+MONO;
+  ctx.fillStyle=st===T?'#FF9E2C':'#8FAA9B';
+  let line;
+  if(sec.list.length===1) line='▸ '+sec.list[0].now.toUpperCase();
+  else { const k={}; sec.list.forEach(a=>k[a.state]=(k[a.state]||0)+1);
+    line=sec.list.length+' AGENTS · '+[W,L,S,T,D].filter(s=>k[s]).map(s=>k[s]+' '+ST[s].word.toUpperCase()).join(' · '); }
+  ctx.fillText(clip(line,Math.floor((sec.w-30)/5.2)), sec.x+14, sec.y+sec.h-13.5);
+  // sealed bays for retired agents
+  sec.list.filter(a=>a.state===D).forEach((a,k)=>{
+    const bx=sec.x+sec.w-74-k*64, by=sec.y+sec.plateH+16;
+    ctx.fillStyle='rgba(40,8,8,.85)'; ctx.fillRect(bx,by,58,30);
+    ctx.strokeStyle='rgba(255,79,79,.8)'; ctx.lineWidth=1.2; ctx.strokeRect(bx+.5,by+.5,58,30);
+    ctx.beginPath(); ctx.moveTo(bx+4,by+4); ctx.lineTo(bx+54,by+26); ctx.moveTo(bx+54,by+4); ctx.lineTo(bx+4,by+26);
+    ctx.strokeStyle='rgba(255,79,79,.35)'; ctx.stroke();
+    ctx.fillStyle='#FF8A8A'; ctx.font='600 9px '+MONO; ctx.textAlign='center';
+    ctx.fillText(a.code+' SEALED', bx+29, by+19);
+  });
+  const anyWalk=false;
+  drawAirlock(sec.door,c,dead,t,anyWalk);
+  ctx.restore();
+}
+
+function drawBay(b,t){
+  const isSel=sel.type==='bay'&&sel.id===b.id, hov=hover==='BAY:'+b.id;
+  ctx.save();
+  rrect(b.x,b.y,b.w,b.h,6); ctx.fillStyle='#05090A'; ctx.fill();
+  ctx.save(); rrect(b.x,b.y,b.w,b.h,6); ctx.clip();
+  if(ART.bay) cover(ART.bay,b.x,b.y,b.w,b.h,.5,.5);
+  ctx.fillStyle='rgba(3,6,8,.74)'; ctx.fillRect(b.x,b.y,b.w,b.h);
+  // hazard striping across the threshold: built, powered down, waiting for a project
+  ctx.globalAlpha=.16; ctx.fillStyle='#E3B35A';
+  for(let x=b.x-b.h;x<b.x+b.w;x+=22){ ctx.beginPath(); ctx.moveTo(x,b.y+b.h); ctx.lineTo(x+10,b.y+b.h); ctx.lineTo(x+10+b.h,b.y); ctx.lineTo(x+b.h,b.y); ctx.closePath(); ctx.fill(); }
+  ctx.globalAlpha=1;
+  ctx.restore();
+  ctx.setLineDash([6,5]); ctx.strokeStyle=isSel?'#E3B35A':(hov?'#9BFFCB':'rgba(126,154,139,.55)'); ctx.lineWidth=isSel?2.2:1.3;
+  rrect(b.x,b.y,b.w,b.h,6); ctx.stroke(); ctx.setLineDash([]);
+  plate(b,'PROJECT BAY '+b.id.slice(1),'OPEN','#6E8A7B',isSel?'#E3B35A':'#7E9A8B');
+  ctx.textAlign='center'; ctx.fillStyle='rgba(155,255,203,.5)'; ctx.font='500 9.5px '+MONO;
+  const cy=b.y+b.plateH+8+(b.h-b.plateH-8)/2;
+  ctx.fillText('RESERVED FOR THE NEXT', b.x+b.w/2, cy-2);
+  ctx.fillText('VOP PROJECT', b.x+b.w/2, cy+11);
+  drawAirlock(b.door,'#5E7486',false,t,false);
+  ctx.restore();
+}
+
+function drawUtility(r,t){
+  ctx.save();
+  rrect(r.x,r.y,r.w,r.h,6); ctx.fillStyle='#06100E'; ctx.fill();
+  ctx.save(); rrect(r.x,r.y,r.w,r.h,6); ctx.clip();
+  if(ART[r.art]) cover(ART[r.art],r.x,r.y,r.w,r.h,.5,.5);
+  ctx.fillStyle='rgba(2,6,8,.28)'; ctx.fillRect(r.x,r.y,r.w,r.h);
+  ctx.restore();
+  ctx.strokeStyle=r.accent; ctx.globalAlpha=.7; ctx.lineWidth=1.5; rrect(r.x,r.y,r.w,r.h,6); ctx.stroke(); ctx.globalAlpha=1;
+  plate(r, r.name.toUpperCase(), r.sub, '#8FAA9B', r.accent);
+  drawAirlock(r.door,r.accent,false,t,false);
+  ctx.restore();
+}
+
+/* ---- the agents: generated figure, lit by state ---- */
+function drawAgent(a,t){
+  if(a.state===D) return;
+  const c=ST[a.state].hex, sleeping=a.state===S, moving=a.mode==='walk';
+  const isSel=sel.type==='agent'&&sel.id===a.code, hov=hover==='A:'+a.code;
+  const bob=moving?Math.abs(Math.cos(a.step*2.3))*1.4:(a.state===W?Math.sin(t*4.4+a.phase)*0.5:0);
+  ctx.save(); ctx.translate(a.x,a.y);
+  const gl=ctx.createRadialGradient(0,1,1,0,1,17);
+  gl.addColorStop(0,c); gl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.globalAlpha=sleeping?.2:.5; ctx.fillStyle=gl;
+  ctx.beginPath(); ctx.ellipse(0,1,17,6,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  if(isSel||hov){ ctx.strokeStyle=isSel?'#E3B35A':'#9BFFCB'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.ellipse(0,1.5,15,5.5,0,0,Math.PI*2); ctx.stroke(); }
+  if(a.state===T){ const p=(Math.sin(t*3.2)+1)/2;
+    ctx.strokeStyle='rgba(255,158,44,'+(0.25+0.5*p)+')'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.ellipse(0,1.5,15+p*7,6+p*3,0,0,Math.PI*2); ctx.stroke(); }
+  if(ART.worker){
+    const im=ART.worker, h=SPR_H, w=h*im.width/im.height;
+    ctx.save();
+    if(sleeping){ ctx.translate(0,-4); ctx.rotate(-Math.PI/2.05); ctx.globalAlpha=.85; }
+    ctx.translate(0,-bob);
+    if(a.facing<0) ctx.scale(-1,1);
+    ctx.shadowColor=c; ctx.shadowBlur=sleeping?0:7;
+    ctx.drawImage(im,-w/2,-h,w,h);
+    ctx.restore();
+  }
+  if(!sleeping){
+    // code tag over the head so each agent can be told apart
+    const y=-SPR_H-9-bob;
+    ctx.font='600 8px '+MONO; ctx.textAlign='center';
+    const tw=ctx.measureText(a.code).width+8;
+    ctx.fillStyle='rgba(4,10,10,.82)'; ctx.fillRect(-tw/2,y-8,tw,11);
+    ctx.fillStyle=c; ctx.fillText(a.code,0,y);
+  }
+  if(a.state===L){ ctx.fillStyle='rgba(205,236,255,.92)'; ctx.fillRect(6,-SPR_H*.55,5,6); }
+  ctx.restore();
+  if(sleeping){ ctx.save(); ctx.globalAlpha=.3+.3*Math.abs(Math.sin(t*1.2+a.phase));
+    ctx.fillStyle='#9BB6C6'; ctx.font='600 11px '+MONO; ctx.textAlign='center';
+    ctx.fillText('z',a.x+22,a.y-14-Math.sin(t*1.2+a.phase)*3); ctx.restore(); }
+}
+
+// MegaFRANK's gaze: a beam from the optic down onto the agent he is checking
+function drawGaze(t){
+  const on=AGENTS.find(a=>a.code===eyeOn); if(!on) return;
+  const tx=eyeTarget.x, ty=eyeTarget.y-SPR_H*.55, stall=on.state===T;
+  const col=stall?'255,158,44':'227,179,90';
+  ctx.save();
+  const ang=Math.atan2(ty-OPTIC.y,tx-OPTIC.x), nx=-Math.sin(ang), ny=Math.cos(ang), wd=16;
+  const g=ctx.createLinearGradient(OPTIC.x,OPTIC.y,tx,ty);
+  g.addColorStop(0,'rgba('+col+',.26)'); g.addColorStop(1,'rgba('+col+',.04)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(OPTIC.x,OPTIC.y);
+  ctx.lineTo(tx+nx*wd,ty+ny*wd); ctx.lineTo(tx-nx*wd,ty-ny*wd); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba('+col+',.6)'; ctx.lineWidth=1.1; ctx.setLineDash([5,6]); ctx.lineDashOffset=-t*30;
+  ctx.beginPath(); ctx.moveTo(OPTIC.x,OPTIC.y); ctx.lineTo(tx,ty); ctx.stroke(); ctx.setLineDash([]);
+  const r=17+Math.sin(t*4)*1.5;
+  ctx.strokeStyle='rgba('+col+',.9)'; ctx.lineWidth=1.3;
+  [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy])=>{
+    ctx.beginPath(); ctx.moveTo(tx+dx*r,ty+dy*r); ctx.lineTo(tx+dx*(r-6),ty+dy*(r-6)); ctx.stroke(); });
+  ctx.globalAlpha=.4; ctx.beginPath(); ctx.arc(tx,ty,r-3,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+function drawStatusBar(){
+  const c={}; AGENTS.forEach(a=>c[a.state]=(c[a.state]||0)+1);
+  const on=AGENTS.find(a=>a.code===eyeOn);
+  const cells=[
+    ['PROJECTS',SECTORS.length-1,'#9BFFCB',98], ['OPEN BAYS',BAYS.length,'#9BFFCB',98],
+    ['WORKING',c.work||0,'#35E47F',98], ['LEARNING',c.learn||0,'#56C8FF',98],
+    ['SLEEPING',c.sleep||0,'#5E7486',98], ['STALLED',c.stall||0,'#FF9E2C',98],
+    ['SEALED',c.dead||0,'#FF4F4F',98], ['OPTIC ON',on?on.code:'—','#E3B35A',100],
+    ['TOTAL / MONTH',money(TOTAL),'#E3B35A',150],
+    ['LOCAL',new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),'#9BFFCB',112]
+  ];
+  ctx.save(); ctx.strokeStyle='rgba(31,122,74,.8)'; ctx.lineWidth=1;
+  let x=60;
+  cells.forEach(([k,v,col,w])=>{
+    ctx.fillStyle='rgba(6,16,13,.92)'; ctx.fillRect(x,24,w,32); ctx.strokeRect(x+.5,24.5,w,31);
+    ctx.fillStyle='#4E675A'; ctx.font='400 8.5px '+MONO; ctx.textAlign='left'; ctx.fillText(k,x+9,37);
+    ctx.fillStyle=col; ctx.font='600 14px '+MONO; ctx.fillText(String(v),x+9,51);
+    x+=w+7;
+  });
+  ctx.strokeStyle='rgba(31,122,74,.45)';
+  for(let i=x+6;i<LW-60;i+=9){ctx.beginPath();ctx.moveTo(i,32);ctx.lineTo(i,48);ctx.stroke();}
+  ctx.restore();
+}
+
+function drawFrame(){
+  ctx.save(); ctx.globalAlpha=.035; ctx.fillStyle='#8BFFC6';
+  for(let y=0;y<LH;y+=3) ctx.fillRect(0,y,LW,1); ctx.restore();
+  ctx.save(); ctx.strokeStyle='rgba(79,217,138,.5)'; ctx.lineWidth=1.4;
+  ctx.strokeRect(12.5,12.5,LW-25,LH-25);
+  [[12,12,1,1],[LW-12,12,-1,1],[12,LH-12,1,-1],[LW-12,LH-12,-1,-1]].forEach(([px,py,sx,sy])=>{
+    ctx.beginPath(); ctx.moveTo(px+sx*26,py); ctx.lineTo(px,py); ctx.lineTo(px,py+sy*26); ctx.stroke();});
+  ctx.restore();
+}
+
+/* ---------------- movement: agents stay inside their own sector ---------------- */
+function follow(a,dt){
+  const p=a.path[a.pi], dx=p.x-a.x, dy=p.y-a.y, d=Math.hypot(dx,dy), sp=42*dt;
+  if(Math.abs(dx)>0.5) a.facing=dx>0?1:-1;
+  if(d<=sp){ a.x=p.x; a.y=p.y; a.pi++;
+    if(a.pi>=a.path.length){ a.path=null; a.mode='idle'; a.timer=2+Math.random()*6; } }
+  else { a.x+=dx/d*sp; a.y+=dy/d*sp; a.step+=dt*6.4; }
+}
+function send(a,pts){ a.path=pts; a.pi=0; a.mode='walk'; }
+function inside(a,r){ return a.x>r.x&&a.x<r.x+r.w&&a.y>r.y&&a.y<r.y+r.h; }
+function stepAgent(a,dt){
+  if(a.state===D) return;
+  if(a.mode==='walk'){ follow(a,dt); return; }
+  if(a.state===S||a.state===T) return;
+  a.timer-=dt; if(a.timer>0) return;
+  if(a===ETX){
+    const home=inside(a,a.sec);
+    if(home && Math.random()<.5){ send(a,[{x:a.sec.door.x,y:a.sec.door.y-0}].concat(a.toArchive.slice(1))); a.timer=9+Math.random()*6; return; }
+    if(!home){ const back=a.toArchive.slice().reverse(); back.push(spot(a.sec)); send(a,back); a.timer=9+Math.random()*6; return; }
+  }
+  send(a,[spot(a.sec)]); a.timer=3+Math.random()*6;
+}
+
+/* ---------------- loop ---------------- */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now; t0+=dt;
+  AGENTS.forEach(a=>stepAgent(a,dt));
+  eyeTimer-=dt;
+  if(eyeTimer<=0){
+    const stalled=AGENTS.filter(a=>a.state===T), live=AGENTS.filter(a=>a.state!==D);
+    const pool=(stalled.length&&Math.random()<.4)?stalled:live;
+    const pick=pool[Math.floor(Math.random()*pool.length)];
+    if(pick) eyeOn=pick.code;
+    eyeTimer=2.8+Math.random()*2.4;
+  }
+  aimEye(dt);
+  render(t0);
+  if(!reduce) requestAnimationFrame(frame);
+}
+function aimEye(dt){
+  const on=AGENTS.find(a=>a.code===eyeOn); if(!on) return;
+  const k=dt==null?1:Math.min(1,dt*3);
+  eyeTarget.x+=(on.x-eyeTarget.x)*k; eyeTarget.y+=(on.y-eyeTarget.y)*k;
+  document.getElementById('watching').innerHTML=
+    (on.state===T?'flagging · ':'holding on task · ')+'<b>'+on.sec.name+' · '+on.code+'</b>';
+}
+
+function render(t){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  drawSpace(t);
+  drawHull();
+  HALLS.forEach(drawHall);
+  drawJunctions();
+  drawLift(t);
+  drawOverwatch(t);
+  BAYS.forEach(b=>drawBay(b,t));
+  SECTORS.forEach((s,i)=>drawSector(s,t,i));
+  drawUtility(ARCHIVE,t); drawUtility(DOCK,t);
+  AGENTS.filter(a=>a.state!==D).sort((p,q)=>p.y-q.y).forEach(a=>drawAgent(a,t));
+  drawGaze(t);
+  drawStatusBar();
+  drawFrame();
+}
+
+/* ---------------- sizing + input ---------------- */
+function size(){
+  const w=cv.clientWidth||LW;
+  dpr=Math.min(2,window.devicePixelRatio||1)*(w/LW);
+  cv.width=Math.round(LW*dpr); cv.height=Math.round(LH*dpr);
+  cv.style.height=(LH*w/LW)+'px'; render(t0);
+}
+addEventListener('resize',size);
+function hit(ev){
+  const r=cv.getBoundingClientRect();
+  const x=(ev.clientX-r.left)*(LW/r.width), y=(ev.clientY-r.top)*(LH/r.height);
+  if(x>OW.x&&x<OW.x+OW.w&&y>OW.y&&y<OW.y+OW.h) return 'FRANK';
+  let best=null, bd=22;
+  AGENTS.forEach(a=>{ if(a.state===D) return;
+    const d=Math.hypot(a.x-x,(a.y-SPR_H*.5)-y); if(d<bd){bd=d;best='A:'+a.code;} });
+  if(best) return best;
+  const s=SECTORS.find(s=>x>s.x&&x<s.x+s.w&&y>s.y&&y<s.y+s.h);
+  if(s) return s.id;
+  const b=BAYS.find(b=>x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h);
+  if(b) return 'BAY:'+b.id;
+  if(x>DOCK.x&&x<DOCK.x+DOCK.w&&y>DOCK.y&&y<DOCK.y+DOCK.h) return 'DOCK';
+  return null;
+}
+cv.addEventListener('click',e=>{ const h=hit(e); if(!h) return;
+  if(h==='FRANK') showFrank(); else if(h.startsWith('A:')) showAgent(h.slice(2)); else if(h.startsWith('BAY:')) showBay(h.slice(4)); else if(h==='DOCK') showDock(); else showSector(h); });
+cv.addEventListener('mousemove',e=>{ const h=hit(e); hover=h; cv.style.cursor=h?'pointer':'crosshair'; if(reduce) render(t0); });
+cv.addEventListener('mouseleave',()=>{ hover=null; if(reduce) render(t0); });
+
+/* ---------------- side panel ---------------- */
+let counts={};
+const detail=document.getElementById('detail'), dhead=document.getElementById('dhead');
+function crewList(list){
+  return '<div class="crew">'+list.map(a=>{ const s=ST[a.state];
+    return `<button type="button" data-code="${a.code}"><i style="background:${s.hex}"></i>
+      <span class="cc">${a.code}</span><span class="cn">${a.name}<small>${a.state===D?'Sealed — '+a.output:a.now}</small></span>
+      <span class="cs" style="color:${s.hex}">${s.word}</span></button>`; }).join('')+'</div>';
+}
+function wireCrew(){ detail.querySelectorAll('[data-code]').forEach(b=>b.addEventListener('click',()=>showAgent(b.dataset.code))); }
+function done(){ if(reduce) render(t0); }
+
+function showFrank(){
+  sel={type:'frank'}; dhead.textContent='Overwatch';
+  const earners=SECTORS.filter(s=>secMrr(s)>0).sort((p,q)=>secMrr(q)-secMrr(p));
+  const needs=SECTORS.filter(s=>secState(s)===T);
+  detail.innerHTML=`
+    <div class="pcode" style="color:var(--eye);border-color:rgba(227,179,90,.5)">OVERWATCH TOWER</div>
+    <h3 class="pname" style="color:var(--eye)">MegaFRANK</h3>
+    <p class="prole">Stands above VERUS Operating Partners. Holds the roster, assigns every task, keeps each agent inside its own sector, and reports up to you once a day.</p>
+    <div class="pstate"><i style="background:var(--eye)"></i>
+      <span class="word" style="color:var(--eye)">On watch</span>
+      <span class="why">last sweep<br>2 min ago</span></div>
+    <dl class="rows">
+      <div class="row"><dt>Total / month</dt><dd class="cash">${money(TOTAL)}</dd></div>
+      <div class="row"><dt>Projects live</dt><dd>${SECTORS.length-1||'none yet'}</dd></div>
+      <div class="row"><dt>Station</dt><dd>VOP headquarters · ${BAYS.length} open project bays</dd></div>
+      <div class="row"><dt>Working now</dt><dd>${counts.work||0} agents</dd></div>
+      <div class="row"><dt>Needs you</dt><dd>${needs.map(s=>s.name).join(', ')||'nothing'}</dd></div>
+      <div class="row"><dt>Sweeps</dt><dd class="mono">every 15 min</dd></div>
+      <div class="row"><dt>Your briefing</dt><dd class="mono">07:00 daily</dd></div>
+    </dl>
+    <div class="fnote"><strong>MegaFRANK’s rule</strong>No agent sets its own status and no agent leaves its sector without a task that requires it. I compute every state from what was actually produced. Silent fourteen days and I seal the bay and tell you.</div>`;
+  done();
+}
+function showSector(id){
+  const sec=SECTORS.find(s=>s.id===id); if(!sec) return;
+  sel={type:'sector',id}; dhead.textContent='Sector';
+  const st=ST[secState(sec)], m=secMrr(sec);
+  const lead=sec.list.find(a=>a.state===T)||sec.list.find(a=>a.state!==D)||sec.list[0]||{note:'No agent assigned here yet.'};
+  detail.innerHTML=`
+    <div class="pcode">${sec.id} · ${sec.kind}</div>
+    <h3 class="pname">${sec.name}</h3>
+    <div class="pstate"><i style="background:${st.hex}"></i>
+      <span class="word" style="color:${st.hex}">${st.word}</span>
+      <span class="why">${sec.list.length} agent${sec.list.length>1?'s':''}<br>in this sector</span></div>
+    <dl class="rows">
+      <div class="row"><dt>Earning</dt><dd class="cash">${m>0?money(m)+' / mo':'—'}</dd></div>
+      <div class="row"><dt>Hallway door</dt><dd class="mono">${{N:'north',S:'south',E:'east',W:'west'}[sec.side]} side</dd></div>
+    </dl>
+    ${crewList(sec.list)}
+    <div class="fnote"><strong>MegaFRANK’s note</strong>${lead.note}</div>`;
+  wireCrew(); done();
+}
+function showAgent(code){
+  const a=BY[code]; if(!a) return;
+  sel={type:'agent',id:code}; dhead.textContent='Agent';
+  const s=ST[a.state];
+  detail.innerHTML=`
+    <button class="back" type="button" id="back">← ${a.sec.name}</button><br>
+    <div class="pcode">${a.code} · ${a.tag}</div>
+    <h3 class="pname">${a.name}</h3>
+    <p class="prole">${a.role}</p>
+    <div class="pstate"><i style="background:${s.hex}"></i>
+      <span class="word" style="color:${s.hex}">${s.word}</span>
+      <span class="why">${s.why}</span></div>
+    <div class="task">
+      <div><b>Now</b><span class="now">${a.now}</span></div>
+      <div><b>Next</b><span class="nxt">${a.next}</span></div>
+    </div>
+    <dl class="rows">
+      <div class="row"><dt>Sector</dt><dd>${a.sec.name}</dd></div>
+      <div class="row"><dt>Earning</dt><dd class="cash">${a.mrr>0?money(a.mrr)+' / mo':'—'}</dd></div>
+      <div class="row"><dt>Last real output</dt><dd class="mono">${a.last}</dd></div>
+      <div class="row"><dt>What it produced</dt><dd>${a.output}</dd></div>
+      <div class="row"><dt>Next run</dt><dd class="mono">${a.nextrun}</dd></div>
+      <div class="row"><dt>This week</dt><dd>${a.week}</dd></div>
+    </dl>
+    <div class="fnote"><strong>MegaFRANK’s note</strong>${a.note}</div>`;
+  document.getElementById('back').addEventListener('click',()=>showSector(a.sec.id));
+  done();
+}
+const JOBS=`<div class="task">
+      <div><b>1</b><span class="nxt">Verifies the offer's real terms — payout, whether it's recurring, whether your own landing page is allowed — and re-checks them monthly</span></div>
+      <div><b>2</b><span class="nxt">Builds the funnel: a live landing page on its own subdomain</span></div>
+      <div><b>3</b><span class="nxt">Writes the promotion: ad copy, social hooks, email follow-up</span></div>
+      <div><b>4</b><span class="nxt">Tracks every click through your own redirect link</span></div>
+      <div><b>5</b><span class="nxt">Reports its numbers up to MegaFRANK every day</span></div>
+    </div>`;
+function showBay(id){
+  const b=BAYS.find(x=>x.id===id); if(!b) return;
+  sel={type:'bay',id}; dhead.textContent='Project bay';
+  detail.innerHTML=`
+    <div class="pcode">BAY ${id.slice(1)} · OPEN</div>
+    <h3 class="pname">Project bay ${id.slice(1)}</h3>
+    <p class="prole">Built and powered down. When an affiliate offer or business idea comes in through the Intake Dock, MegaFRANK gives it this bay and one agent that owns it.</p>
+    <div class="pstate"><i style="background:var(--sleep)"></i>
+      <span class="word" style="color:var(--fg-dim)">Open</span>
+      <span class="why">no offer or idea<br>assigned yet</span></div>
+    <p class="prole" style="margin-top:14px">The agent's five jobs once it moves in:</p>
+    ${JOBS}
+    <dl class="rows">
+      <div class="row"><dt>Your press</dt><dd>signing up for the program</dd></div>
+      <div class="row"><dt>Your press</dt><dd>approving any ad spend</dd></div>
+      <div class="row"><dt>Kill rule</dt><dd>zero clicks for 14 days → bay sealed</dd></div>
+    </dl>
+    <div class="fnote"><strong>MegaFRANK’s note</strong>No agent here gets to sit looking green. If the bay produces nothing, I seal it and report the death the same as a win.</div>`;
+  done();
+}
+function showDock(){
+  sel={type:'dock'}; dhead.textContent='Intake Dock';
+  detail.innerHTML=`
+    <div class="pcode" style="color:var(--eye);border-color:rgba(227,179,90,.5)">INTAKE DOCK</div>
+    <h3 class="pname">Intake Dock</h3>
+    <p class="prole">Where affiliate offers and business ideas arrive. Each one waits here until MegaFRANK opens a bay for it and assigns its agent.</p>
+    <div class="pstate"><i style="background:var(--eye)"></i>
+      <span class="word" style="color:var(--eye)">${INTAKE.offers+INTAKE.ideas?'Waiting':'Empty'}</span>
+      <span class="why">${INTAKE.offers+INTAKE.ideas} waiting<br>to launch</span></div>
+    <dl class="rows">
+      <div class="row"><dt>Waiting to launch</dt><dd>${INTAKE.offers} offers · ${INTAKE.ideas} ideas</dd></div>
+      <div class="row"><dt>Waiting on you</dt><dd>${INTAKE.signups} sign-ups · ${INTAKE.spend} spend approvals</dd></div>
+      <div class="row"><dt>Open bays</dt><dd>${BAYS.length}</dd></div>
+    </dl>
+    <div class="fnote"><strong>MegaFRANK’s note</strong>Anything that needs your name, your W-9, your bank details or your money stops here for you. Everything after that, the bay's agent does.</div>`;
+  done();
+}
+showFrank();
+
+/* ---------------- day strip ---------------- */
+function buildStrip(){
+  const sg=document.getElementById('sgrid');
+let head='<div class="hours"><b></b>';
+for(let h=0;h<24;h++) head+=`<b>${h%3===0?String(h).padStart(2,'0'):''}</b>`;
+head+='</div>';
+sg.innerHTML=head+SECTORS.flatMap(sec=>sec.list).map(a=>{
+  const day=(a.day+'ssssssssssssssssssssssss').slice(0,24);
+  return `<div class="srow"><div class="slabel"><em>${a.sec.id} ·</em> ${a.code} ${a.name}</div>`+
+    [...day].map(c=>`<div class="cell ${c}"></div>`).join('')+'</div>';
+}).join('');
+
+}
+loadColony(); setInterval(loadColony,60000);
+size();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>render(t0));
+if(reduce){ setTimeout(()=>{ const st=AGENTS.find(a=>a.state===T)||AGENTS[0]; eyeOn=st?st.code:null; aimEye(null); render(t0); },1500); }
+else requestAnimationFrame(frame);
+</script>
+
+</body></html>
