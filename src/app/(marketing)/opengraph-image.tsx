@@ -38,7 +38,7 @@ export default async function OpengraphImage() {
               marginBottom: 28,
             }}
           >
-            VERUS Operating Company
+            VERUS OPERATING PARTNERS LLC
           </div>
         )}
         <div

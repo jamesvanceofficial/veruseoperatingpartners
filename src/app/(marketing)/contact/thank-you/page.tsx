@@ -3,7 +3,7 @@ import { LinkButton } from "@/shared/ui/LinkButton";
 import { Card } from "@/shared/ui/Card";
 
 export const metadata: Metadata = {
-  title: "Thank You | VERUS Operating Company",
+  title: "Thank You | VERUS OPERATING PARTNERS LLC",
   description: "We've received your message and will follow up to schedule a call.",
 };
 

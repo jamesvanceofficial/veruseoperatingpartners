@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow"><title>The VERUS Journey — Review Boards — V2</title>
+  <style>
+    @font-face{font-family:Geist;src:url('assets/geist.woff2');font-weight:100 900}*{box-sizing:border-box}body{margin:0;background:#e7e5df;color:#071526;font:14px/1.6 Geist,Arial,sans-serif}header{padding:26px 32px;background:#071526;color:#f7f5ef}h1{font-size:24px;font-weight:650;margin:0;letter-spacing:-.04em}header p{font-size:12px;color:#a9b4c2;max-width:800px;margin:8px 0 20px}nav{display:flex;gap:12px;flex-wrap:wrap}button,a{font:inherit;font-size:12px;padding:9px 15px;border:1px solid #8b7d50;background:none;color:#f1d27a;cursor:pointer;text-decoration:none}button[aria-pressed=true]{background:#f1d27a;color:#071526}a:focus-visible,button:focus-visible{outline:2px solid #f1d27a;outline-offset:4px}.canvas{padding:32px;overflow:auto}.board{display:block;margin:auto;width:1440px;max-width:100%;height:auto;box-shadow:0 12px 50px #07152625}.canvas.mobile .board{width:390px}.canvas.native .board{max-width:none}footer{padding:0 32px 32px;font-size:11px;color:#48525a;max-width:1000px}footer a{color:#796321;border:0;padding:0;font-size:11px} @media(max-width:600px){header{padding:22px}.canvas{padding:16px}h1{font-size:23px}nav{gap:8px}button,a{font-size:11px;padding:8px 10px}footer{padding:0 22px 25px}}
+  </style>
+</head>
+<body>
+  <header><h1>The VERUS Journey / Prototype V2</h1><p>Updated desktop and mobile previews: Geist typography, the established homepage headline, direct business copy, and a connected four-stage journey. Open the responsive prototype to review stage navigation, the persistent destination, and scroll progress.</p><nav aria-label="Review controls"><button data-view="desktop" aria-pressed="true">Desktop · 1440 px</button><button data-view="mobile" aria-pressed="false">Mobile · 390 px</button><button id="scale" aria-pressed="false">View at actual size</button><a href="index.html">Open responsive prototype ↗</a></nav></header>
+  <div class="canvas"><img class="board" src="review/desktop-full.png" alt="Full-size desktop visual prototype of the VERUS homepage and continuous customer journey" width="1440"></div>
+  <footer><p>The boards are static design artwork, not browser screenshots. Chromium could not launch within this environment, so the HTML prototype still needs a browser review. The static boards use the existing COMPASS screenshots and reproduce the existing CompassRose artwork; the HTML preserves its 300-second rotation and reduced-motion behavior.</p><p>Client work is based on the repository’s RBL Safety and Radiant Moments case studies. COMPASS visuals show demonstration data. This prototype is isolated from the application; scan actions are previews. Typography and copy refinements are isolated to this prototype. Production implementation is waiting for visual approval.</p></footer>
+  <script>
+    const canvas=document.querySelector('.canvas'),board=document.querySelector('.board');
+    document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{const mobile=button.dataset.view==='mobile';document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));canvas.classList.toggle('mobile',mobile);board.src=mobile?'review/mobile-full.png':'review/desktop-full.png';board.width=mobile?390:1440;board.alt=`Full-size ${mobile?'mobile':'desktop'} visual prototype of the VERUS homepage and continuous customer journey`;}));
+    document.querySelector('#scale').addEventListener('click',event=>{const native=canvas.classList.toggle('native');event.target.setAttribute('aria-pressed',String(native));event.target.textContent=native?'Fit to window':'View at actual size';});
+  </script>
+</body>
+</html>

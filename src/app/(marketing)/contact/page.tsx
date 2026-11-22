@@ -9,10 +9,10 @@ import { ContactForm } from "@/modules/marketing/ContactForm";
 import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 
 export const metadata: Metadata = {
-  title: "Contact | VERUS Operating Company",
+  title: "Contact | VERUS OPERATING PARTNERS LLC",
   description: "Tell us about your business — we'll follow up to schedule a call. Prefer a faster starting point? Take the free scan first.",
   openGraph: {
-    title: "Contact | VERUS Operating Company",
+    title: "Contact | VERUS OPERATING PARTNERS LLC",
     description: "Tell us about your business and we'll follow up to schedule a call.",
   },
 };

@@ -22,11 +22,11 @@ import { CASE_STUDIES } from "@/modules/marketing/caseStudies";
 import { SERVICE_AREAS } from "@/modules/marketing/services";
 
 export const metadata: Metadata = {
-  title: "VERUS Operating Company — Systems for Founder-Led Businesses",
+  title: "VERUS OPERATING PARTNERS LLC — Systems for Founder-Led Businesses",
   description:
     "VERUS diagnoses what's actually holding your company back, then builds the systems and processes to fix it — and stays embedded running them. Founder-led businesses, $1M-$25M revenue, delivered remotely nationwide.",
   openGraph: {
-    title: "VERUS Operating Company — Systems for Founder-Led Businesses",
+    title: "VERUS OPERATING PARTNERS LLC — Systems for Founder-Led Businesses",
     description: "We find what's holding your company back, then build the systems to fix it.",
   },
 };
@@ -52,7 +52,7 @@ export default function HomePage() {
             }
           >
             <FadeUp>
-              <span className="section-eyebrow">VERUS Operating Company</span>
+              <span className="section-eyebrow">VERUS OPERATING PARTNERS LLC</span>
             </FadeUp>
             <FadeUp delayMs={80}>
               <h1 className="text-[32px] font-semibold leading-[1.1] text-[var(--cream)] sm:text-[46px]">

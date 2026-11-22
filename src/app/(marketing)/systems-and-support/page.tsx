@@ -11,11 +11,11 @@ import { SUPPORT_TIER_INFO, SUPPORT_TIERS, SUPPORT_SUBSCRIPTION_NAME } from "@/m
 import { redactPriceMentions } from "@/modules/assessments/pricingGate";
 
 export const metadata: Metadata = {
-  title: "Software, Systems & Support | VERUS Operating Company",
+  title: "Software, Systems & Support | VERUS OPERATING PARTNERS LLC",
   description:
     "The ongoing subscription that keeps what VERUS builds running, current, and used — hosting, fixes, included monthly work, training, and a system review. Bundled with every build.",
   openGraph: {
-    title: "Software, Systems & Support | VERUS Operating Company",
+    title: "Software, Systems & Support | VERUS OPERATING PARTNERS LLC",
     description: "What keeps running after handover, and who's responsible for it.",
   },
 };

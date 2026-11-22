@@ -2,7 +2,7 @@
 
 # VERUS OS (COMPASS)
 
-Internal command center for **VERUS Operating Company** — NOT the same
+Internal command center for **VERUS OPERATING PARTNERS LLC** — NOT the same
 project as the existing `verus-compass`/`oil-oasis` app
 (`/root/frank-dev/oil-oasis`), which serves VERUS Energy Partners (a
 different VERUS business, oil & gas). Never touch that project from here.

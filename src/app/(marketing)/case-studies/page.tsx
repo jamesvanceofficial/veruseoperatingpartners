@@ -10,10 +10,10 @@ import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { CASE_STUDIES } from "@/modules/marketing/caseStudies";
 
 export const metadata: Metadata = {
-  title: "Case Studies | VERUS Operating Company",
+  title: "Case Studies | VERUS OPERATING PARTNERS LLC",
   description: "What VERUS actually built for RBL Safety and Radiant Moments, and what changed as a result — no invented numbers, no testimonials dressed up as data.",
   openGraph: {
-    title: "Case Studies | VERUS Operating Company",
+    title: "Case Studies | VERUS OPERATING PARTNERS LLC",
     description: "What was built, and what changed — written honestly.",
   },
 };

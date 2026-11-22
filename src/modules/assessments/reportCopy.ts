@@ -114,7 +114,7 @@ export const NEXT_STEPS = [
 ];
 
 export const VERUS_CONTACT = {
-  companyName: "VERUS Operating Company",
+  companyName: "VERUS OPERATING PARTNERS LLC",
   website: "verusoperatingpartners.com",
   cta: "Schedule a call at verusoperatingpartners.com",
 };

@@ -12,11 +12,11 @@ import { BUILD_TIER_INFO, BUILD_TIERS } from "@/modules/assessments/buildTiers";
 import { redactPriceMentions } from "@/modules/assessments/pricingGate";
 
 export const metadata: Metadata = {
-  title: "Build Packages | VERUS Operating Company",
+  title: "Build Packages | VERUS OPERATING PARTNERS LLC",
   description:
     "Foundation, Growth, and Enterprise builds — the systems, software, and processes VERUS builds to fix a founder-led business's worst bottleneck first. Scoped to your business after a Business Assessment.",
   openGraph: {
-    title: "Build Packages | VERUS Operating Company",
+    title: "Build Packages | VERUS OPERATING PARTNERS LLC",
     description: "Foundation, Growth, and Enterprise builds — scoped to your business, not a template.",
   },
 };

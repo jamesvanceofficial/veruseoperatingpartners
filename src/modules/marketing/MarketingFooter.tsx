@@ -27,7 +27,7 @@ export function MarketingFooter() {
           </nav>
         </div>
         <div className="flex flex-col gap-1 border-t border-[var(--hairline)] pt-6 text-[11px] text-[var(--muted)]">
-          <p>&copy; {new Date().getFullYear()} VERUS Operating Company. Delivered remotely, nationwide.</p>
+          <p>&copy; {new Date().getFullYear()} VERUS OPERATING PARTNERS LLC. Delivered remotely, nationwide.</p>
           <p>
             <Link href="/login" className="hover:text-[var(--gold-light)]">
               Client / Team Login

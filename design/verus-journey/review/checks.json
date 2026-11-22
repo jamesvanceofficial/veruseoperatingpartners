@@ -1,0 +1,28 @@
+{
+  "index.html_references": "pass",
+  "review.html_references": "pass",
+  "headline_and_stage_content": "pass",
+  "compass_artwork_and_product_assets": "unchanged",
+  "original_rotation_and_reduced_motion": "pass",
+  "desktop_preview": {
+    "width": 1440,
+    "height": 5100,
+    "rendering": "static artwork"
+  },
+  "mobile_preview": {
+    "width": 390,
+    "height": 7390,
+    "rendering": "static artwork"
+  },
+  "text_contrast_ratios": {
+    "navy_on_cream": 16.83,
+    "body_on_cream": 7.32,
+    "gold_labels_on_cream": 5.32,
+    "muted_on_navy": 8.73,
+    "gold_on_navy": 12.44
+  },
+  "production_tracked_files": "unchanged",
+  "javascript_lint": "pass: npm run lint -- design/verus-journey/journey.js",
+  "browser_verification": "blocked: Chromium cannot launch under sandbox socket restrictions; previews are static artwork, not screenshots",
+  "approval_status": "prototype refinement only; production implementation awaits visual approval"
+}

@@ -18,11 +18,11 @@ import { createAdminClient } from "@/shared/supabase/admin";
 import { getCategories } from "@/modules/assessments/data";
 
 export const metadata: Metadata = {
-  title: "The Business Assessment | VERUS Operating Company",
+  title: "The Business Assessment | VERUS OPERATING PARTNERS LLC",
   description:
     "A $2,500 diagnostic across every part of a founder-led business — ranked by what's actually costing you the most, with a build and support recommendation to fix it.",
   openGraph: {
-    title: "The Business Assessment | VERUS Operating Company",
+    title: "The Business Assessment | VERUS OPERATING PARTNERS LLC",
     description: "A $2,500 diagnostic that finds your worst bottleneck and ranks what it's actually costing you.",
   },
 };

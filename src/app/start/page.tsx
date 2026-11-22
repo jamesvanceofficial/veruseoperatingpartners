@@ -199,7 +199,7 @@ export default function StartPage() {
       <PhotoSection src="/images/photography/handshake.webp" alt="">
         <div className="page-container flex flex-col gap-10 py-11 sm:py-14">
           <FadeUp>
-            <SectionHeading eyebrow="Who's Behind This" title="VERUS Operating Company" align="center" />
+            <SectionHeading eyebrow="Who's Behind This" title="VERUS OPERATING PARTNERS LLC" align="center" />
           </FadeUp>
           <FadeUp>
             <div className="mx-auto flex max-w-2xl flex-col gap-2.5 text-center">
@@ -258,7 +258,7 @@ export default function StartPage() {
 
       {/* Deliberately no footer nav — plain, non-linked close. */}
       <div className="page-container flex justify-center py-8 text-center text-[11px] text-[var(--muted)]">
-        &copy; {new Date().getFullYear()} VERUS Operating Company. Delivered remotely, nationwide.
+        &copy; {new Date().getFullYear()} VERUS OPERATING PARTNERS LLC. Delivered remotely, nationwide.
       </div>
     </div>
   );

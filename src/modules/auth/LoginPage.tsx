@@ -38,7 +38,7 @@ function LoginForm() {
     <form onSubmit={handleSubmit} className="glass-panel-strong fade-scale-in flex w-full max-w-sm flex-col gap-4 p-7">
       <div>
         <h1 className="text-[15px] font-semibold text-[var(--cream)]">Sign in to COMPASS</h1>
-        <p className="text-[12px] text-[var(--muted)]">VERUS Operating Company</p>
+        <p className="text-[12px] text-[var(--muted)]">VERUS OPERATING PARTNERS LLC</p>
       </div>
 
       <FormField label="Email" htmlFor="email">

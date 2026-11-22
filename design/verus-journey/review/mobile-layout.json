@@ -1,0 +1,12 @@
+{
+  "journey_start": 948.57,
+  "chapters": {
+    "discover": 1452,
+    "diagnose": 2560,
+    "build": 3894,
+    "sustain": 5228
+  },
+  "width": 390,
+  "height": 7390,
+  "rendering": "static concept artwork; not a browser screenshot"
+}

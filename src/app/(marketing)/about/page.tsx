@@ -7,12 +7,12 @@ import { FadeUp } from "@/modules/marketing/animation/FadeUp";
 import { OperatorDiagram } from "@/modules/marketing/AboutIcons";
 
 export const metadata: Metadata = {
-  title: "James Vance | VERUS Operating Company",
+  title: "James Vance | VERUS OPERATING PARTNERS LLC",
   description:
     "James Vance is an entrepreneur, business owner, investor, and operator with experience across real estate, oil and gas, telecommunications, security, construction, sales, and business development.",
   openGraph: {
-    title: "James Vance | VERUS Operating Company",
-    description: "The operator behind VERUS Operating Company.",
+    title: "James Vance | VERUS OPERATING PARTNERS LLC",
+    description: "The operator behind VERUS OPERATING PARTNERS LLC.",
   },
 };
 

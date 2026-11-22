@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   // localhost without this, which would break every social-share preview
   // in production).
   metadataBase: new URL("https://verusoperatingpartners.com"),
-  title: "VERUS Operating Company",
-  description: "COMPASS — the internal operating system for VERUS Operating Company.",
+  title: "VERUS OPERATING PARTNERS LLC",
+  description: "COMPASS — the internal operating system for VERUS OPERATING PARTNERS LLC.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

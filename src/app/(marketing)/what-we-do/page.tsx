@@ -21,11 +21,11 @@ import {
 } from "@/modules/marketing/CategoryIcons";
 
 export const metadata: Metadata = {
-  title: "What We Do | VERUS Operating Company",
+  title: "What We Do | VERUS OPERATING PARTNERS LLC",
   description:
     "VERUS is not a consulting or coaching firm. We diagnose the worst bottleneck in a founder-led business, build the systems and processes to fix it, and stay embedded running it.",
   openGraph: {
-    title: "What We Do | VERUS Operating Company",
+    title: "What We Do | VERUS OPERATING PARTNERS LLC",
     description: "We diagnose, we build, and we stay embedded running it — systems and processes, always both.",
   },
 };

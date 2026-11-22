@@ -13,11 +13,11 @@ import { SERVICE_ICONS } from "@/modules/marketing/serviceIconMap";
 import { SERVICE_AREAS, WHY_THROUGH_VERUS, SERVICE_TIMING, SERVICES_PRICING_NOTE, VA_MIN_HOURS_LABEL } from "@/modules/marketing/services";
 
 export const metadata: Metadata = {
-  title: "Services | VERUS Operating Company",
+  title: "Services | VERUS OPERATING PARTNERS LLC",
   description:
     "Managed marketing, personal assistants, administration, and trained virtual staff — the ongoing work VERUS staffs and runs inside the systems we build.",
   openGraph: {
-    title: "Services | VERUS Operating Company",
+    title: "Services | VERUS OPERATING PARTNERS LLC",
     description: "VERUS doesn't just build the systems — we staff and run the work inside them.",
   },
 };
