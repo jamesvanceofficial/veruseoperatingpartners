@@ -8,8 +8,9 @@ import type { DataQualityIssues } from "./data";
  * convention as the dashboard's past-due line).
  */
 export function DataQualityBanner({ issues }: { issues: DataQualityIssues }) {
-  const { activeClientsWithoutStripe, unmatchedSubscriptions } = issues;
-  if (activeClientsWithoutStripe.length === 0 && unmatchedSubscriptions.length === 0) return null;
+  const { activeClientsWithoutStripe, unmatchedSubscriptions, suspectedDuplicates } = issues;
+  if (activeClientsWithoutStripe.length === 0 && unmatchedSubscriptions.length === 0 && suspectedDuplicates.length === 0) return null;
+  const unmatchedServiceMrr = unmatchedSubscriptions.reduce((s, u) => s + u.serviceMrr, 0);
 
   return (
     <div role="alert" className="glass-panel flex flex-col gap-2.5 border border-[color-mix(in_srgb,var(--yellow)_55%,transparent)] px-4 py-3">
@@ -34,7 +35,8 @@ export function DataQualityBanner({ issues }: { issues: DataQualityIssues }) {
       {unmatchedSubscriptions.length > 0 ? (
         <div className="text-[12.5px] text-[var(--cream)]">
           {unmatchedSubscriptions.length === 1 ? "1 Stripe subscription has" : `${unmatchedSubscriptions.length} Stripe subscriptions have`} no linked organization (
-          {formatCurrency(unmatchedSubscriptions.reduce((s, u) => s + u.mrr, 0))}/mo, not counted in Client or Total MRR until attached):{" "}
+          {formatCurrency(unmatchedSubscriptions.reduce((s, u) => s + u.mrr, 0))}/mo, not counted in Client or Total MRR until attached
+          {unmatchedServiceMrr > 0 ? `; their service lines, ${formatCurrency(unmatchedServiceMrr)}/mo, already count in Services MRR` : ""}):{" "}
           {unmatchedSubscriptions.map((u, i) => (
             <span key={u.id}>
               {i > 0 ? "; " : ""}
@@ -45,6 +47,23 @@ export function DataQualityBanner({ issues }: { issues: DataQualityIssues }) {
           <Link href="/subscriptions/stripe" className="text-[var(--gold-light)] hover:underline">
             Attach them →
           </Link>
+        </div>
+      ) : null}
+
+      {suspectedDuplicates.length > 0 ? (
+        <div className="text-[12.5px] text-[var(--cream)]">
+          {suspectedDuplicates.length === 1 ? "1 COMPASS service line item looks" : `${suspectedDuplicates.length} COMPASS service line items look`} like a duplicate of a
+          service already billed in Stripe for the same organization — excluded from Services MRR so it isn&apos;t counted twice:{" "}
+          {suspectedDuplicates.map((d, i) => (
+            <span key={d.lineItemId}>
+              {i > 0 ? "; " : ""}
+              <Link href={`/subscriptions/${d.subscriptionId}`} className="text-[var(--gold-light)] hover:underline">
+                {d.orgName}: &ldquo;{d.lineItemDescription}&rdquo; ({formatCurrency(d.lineItemMrr)}/mo)
+              </Link>{" "}
+              vs. Stripe &ldquo;{d.stripeProductName}&rdquo;
+            </span>
+          ))}
+          . End the COMPASS line item if Stripe is billing it.
         </div>
       ) : null}
 

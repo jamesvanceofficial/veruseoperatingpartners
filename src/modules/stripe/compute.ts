@@ -1,3 +1,6 @@
+import { SERVICE_CATEGORY_METADATA_KEY, SERVICE_CATEGORY_VALUE, SERVICE_KEY_METADATA_KEY } from "./config";
+import { serviceKeyFromText } from "./services";
+
 /**
  * Pure functions (no DB, no network) that turn raw Stripe objects into
  * the numbers COMPASS stores — same convention as subscriptions/mrr.ts
@@ -15,6 +18,7 @@ export type StripePrice = {
   unit_amount: number | null;
   unit_amount_decimal?: string | null;
   recurring: StripeRecurring | null;
+  metadata?: Record<string, string> | null;
 };
 export type StripeSubscriptionItem = { price: StripePrice; quantity?: number | null };
 export type StripeSchedulePhase = {
@@ -33,7 +37,14 @@ export type SyncedItem = {
   interval: string;
   interval_count: number;
   monthly_amount: number;
+  /** Resold service line (Stripe product or price metadata verus_category = "service") — counts as Services MRR. Absent on rows synced before this existed = false. */
+  is_service?: boolean;
+  /** Which service, for duplicate detection against COMPASS line items: verus_service metadata, else inferred from the product name. */
+  service_key?: string | null;
 };
+
+/** What the sync knows about each Stripe product, read from the product list every run. */
+export type ProductInfo = { name: string; metadata: Record<string, string> };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -64,26 +75,51 @@ export function monthlyFactor(recurring: StripeRecurring | null): number {
   }
 }
 
-export function toSyncedItems(items: StripeSubscriptionItem[], productNames: Map<string, string>): SyncedItem[] {
+/**
+ * A line is a service when its price's metadata says verus_category =
+ * "service", or — with no category on the price — its product's does. A
+ * category set on the price always wins (either way), so one product can
+ * carry a service price and a non-service price.
+ */
+export function classifyServiceLine(price: StripePrice, product: ProductInfo | undefined): { isService: boolean; serviceKey: string | null } {
+  const priceCategory = price.metadata?.[SERVICE_CATEGORY_METADATA_KEY]?.trim().toLowerCase();
+  const productCategory = product?.metadata?.[SERVICE_CATEGORY_METADATA_KEY]?.trim().toLowerCase();
+  const category = priceCategory || productCategory;
+  const isService = category === SERVICE_CATEGORY_VALUE;
+  if (!isService) return { isService: false, serviceKey: null };
+  const explicitKey = (price.metadata?.[SERVICE_KEY_METADATA_KEY] || product?.metadata?.[SERVICE_KEY_METADATA_KEY])?.trim().toLowerCase();
+  return { isService: true, serviceKey: explicitKey || serviceKeyFromText(product?.name ?? "") };
+}
+
+export function toSyncedItems(items: StripeSubscriptionItem[], products: Map<string, ProductInfo>): SyncedItem[] {
   return items.map((item) => {
     const productId = productIdOf(item.price);
     const unit = unitAmountDollars(item.price);
     const quantity = item.quantity ?? 1;
+    const product = products.get(productId);
+    const service = classifyServiceLine(item.price, product);
     return {
       product_id: productId,
-      product_name: productNames.get(productId) ?? productId,
+      product_name: product?.name ?? productId,
       price_id: item.price.id,
       unit_amount: round2(unit),
       quantity,
       interval: item.price.recurring?.interval ?? "one_time",
       interval_count: item.price.recurring?.interval_count ?? 1,
       monthly_amount: round2(unit * quantity * monthlyFactor(item.price.recurring)),
+      is_service: service.isService,
+      service_key: service.serviceKey,
     };
   });
 }
 
 export function sumMonthly(items: SyncedItem[]): number {
   return round2(items.reduce((s, i) => s + i.monthly_amount, 0));
+}
+
+/** One subscription's monthly amount split by line: resold service lines vs. everything else (platform/product lines). Never double-counted — each line lands in exactly one. */
+export function splitMonthly(items: SyncedItem[]): { service: number; platform: number } {
+  return { service: sumMonthly(items.filter((i) => i.is_service)), platform: sumMonthly(items.filter((i) => !i.is_service)) };
 }
 
 /** One billing period's charge for these items (not normalized to monthly). */
@@ -103,10 +139,10 @@ export function describeInterval(interval: string, count: number): string {
   return count === 1 ? interval : `every ${count} ${interval}s`;
 }
 
-function phaseItems(phase: StripeSchedulePhase, productNames: Map<string, string>): SyncedItem[] | null {
+function phaseItems(phase: StripeSchedulePhase, products: Map<string, ProductInfo>): SyncedItem[] | null {
   // A phase item's price must be expanded to read its amount; an unexpanded string id means we can't price it.
   if (phase.items.some((i) => typeof i.price === "string")) return null;
-  return toSyncedItems(phase.items.map((i) => ({ price: i.price as StripePrice, quantity: i.quantity })), productNames);
+  return toSyncedItems(phase.items.map((i) => ({ price: i.price as StripePrice, quantity: i.quantity })), products);
 }
 
 function phaseAt(schedule: StripeSchedule | null, t: number): StripeSchedulePhase | null {
@@ -149,7 +185,7 @@ export function computeInvoiceAndSchedule(
   sub: { status: string; current_period_end: number | null; cancel_at_period_end: boolean; cancel_at: number | null },
   currentItems: SyncedItem[],
   schedule: StripeSchedule | null,
-  productNames: Map<string, string>,
+  products: Map<string, ProductInfo>,
   nowSec: number
 ): InvoiceAndSchedule {
   const result: InvoiceAndSchedule = { nextInvoiceAt: null, nextInvoiceAmount: null, scheduledChangeAt: null, scheduledMrr: null, scheduledItems: null };
@@ -158,7 +194,7 @@ export function computeInvoiceAndSchedule(
   const ending = sub.cancel_at_period_end || (sub.cancel_at !== null && periodEnd !== null && sub.cancel_at <= periodEnd);
   if (periodEnd !== null && !ending && (sub.status === "active" || sub.status === "trialing" || sub.status === "past_due")) {
     const phase = phaseAt(schedule, periodEnd);
-    const items = (phase && phaseItems(phase, productNames)) ?? currentItems;
+    const items = (phase && phaseItems(phase, products)) ?? currentItems;
     result.nextInvoiceAt = periodEnd;
     result.nextInvoiceAmount = sumPerPeriod(items);
   }
@@ -166,7 +202,7 @@ export function computeInvoiceAndSchedule(
   if (schedule && schedule.status === "active") {
     const future = schedule.phases.filter((p) => p.start_date > nowSec).sort((a, b) => a.start_date - b.start_date);
     for (const phase of future) {
-      const items = phaseItems(phase, productNames);
+      const items = phaseItems(phase, products);
       if (items && !sameItems(items, currentItems)) {
         result.scheduledChangeAt = phase.start_date;
         result.scheduledMrr = sumMonthly(items);

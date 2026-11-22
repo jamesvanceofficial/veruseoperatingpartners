@@ -9,6 +9,7 @@ import {
   summarizeProducts,
   toSyncedItems,
   type StripeSchedule,
+  type ProductInfo,
   type StripeSubscriptionItem,
 } from "./compute";
 import { matchCustomerToOrg } from "./match";
@@ -69,14 +70,15 @@ async function syncAll(admin: ReturnType<typeof createAdminClient>, runId: strin
   const nowSec = Math.floor(Date.now() / 1000);
   const syncedAt = new Date().toISOString();
 
-  const products = await stripeListAll<{ id: string; name: string }>("products");
-  const productNames = new Map(products.map((p) => [p.id, p.name]));
+  // Every product (active or archived) with its metadata — verus_category = "service" marks a resold service.
+  const products = await stripeListAll<{ id: string; name: string; metadata?: Record<string, string> | null }>("products");
+  const productInfo = new Map<string, ProductInfo>(products.map((p) => [p.id, { name: p.name, metadata: p.metadata ?? {} }]));
 
   // The default list (no status filter) is every subscription that isn't canceled.
   const subs = await stripeListAll<StripeSub>("subscriptions", { expand: ["data.customer"] });
 
   const rows = [];
-  for (const sub of subs) rows.push(await toRow(sub, productNames, nowSec, syncedAt));
+  for (const sub of subs) rows.push(await toRow(sub, productInfo, nowSec, syncedAt));
 
   if (rows.length > 0) {
     // Only Stripe-sourced columns — org_id/match_method/matched_* are never touched by the upsert, so a link (manual or automatic) survives every sync.
@@ -92,7 +94,7 @@ async function syncAll(admin: ReturnType<typeof createAdminClient>, runId: strin
   for (const row of stored ?? []) {
     if (seen.has(row.stripe_subscription_id) || TERMINAL_STATUSES.has(row.status)) continue;
     const sub = await stripeGet<StripeSub>(`subscriptions/${row.stripe_subscription_id}`, { expand: ["customer"] });
-    const { error } = await admin.from("stripe_subscriptions").update(await toRow(sub, productNames, nowSec, syncedAt)).eq("stripe_subscription_id", sub.id);
+    const { error } = await admin.from("stripe_subscriptions").update(await toRow(sub, productInfo, nowSec, syncedAt)).eq("stripe_subscription_id", sub.id);
     if (error) throw error;
     refreshedEnded++;
   }
@@ -101,11 +103,11 @@ async function syncAll(admin: ReturnType<typeof createAdminClient>, runId: strin
   return { runId, synced: rows.length, newlyMatched, refreshedEnded };
 }
 
-async function toRow(sub: StripeSub, productNames: Map<string, string>, nowSec: number, syncedAt: string) {
+async function toRow(sub: StripeSub, productInfo: Map<string, ProductInfo>, nowSec: number, syncedAt: string) {
   const customer: StripeCustomer = typeof sub.customer === "string" ? { id: sub.customer } : sub.customer;
-  const items = toSyncedItems(sub.items.data, productNames);
+  const items = toSyncedItems(sub.items.data, productInfo);
   const schedule = sub.schedule ? await stripeGet<StripeSchedule>(`subscription_schedules/${sub.schedule}`, { expand: ["phases.items.price"] }) : null;
-  const plan = computeInvoiceAndSchedule(sub, items, schedule, productNames, nowSec);
+  const plan = computeInvoiceAndSchedule(sub, items, schedule, productInfo, nowSec);
   const primary = items[0];
 
   return {
@@ -120,7 +122,8 @@ async function toRow(sub: StripeSub, productNames: Map<string, string>, nowSec: 
     items,
     mrr: sumMonthly(items),
     status: sub.status,
-    is_product_plan: items.length > 0 && items.every((i) => PRODUCT_PLAN_PRODUCT_IDS.has(i.product_id)),
+    // Product plan = every non-service line is a self-serve product (a service line on top doesn't make it a client subscription).
+    is_product_plan: items.some((i) => !i.is_service) && items.filter((i) => !i.is_service).every((i) => PRODUCT_PLAN_PRODUCT_IDS.has(i.product_id)),
     stripe_created_at: iso(sub.created),
     current_period_end: iso(sub.current_period_end),
     cancel_at_period_end: sub.cancel_at_period_end,

@@ -8,7 +8,7 @@ import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getSessionUser, getMyProfile } from "@/shared/session";
 import { isVerusStaff } from "@/shared/roles";
 import { listOrgOptions } from "@/modules/organizations/data";
-import { listStripeSubscriptions, getRecentSyncRuns, isCountedForMrr, isUnmatchedClientSubscription, type StripeSubscriptionRow } from "@/modules/stripe/data";
+import { listStripeSubscriptions, getRecentSyncRuns, isCountedForMrr, isUnmatchedClientSubscription, rowSplit, type StripeSubscriptionRow } from "@/modules/stripe/data";
 import { StripeSyncButton } from "@/modules/stripe/StripeSyncButton";
 import { AttachOrgControl } from "@/modules/stripe/AttachOrgControl";
 import { formatSyncTime, formatUtcDate } from "@/modules/stripe/format";
@@ -73,6 +73,11 @@ export default async function StripeSubscriptionsPage() {
             {r.unit_amount !== null ? `${formatCurrency(r.unit_amount)} × ${r.quantity ?? 1} / ${r.billing_interval}` : null}
             {r.items.length > 1 ? ` · ${r.items.length} items` : null}
           </div>
+          {r.items.some((i) => i.is_service) ? (
+            <div className="text-[11px] text-[var(--gold-light)]">
+              Service: {r.items.filter((i) => i.is_service).map((i) => i.product_name).join(", ")} · {formatCurrency(rowSplit(r).now.service)}/mo in Services MRR
+            </div>
+          ) : null}
         </div>
       ),
     },
@@ -106,6 +111,12 @@ export default async function StripeSubscriptionsPage() {
           <StripeSyncButton />
         </div>
       </div>
+
+      <p className="text-[12px] text-[var(--muted)]">
+        To count a Stripe product as a resold service (VA placement, marketing management, SEO, social, bookkeeping), give the product — or one of its prices — the
+        metadata <code>verus_category</code> = <code>service</code> in Stripe. Picked up on the next sync. Optional <code>verus_service</code> (va, marketing, seo,
+        social, bookkeeping) names which service, for duplicate checks against COMPASS line items.
+      </p>
 
       {loadError ? (
         <EmptyState title="Stripe sync isn't set up yet" description="The database migrations may not have been run yet." />

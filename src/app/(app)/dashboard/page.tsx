@@ -5,7 +5,6 @@ import { LinkButton } from "@/shared/ui/LinkButton";
 import { createClient as createServerSupabase } from "@/shared/supabase/server";
 import { getOpenAndOverdueCounts } from "@/modules/support/data";
 import { getStripeDashboardMetrics, getDataQualityIssues } from "@/modules/stripe/data";
-import { getSubscriptionDashboardMetrics } from "@/modules/subscriptions/data";
 import { DataQualityBanner } from "@/modules/stripe/DataQualityBanner";
 import { StripeSyncButton } from "@/modules/stripe/StripeSyncButton";
 import { formatSyncTime, formatUtcDate } from "@/modules/stripe/format";
@@ -17,7 +16,6 @@ export default async function DashboardPage() {
   let ticketCounts = { open: 0, overdue: 0 };
   let mrr: Awaited<ReturnType<typeof getStripeDashboardMetrics>> | null = null;
   let issues: Awaited<ReturnType<typeof getDataQualityIssues>> | null = null;
-  let lineItemMetrics: Awaited<ReturnType<typeof getSubscriptionDashboardMetrics>> | null = null;
   let loadError = false;
   try {
     // Revenue and the data-quality check read staff-only Stripe data, so they're shown to VERUS staff only.
@@ -25,12 +23,10 @@ export default async function DashboardPage() {
     const profileResult = user ? await getMyProfile(user.id) : null;
     const staff = profileResult?.status === "ok" && isVerusStaff(profileResult.profile.role);
     const supabase = await createServerSupabase();
-    [ticketCounts, mrr, issues, lineItemMetrics] = await Promise.all([
+    [ticketCounts, mrr, issues] = await Promise.all([
       getOpenAndOverdueCounts(supabase),
       staff ? getStripeDashboardMetrics(supabase) : Promise.resolve(null),
       staff ? getDataQualityIssues(supabase) : Promise.resolve(null),
-      // Services MRR: resold services on COMPASS subscription line items (revenue_category 'service') — the existing line-item calculation, unchanged.
-      staff ? getSubscriptionDashboardMetrics(supabase) : Promise.resolve(null),
     ]);
   } catch {
     loadError = true;
@@ -38,10 +34,14 @@ export default async function DashboardPage() {
 
   const synced = mrr ? `synced ${formatSyncTime(mrr.lastSuccessfulSyncAt)}` : "";
   const scheduledNote = (s: { at: string; mrrAfter: number } | null) => (s ? ` → ${formatCurrency(s.mrrAfter)} from ${formatUtcDate(s.at)}.` : "");
-  const servicesMRR = lineItemMetrics?.mrrByCategory.service ?? 0;
-  // Total MRR = Product + Client (Stripe) + Services (COMPASS line items). Services has no scheduled changes, so it carries straight into the scheduled figure too.
-  const totalMRR = (mrr?.totalMRR ?? 0) + servicesMRR;
-  const totalScheduled = mrr?.totalScheduled ? { ...mrr.totalScheduled, mrrAfter: mrr.totalScheduled.mrrAfter + servicesMRR } : null;
+  const services = mrr?.services;
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const servicesHint = services
+    ? `Stripe: ${plural(services.stripeLineCount, "line")} on products marked verus_category = service (VA placement, marketing management, SEO, social, bookkeeping), ${formatCurrency(services.stripeMRR)}. ` +
+      `Plus COMPASS: ${plural(services.compassLineCount, "service line item")} billed outside Stripe, ${formatCurrency(services.compassMRR)}` +
+      (services.duplicates.length ? ` (${services.duplicates.length} suspected duplicate${services.duplicates.length === 1 ? "" : "s"} of a Stripe line excluded)` : "") +
+      `. ${synced}`
+    : "";
 
   return (
     <PageShell title="Dashboard" subtitle="A single view of every deal, client, and system VERUS runs.">
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="section-label">Revenue · Stripe and COMPASS line items</p>
+              <p className="section-label">Revenue · Stripe</p>
               <p className="mt-1 text-[11.5px] text-[var(--muted)]">
                 Last successful sync {formatSyncTime(mrr.lastSuccessfulSyncAt)} · syncs hourly
                 {mrr.lastSync?.status === "error" ? (
@@ -69,9 +69,9 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
             <Stat
               label="Total MRR"
-              value={formatCurrency(totalMRR)}
+              value={formatCurrency(mrr.totalMRR)}
               tone="gold"
-              hint={`Product + Client (Stripe) + Services (COMPASS line items)${scheduledNote(totalScheduled) || "."} ${synced}`}
+              hint={`Product + Client + Services, split by Stripe line so nothing counts twice${scheduledNote(mrr.totalScheduled) || "."} ${synced}`}
             />
             <Stat
               label="New MRR This Month"
@@ -82,17 +82,17 @@ export default async function DashboardPage() {
             <Stat
               label="Product MRR"
               value={formatCurrency(mrr.productMRR)}
-              hint={`Stripe: ${mrr.productCount} self-serve subscriber${mrr.productCount === 1 ? "" : "s"} who bought a product online, not tied to a client org (Verus Trading Bot). ${synced}`}
+              hint={`Stripe: ${mrr.productCount} self-serve subscriber${mrr.productCount === 1 ? "" : "s"} who bought a product online, not tied to a client org (Verus Trading Bot); service lines excluded. ${synced}`}
             />
             <Stat
               label="Client MRR"
               value={formatCurrency(mrr.clientMRR)}
-              hint={`Stripe: ${mrr.clientCount} subscription${mrr.clientCount === 1 ? "" : "s"} belonging to a client org VERUS built and supports${scheduledNote(mrr.clientScheduled) || "."} ${synced}`}
+              hint={`Stripe: ${mrr.clientCount} subscription${mrr.clientCount === 1 ? "" : "s"} belonging to a client org VERUS built and supports, platform lines only (service lines count in Services)${scheduledNote(mrr.clientScheduled) || "."} ${synced}`}
             />
             <Stat
               label="Services MRR"
-              value={formatCurrency(servicesMRR)}
-              hint="COMPASS subscription line items in the service category: resold VA placement, marketing management, SEO, bookkeeping. Read live from COMPASS, not synced from Stripe."
+              value={formatCurrency(services?.totalMRR ?? 0)}
+              hint={servicesHint}
             />
             <Stat
               label="Active Subscriptions"

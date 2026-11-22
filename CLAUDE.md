@@ -1092,8 +1092,9 @@ unauthenticated `POST /api/public/proposal/<bad-token>/accept` 404s.
 
 `src/modules/stripe/` — a **read-only** mirror of the connected Stripe
 account (`acct_1T5srl2at2coPQ6Z`, VERUS OPERATING PARTNERS LLC). The
-dashboard's six MRR tiles read ONLY from this mirror now — never from the
-hand-entered `subscription_line_items` (the `/subscriptions` module and its
+dashboard's MRR tiles read from this mirror — the only hand-entered
+`subscription_line_items` they use are service lines billed outside Stripe
+(see Tiles below) (the `/subscriptions` module and its
 own per-subscription MRR are untouched, just no longer what the dashboard
 reports).
 
@@ -1150,19 +1151,34 @@ logged in `stripe_sync_runs`. Subscriptions that drop out of Stripe's live
 list are re-fetched individually so a cancellation shows as `canceled`,
 not a stale `active`.
 
-**Tiles** (`getStripeDashboardMetrics()` in `data.ts`, plus one non-Stripe
-tile): Total = Product + Client + Services; Product MRR = active product
-plans (self-serve subscribers who bought online, not tied to a client
-org — the Verus Trading Bot); Client MRR = active client subs linked to
-an org VERUS built and supports (RBL Safety); **Services MRR** = resold
-services (VA placement, marketing management, SEO, bookkeeping), read
-live from COMPASS's own `subscription_line_items` where
-`revenue_category = 'service'` via the existing
-`getSubscriptionDashboardMetrics()`/`computeMRRByCategory()` — not
-synced from Stripe, $0 while no such line items exist (true as of this
-stage). Renamed from Stage 40's original Software/Service tiles (the
-`/subscriptions/[id]` page's own per-subscription Software/Service
-line-item labels are a separate thing and were left as-is); Active Subscriptions = Stripe status `active`; Upcoming
+**Tiles** (`getStripeDashboardMetrics()` in `data.ts`), classified
+LINE BY LINE, in this order: (1) a Stripe line whose product — or price,
+which overrides its product — carries metadata `verus_category` =
+`service` (read from the product list on every sync, stored as
+`is_service`/`service_key` on each item in `items`/`scheduled_items`) →
+**Services MRR**; (2) the other lines of a subscription linked to a client
+organization → **Client MRR** (RBL Safety); (3) the other lines of a
+product-plan subscription (self-serve, not tied to an org — the Verus
+Trading Bot) → **Product MRR**. A subscription carrying a platform line and
+a service line splits across Client and Services by line, never counted
+twice (`splitMonthly()` in `compute.ts`). `is_product_plan` is judged on
+the non-service lines only, so a service line on top doesn't turn a
+Trading Bot subscription into a client one. The platform lines of an
+unmatched client subscription stay in no tile until attached (named in
+the banner, as before); its service lines still count in Services.
+Services MRR also adds open COMPASS `subscription_line_items` with
+`revenue_category = 'service'` (for anything billed outside Stripe),
+EXCEPT one whose organization already has a counted Stripe service line
+for the same service — matched by service key (`verus_service` metadata,
+else inferred from the name: va/seo/social/bookkeeping/marketing,
+`serviceKeyFromText()` in `services.ts`) or an identical name. That line
+item is excluded and named in the banner as a suspected duplicate.
+`computeServicesBreakdown()` (pure, `services.ts`) is the one place this
+is decided, shared by the tile and the banner. Total = Product + Client +
+Services. $0 Services today: no Stripe product is tagged and no COMPASS
+service line items exist. (The `/subscriptions/[id]` page's own
+per-subscription Software/Service line-item labels are a separate thing
+and were left as-is.) Active Subscriptions = Stripe status `active`; Upcoming
 Renewals = next invoice within 30 days; New MRR This Month = MRR of
 counted subscriptions created this calendar month. "This month"/"30 days"
 are UTC (the server clock), and every timestamp shown says UTC. Every tile
@@ -1174,8 +1190,9 @@ otherwise see $0 tiles.
 
 **Data-quality banner** (`DataQualityBanner.tsx`, `getDataQualityIssues()`):
 renders only when something's wrong — an `active_client` organization
-(excluding `is_demo`) with no live linked Stripe subscription, or a live
-client Stripe subscription with no linked organization. Product-plan
+(excluding `is_demo`) with no live linked Stripe subscription, a live
+client Stripe subscription with no linked organization, or a COMPASS
+service line item suspected of duplicating a Stripe service line. Product-plan
 subscribers are never flagged. Verified live by temporarily clearing
 Northline's demo flag and unlinking RBL's subscription (banner named both
 orgs and the unlinked subscription with its MRR), then restoring both.
