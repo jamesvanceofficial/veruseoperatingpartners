@@ -9,6 +9,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env.local
+    # Read-only Stripe sync. The value lives only in the gitignored .env
+    # (compose's own substitution file) — never in this file or the image.
+    environment:
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
     ports:
       - "3009:3000"
     networks:

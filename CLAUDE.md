@@ -906,7 +906,7 @@ now points at `/subscriptions` instead; the orphaned stub page file was
 left in place rather than deleted, since nothing links to it anymore and
 deleting an unrelated file wasn't asked for.
 
-**Dashboard** gained the six numbers asked for: Total MRR, New MRR This
+**Dashboard** (superseded by Stage 40 — the tiles now read synced Stripe data, not line items) gained the six numbers asked for: Total MRR, New MRR This
 Month, Software MRR, Service MRR, Active Subscriptions, and Upcoming
 Renewals (active subscriptions with a `renewal_date` in the next 30
 days) as a stat row, plus a standalone past-due-accounts warning line
@@ -1087,6 +1087,94 @@ left behind. Separately confirmed live over curl: `/proposals`
 unauthenticated redirects to login (307), `/proposal/<bad-token>` 404s,
 an unauthenticated `POST /api/proposals` is rejected (401), and an
 unauthenticated `POST /api/public/proposal/<bad-token>/accept` 404s.
+
+## Stripe Sync and MRR (Stage 40)
+
+`src/modules/stripe/` — a **read-only** mirror of the connected Stripe
+account (`acct_1T5srl2at2coPQ6Z`, VERUS OPERATING PARTNERS LLC). The
+dashboard's six MRR tiles read ONLY from this mirror now — never from the
+hand-entered `subscription_line_items` (the `/subscriptions` module and its
+own per-subscription MRR are untouched, just no longer what the dashboard
+reports).
+
+**Read-only by construction**: `client.ts` exposes only `stripeGet`/
+`stripeListAll` — there is no POST/DELETE helper anywhere, so nothing in
+COMPASS can create/change/cancel anything in Stripe. API version is pinned
+(`STRIPE_API_VERSION`, 2024-06-20) so the shape read never shifts. The
+next invoice is therefore COMPUTED, not previewed: Stripe's old GET
+upcoming-invoice endpoint refuses these subscriptions (they're
+`billing_mode = flexible`) and its replacement, `create_preview`, is a
+POST. `compute.ts` (pure functions) takes the next invoice as the current
+period end, priced at whatever items are in effect at that moment — a
+schedule phase starting exactly then wins, so a scheduled increase shows
+its new amount. The scheduled change is the first future schedule phase
+whose items differ from today's (or a future `cancel_at`, → $0). Amounts
+are list price (unit × quantity), normalized to monthly by interval.
+Verified against every subscription's real latest Stripe invoice: all
+recurring amounts match; the only differences are mid-cycle proration
+invoices (`subscription_update`) and a one-time `verus_referral_5000`
+coupon (duration `once`, first invoice only) — no ongoing discounts or tax
+exist on any subscription at the time of writing.
+
+**Classification is by Stripe product ID** (`PRODUCT_PLAN_PRODUCT_IDS` in
+`config.ts` — Verus Trading Bot + Extra broker account). A subscription
+made only of those is a product plan: an individual subscriber, Software
+MRR, never matched to an organization, never flagged as unmatched.
+Everything else is a client subscription: Service MRR once linked to an
+organization; until then it's "unmatched" — in neither Software nor
+Service nor Total, but named with its MRR by the data-quality banner so it
+can't be missed. Add a new product's ID there when a new self-serve plan
+launches.
+
+**Matching** (`match.ts`, pure): customer email against every
+`contacts.email` (case-insensitive) first, then normalized company name
+(lowercased, punctuation and trailing LLC/Inc/Co/etc. stripped) against
+`organizations.name` — only when it points at exactly ONE organization;
+anything ambiguous stays unmatched. Never creates an organization. Runs
+only on client subscriptions with no link yet, so a link (automatic or
+manual) is never overwritten by a later sync — the upsert writes only
+Stripe-sourced columns. Manual attach (`AttachOrgControl.tsx` →
+`PATCH /api/stripe/subscriptions/[id]`, staff only) is also how a wrong
+automatic match is corrected (attach to the right org); there's
+deliberately no "detach to nothing", since the next sync would just
+re-match it.
+
+**Schedule**: `src/instrumentation.ts` → `scheduler.ts` starts an
+in-process timer (1 minute after boot, then hourly) — version-controlled
+and shipped with every deploy, not a host crontab that could drift from
+git. Skipped during `next build`. On demand: "Sync Stripe Now"
+(`StripeSyncButton.tsx` → `POST /api/stripe/sync`, staff only) on the
+dashboard and `/subscriptions/stripe`. `runStripeSync()` holds an
+in-process lock so the timer and a click can't overlap; every run is
+logged in `stripe_sync_runs`. Subscriptions that drop out of Stripe's live
+list are re-fetched individually so a cancellation shows as `canceled`,
+not a stale `active`.
+
+**Tiles** (`getStripeDashboardMetrics()` in `data.ts`): Total = Software +
+Service; Software = active product plans; Service = active client subs
+linked to an org; Active Subscriptions = Stripe status `active`; Upcoming
+Renewals = next invoice within 30 days; New MRR This Month = MRR of
+counted subscriptions created this calendar month. "This month"/"30 days"
+are UTC (the server clock), and every timestamp shown says UTC. Every tile
+carries a hint naming its source and the last successful sync time;
+Total/Service also name the next scheduled change (e.g. RBL's Dec 7, 2026
+move from $1,000 to $1,622/mo). Revenue and the banner render for VERUS
+staff only — the Stripe tables are staff-only, so a client viewer would
+otherwise see $0 tiles.
+
+**Data-quality banner** (`DataQualityBanner.tsx`, `getDataQualityIssues()`):
+renders only when something's wrong — an `active_client` organization
+(excluding `is_demo`) with no live linked Stripe subscription, or a live
+client Stripe subscription with no linked organization. Product-plan
+subscribers are never flagged. Verified live by temporarily clearing
+Northline's demo flag and unlinking RBL's subscription (banner named both
+orgs and the unlinked subscription with its MRR), then restoring both.
+
+**Pages**: `/subscriptions/stripe` (staff only — unmatched client subs with
+attach controls, linked client subs with "Move", Trading Bot subscribers,
+ended subs, recent sync runs); the organization Subscription tab gained a
+"Stripe · Billing of Record" section (MRR now, next invoice, scheduled MRR,
+current vs. scheduled items).
 
 ## The Public Website (Stage 18)
 
@@ -1819,6 +1907,12 @@ never hotlinked, per the standing rule from Stage 27.
   redeploy. All three are blank until real values are provided; the form
   degrades to "lead saved to CRM, no email sent" until then, never a
   broken submission.
+- `STRIPE_SECRET_KEY` (Stage 40) — server-only, read-only use (GET
+  requests only, see the Stripe Sync section). Lives in the gitignored
+  root `.env` (compose's substitution file, NOT `.env.local`) and reaches
+  the running container via `docker-compose.yml`'s `environment:` block —
+  never baked into the image, never committed, never printed. Without it,
+  the hourly sync logs a warning and stays off; the button returns 503.
 
 ## Database tables (update this list every time a migration adds one)
 
@@ -2058,6 +2152,22 @@ other table below is still staff-write-only, no exceptions.
   (marketing/SEO/social/bookkeeping/VA staffing) and the dashboard needs
   to split MRR between them honestly. See the Subscriptions section above
   for the full add-on catalog and VA-placement billing shape.
+- `stripe_subscriptions` (Stage 40) — the read-only Stripe mirror, one row
+  per Stripe subscription: ids, customer email/name, product summary,
+  primary item's unit_amount/quantity/billing_interval, all items (jsonb),
+  monthly-normalized `mrr`, status, `is_product_plan`, created/period/cancel
+  dates, computed `next_invoice_date`/`_amount`, `scheduled_change_at`/
+  `scheduled_mrr`/`scheduled_items`, and the COMPASS link: `org_id`
+  (nullable FK, `on delete set null` — deleting an org makes its
+  subscription unmatched again), `match_method` (email/name/manual),
+  `matched_at`, `matched_by`. **Staff-only read, no write policy** (every
+  write is the server-side sync or attach route via the admin client) —
+  deliberately not the default org-scoped client read, since it holds every
+  Stripe customer's email including individual Trading Bot subscribers.
+- `stripe_sync_runs` (Stage 40) — one row per sync: trigger (schedule/
+  manual), triggered_by, status (running/success/error), started/finished,
+  subscriptions_synced, newly_matched, error. Staff-only read, no write
+  policy.
 - `revenue_transactions` — append-only money ledger: assessment_fee /
   build_deposit / build_balance / subscription_charge / vendor_commission /
   refund, amount, direction (in/out), polymorphic `related_table` +

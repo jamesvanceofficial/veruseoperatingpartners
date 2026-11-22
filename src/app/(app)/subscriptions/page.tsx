@@ -54,9 +54,14 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
             </LinkButton>
           ) : null}
         </form>
-        <LinkButton href="/subscriptions/new" variant="primary">
-          New Subscription
-        </LinkButton>
+        <div className="flex items-center gap-2">
+          <LinkButton href="/subscriptions/stripe" variant="secondary">
+            Stripe Subscriptions
+          </LinkButton>
+          <LinkButton href="/subscriptions/new" variant="primary">
+            New Subscription
+          </LinkButton>
+        </div>
       </div>
 
       {loadError ? (
