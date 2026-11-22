@@ -713,3 +713,209 @@ h1, h2, h3, h4 {
     display: none;
   }
 }
+
+/* ===========================================================
+   Public-site theme (.mkt) — the marketing pages and /scan only. It
+   REDEFINES the same custom properties every shared component already
+   reads (the .client-report print trick), so the logged-in COMPASS app,
+   which never sits inside .mkt, keeps its navy/gold palette untouched,
+   while on the public site no navy or gold can render at all: --navy/
+   --navy-2 become the ground/raised greys and --gold/--gold-light become
+   the accent (which is also what re-tints the compass rose — same SVG,
+   new token values).
+     ground #08090b · raised #121316 · light #f4f4f0 · accent #c4f43b
+     white #ffffff · muted-on-dark #8e9198 · muted-on-light #5a5c63
+   .mkt-light (light sections) and .mkt-accent (full-bleed CTA bands)
+   re-scope the text/surface tokens again for their own backgrounds.
+   These rules are unlayered on purpose: they beat Tailwind's layered
+   utilities, so a shared component's font-semibold / rounded-* /
+   gradient classes can't leak the old look back in.
+   =========================================================== */
+.mkt {
+  --ground: #08090b;
+  --raised: #121316;
+  --light: #f4f4f0;
+  --accent: #c4f43b;
+  --white: #ffffff;
+  --muted-dark: #8e9198;
+  --muted-on-light: #5a5c63;
+
+  --navy: var(--ground);
+  --navy-2: var(--raised);
+  --black: var(--ground);
+  --gold: var(--accent);
+  --gold-light: var(--accent);
+  --cream: var(--white);
+  --muted: var(--muted-dark);
+  --surface: var(--raised);
+  --surface-strong: var(--raised);
+  --hairline: color-mix(in srgb, #ffffff 10%, transparent);
+  --hairline-strong: color-mix(in srgb, #ffffff 22%, transparent);
+  --radius-md: 20px;
+  --radius-lg: 20px;
+  --page-max: 1320px;
+
+  background: var(--ground);
+  color: var(--white);
+  font-family: var(--font-sans);
+}
+body:has(.mkt) {
+  background: #08090b;
+}
+.mkt ::selection {
+  background: color-mix(in srgb, #c4f43b 40%, transparent);
+  color: #ffffff;
+}
+.mkt-light {
+  --cream: #08090b;
+  --muted: var(--muted-on-light);
+  --gold-light: #08090b;
+  --gold: #08090b;
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
+  --hairline: color-mix(in srgb, #08090b 12%, transparent);
+  --hairline-strong: color-mix(in srgb, #08090b 28%, transparent);
+  background: var(--light);
+  color: #08090b;
+}
+.mkt-accent {
+  --cream: #08090b;
+  --muted: #08090b;
+  --gold-light: #08090b;
+  --hairline: color-mix(in srgb, #08090b 18%, transparent);
+  --hairline-strong: #08090b;
+  background: var(--accent);
+  color: #08090b;
+}
+
+.mkt h1,
+.mkt h2,
+.mkt h3,
+.mkt h4 {
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+/* Geist Mono only for small uppercase, widely-spaced labels. */
+.mkt .section-eyebrow,
+.mkt .section-label,
+.mkt .mono-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.mkt .section-eyebrow,
+.mkt .mono-label {
+  color: var(--gold-light);
+}
+.mkt .font-tabular {
+  font-family: var(--font-sans);
+}
+
+/* Flat raised surfaces with 20px corners instead of glass. */
+.mkt .glass-panel,
+.mkt .glass-panel-strong {
+  background: var(--surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  box-shadow: none;
+}
+.mkt .glass-panel-elevated {
+  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.6);
+}
+
+/* Buttons: fully rounded pills, at least 44px tall. */
+.mkt .btn {
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow: none;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+.mkt .btn-primary {
+  background: var(--accent);
+  background-image: none;
+  border: 1px solid var(--accent);
+  color: #08090b;
+}
+.mkt .btn-primary:hover {
+  background: #d3ff5c;
+  border-color: #d3ff5c;
+  box-shadow: none;
+}
+.mkt .btn-secondary {
+  background: transparent;
+  border: 1px solid var(--hairline-strong);
+  color: var(--cream);
+}
+.mkt .btn-secondary:hover {
+  border-color: var(--cream);
+  box-shadow: none;
+}
+.mkt-accent .btn-primary {
+  background: #08090b;
+  border-color: #08090b;
+  color: #ffffff;
+}
+.mkt-accent .btn-primary:hover {
+  background: #23252b;
+  border-color: #23252b;
+}
+.mkt .btn:focus-visible,
+.mkt a:focus-visible,
+.mkt button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+.mkt-light .btn:focus-visible,
+.mkt-light a:focus-visible,
+.mkt-accent .btn:focus-visible,
+.mkt-accent a:focus-visible {
+  outline-color: #08090b;
+}
+
+/* Scrolling platform-name marquee — the list is rendered twice so
+   translating by -50% loops seamlessly. Stops under reduced motion and
+   falls back to one static, wrapped list. */
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 38s linear infinite;
+}
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .marquee-track {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .marquee-dup {
+    display: none;
+  }
+}
+
+.mkt [id] {
+  scroll-margin-top: 88px;
+}

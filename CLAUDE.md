@@ -121,6 +121,12 @@ brand palette, never hardcode a hex value in a component:
 --red: #d35d5d;
 ```
 
+**The public site has its own palette (Stage 41)** — see "Public site
+redesign (Stage 41)" below: `.mkt` re-scopes these same tokens for the
+marketing pages and `/scan` only. Everything else (the logged-in app,
+the client report, proposals, the assessment runner, login) uses the
+tokens above, unchanged.
+
 Dark executive/PE-dashboard feel: glassmorphism (`.glass-panel` /
 `.glass-panel-strong` utility classes), soft radial gradients deepening
 toward the bottom, tight spacing, restrained glow (`.glow-gold-hover`,
@@ -1804,6 +1810,46 @@ via computed style). Marketing eyebrows now use `.section-eyebrow`
 (11px/600/0.14em, gold-light); the home Fit cards' green/red labels use
 the `!` important modifier for the same reason. Internal-app uses of
 `section-label` are untouched.
+
+**Public site redesign (Stage 41)** — new palette, type and homepage.
+*Theme*: `.mkt` in `globals.css` (applied by `(marketing)/layout.tsx` and
+`/scan`'s root div) redefines the shared tokens inside that subtree only —
+ground `#08090b`, raised `#121316`, light `#f4f4f0`, accent `#c4f43b`,
+white, muted-on-dark `#8e9198`, muted-on-light `#5a5c63`; `--navy`/
+`--navy-2` map to ground/raised and `--gold`/`--gold-light` to the accent,
+so no navy or gold can render on a public page (verified by walking every
+element's computed colours on all eleven public routes) and the compass
+rose re-tints to the accent with no new artwork. `.mkt-light` (light
+sections) and `.mkt-accent` (full-bleed CTA bands) re-scope text/surface
+tokens for their backgrounds. Headings 700 / -0.04em; Geist Mono only via
+`.mono-label`/`.section-eyebrow`/`.section-label` (small uppercase, wide
+tracking); `.font-tabular` falls back to Geist inside `.mkt`. Glass panels
+become flat 20px-corner raised surfaces. Buttons become pills (min 44px):
+`buttonStyles.ts` now also emits marker classes `btn btn-<variant>` that
+have NO styles outside `.mkt`, so the app's buttons are untouched. Fonts
+are still loaded from Google Fonts via `next/font/google` in
+`src/app/layout.tsx` (self-hosted at build time). The favicon (`icon.tsx`,
+shared with the app) was left gold.
+*Nav* (`MarketingHeader.tsx`) carries only the homepage sections (What we
+do / What we've built / How we help / Next steps → `/#…` anchors), Log in
+and a "Book a call" pill; link targets live in `marketing/links.ts` (a
+plain module, so server components get real strings — constants exported
+from the `"use client"` header would arrive as client references). The
+footer links everything else, including the pages that left the nav (The
+Assessment, Build Packages, Systems & Support, Services, Case Studies,
+About, What We Do). "Book a call" → `/contact`, "Take the free scan" →
+`/scan` — neither form changed.
+*Homepage* (`(marketing)/page.tsx`, components in `marketing/home/`):
+hero (rotating compass behind the right side, `compass-spin-slow`, off
+under reduced motion) → RBL Safety product shot in `BrowserShot` →
+`Marquee` (list rendered twice, second copy `aria-hidden`; reduced motion
+stops it and drops the copy) → What we do (light) → accent CTA → What
+we've built intro → six platform rows from `home/platforms.ts`
+(alternating dark/light, screenshots in `public/images/platforms/`) → How
+we help → accent CTA → What happens next (light) → free scan block.
+Copy was supplied verbatim — don't rephrase it. The old homepage's
+components (`HeroCompassStage`, `CompassHandoff`, etc.) are no longer used
+by the homepage but were left in place.
 
 ## Migrations rule
 

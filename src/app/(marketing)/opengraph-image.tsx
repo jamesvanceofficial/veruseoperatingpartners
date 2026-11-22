@@ -20,8 +20,8 @@ export default async function OpengraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(160deg, #0d2238 0%, #071526 55%, #02060d 100%)",
-          color: "#f7f5ef",
+          background: "#08090b",
+          color: "#ffffff",
           fontFamily: "sans-serif",
         }}
       >
@@ -34,7 +34,7 @@ export default async function OpengraphImage() {
               fontSize: 20,
               letterSpacing: 8,
               textTransform: "uppercase",
-              color: "#f1d27a",
+              color: "#c4f43b",
               marginBottom: 28,
             }}
           >
@@ -44,21 +44,21 @@ export default async function OpengraphImage() {
         <div
           style={{
             fontSize: 60,
-            fontWeight: 600,
+            fontWeight: 700, letterSpacing: -2,
             textAlign: "center",
             maxWidth: 920,
             lineHeight: 1.15,
-            color: "#f7f5ef",
+            color: "#ffffff",
           }}
         >
-          From Founder-Led Chaos to System-Driven Growth.
+          We build the software your company actually runs on.
         </div>
         <div
           style={{
             marginTop: 36,
             width: 120,
             height: 2,
-            background: "#d4af37",
+            background: "#c4f43b",
           }}
         />
       </div>

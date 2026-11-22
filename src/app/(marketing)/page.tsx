@@ -1,381 +1,263 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { LinkButton } from "@/shared/ui/LinkButton";
-import { Card } from "@/shared/ui/Card";
-import { SectionHeading } from "@/modules/marketing/SectionHeading";
-import { TwoColSection } from "@/modules/marketing/TwoColSection";
-import { PullQuote } from "@/modules/marketing/PullQuote";
-import { StatBand } from "@/modules/marketing/StatBand";
-import { FaqAccordion } from "@/modules/marketing/FaqAccordion";
-import { ScreenshotVisual } from "@/modules/marketing/ScreenshotVisual";
-import { PhotoSection } from "@/modules/marketing/PhotoSection";
-import { HeroCompassStage } from "@/modules/marketing/HeroCompassStage";
-import { CompassHandoff } from "@/shared/ui/CompassMark";
-import { AnimatedScoreGauge } from "@/modules/marketing/animation/AnimatedScoreGauge";
-import { FadeUp } from "@/modules/marketing/animation/FadeUp";
-import { CategoryBars } from "@/modules/assessments/CategoryBars";
-import { BandScale } from "@/modules/assessments/BandScale";
-import { RankedBottleneckList } from "@/modules/assessments/RankedBottleneckList";
-import { SAMPLE_CATEGORIES, SAMPLE_BANDS, SAMPLE_SCORE, SAMPLE_BOTTLENECKS } from "@/modules/marketing/sampleAssessment";
-import { PROBLEM_BLOCKS, WHAT_VERUS_BUILDS, HOW_IT_WORKS_STEPS, POSITIONING, WHO_THIS_IS_FOR, WHO_THIS_IS_NOT_FOR, FAQ_ITEMS } from "@/modules/marketing/positioning";
-import { CASE_STUDIES } from "@/modules/marketing/caseStudies";
-import { SERVICE_AREAS } from "@/modules/marketing/services";
+import { CompassRose } from "@/shared/ui/CompassRose";
+import { BOOK_A_CALL_HREF, FREE_SCAN_HREF } from "@/modules/marketing/links";
+import { BrowserShot } from "@/modules/marketing/home/BrowserShot";
+import { Marquee } from "@/modules/marketing/home/Marquee";
+import { CtaBand } from "@/modules/marketing/home/CtaBand";
+import { PLATFORMS } from "@/modules/marketing/home/platforms";
 
 export const metadata: Metadata = {
-  title: "VERUS OPERATING PARTNERS LLC — Systems for Founder-Led Businesses",
+  title: "VERUS OPERATING PARTNERS LLC — We build the software your company actually runs on",
   description:
-    "VERUS diagnoses what's actually holding your company back, then builds the systems and processes to fix it — and stays embedded running them. Founder-led businesses, $1M-$25M revenue, delivered remotely nationwide.",
+    "Not advice. Not a binder. We find the one thing holding a founder-led business back, build the system that fixes it, and keep it running every month after.",
   openGraph: {
-    title: "VERUS OPERATING PARTNERS LLC — Systems for Founder-Led Businesses",
-    description: "We find what's holding your company back, then build the systems to fix it.",
+    title: "VERUS OPERATING PARTNERS LLC — We build the software your company actually runs on",
+    description: "We find the one thing holding a founder-led business back, build the system that fixes it, and keep it running every month after.",
   },
 };
+
+const WHAT_WE_DO = [
+  {
+    n: "01",
+    title: "We find the bottleneck",
+    body: "A working session on your company, not a questionnaire. We come out of it knowing the single thing costing you the most money, and why it hasn't been fixed yet.",
+  },
+  {
+    n: "02",
+    title: "We build the system",
+    body: "Custom software, documented processes, dashboards, automations, the back office — whatever that bottleneck actually needs. Built alongside your people, biggest problem first.",
+  },
+  {
+    n: "03",
+    title: "We run it every month",
+    body: "It doesn't get handed over and abandoned. We maintain it, extend it and add seats as you grow, for a monthly fee that scales with the company.",
+  },
+];
+
+const HOW_WE_HELP = [
+  {
+    title: "Everything goes through me.",
+    body: "Every quote, every schedule change, every exception waits on the owner. We move those decisions into a system with rules, so the business runs when you're not in it.",
+  },
+  {
+    title: "I don't trust my own numbers.",
+    body: "Jobs, payroll and billing live in different places, so nothing reconciles. We put them on one record, so cost, profit and what's owed stop being opinions.",
+  },
+  {
+    title: "We grew and it broke.",
+    body: "What worked at ten people collapses at forty. We rebuild the operating layer underneath so headcount stops being the thing that breaks you.",
+  },
+  {
+    title: "My people are doing robot work.",
+    body: "Typing, re-typing, copying between tools, chasing paper. We automate the repeatable parts and document the rest so a new hire is useful in a week.",
+  },
+];
+
+const NEXT_STEPS = [
+  { n: 1, title: "Book a 30-minute call", body: "You describe what's breaking. We tell you what we'd build first and roughly what it costs. No deck, no pitch." },
+  {
+    n: 2,
+    title: "We scope the first build",
+    body: "A written proposal for the one bottleneck worth fixing now — what gets built, how long, what it costs, what changes for you.",
+  },
+  {
+    n: 3,
+    title: "We build it and run it",
+    body: "Work starts within days, not quarters. When it's live, it moves onto a monthly plan that keeps it maintained and growing.",
+  },
+];
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* HERO — text left, the full compass rose right as the anchor, with
-          the real report screenshot set on its center. Layout alternates
-          down the page from here: text/visual, visual/text, text/visual... */}
+      {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="hero-light-sweep" />
-        <div className="page-container section-y relative">
-          <TwoColSection
-            reverse
-            visual={
-              <FadeUp>
-                <HeroCompassStage
-                  src="/images/product/report-screenshot.webp"
-                  alt="A completed VERUS business assessment report showing an enterprise score, category breakdown, and ranked bottleneck list"
-                />
-              </FadeUp>
-            }
-          >
-            <FadeUp>
-              <span className="section-eyebrow">VERUS OPERATING PARTNERS LLC</span>
-            </FadeUp>
-            <FadeUp delayMs={80}>
-              <h1 className="text-[32px] font-semibold leading-[1.1] text-[var(--cream)] sm:text-[46px]">
-                From Founder-Led Chaos to System-Driven Growth.
-              </h1>
-            </FadeUp>
-            <FadeUp delayMs={160}>
-              <p className="max-w-lg text-[14.5px] leading-relaxed text-[var(--muted)] sm:text-[16px]">
-                We find what&apos;s actually holding your company back, then build the systems and processes to fix it.
-              </p>
-            </FadeUp>
-            <FadeUp delayMs={240}>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <LinkButton href="/scan" variant="primary" className="px-6 py-3 text-[14px]">
-                  Get Your Free Score
-                </LinkButton>
-                <LinkButton href="/contact" variant="secondary" className="px-6 py-3 text-[14px]">
-                  Book a Call
-                </LinkButton>
-              </div>
-            </FadeUp>
-          </TwoColSection>
+        <div className="pointer-events-none absolute -right-[28vw] top-1/2 w-[min(1100px,120vw)] -translate-y-1/2 sm:-right-[14vw] lg:-right-[6vw] lg:w-[min(1000px,72vw)]" aria-hidden="true">
+          <CompassRose className="compass-spin-slow h-auto w-full" opacity={0.14} />
+        </div>
+        <div className="page-container relative flex flex-col gap-7 pb-14 pt-16 sm:pb-20 sm:pt-24 lg:pt-28">
+          <p className="mono-label">OPERATIONS · SYSTEMS · SOFTWARE</p>
+          <h1 className="max-w-[12ch] text-[clamp(44px,9.2vw,108px)] leading-[0.95] text-[var(--white)] sm:max-w-none">
+            We build the software
+            <br className="hidden sm:inline" /> your company
+            <br className="hidden sm:inline" /> actually runs on.
+          </h1>
+          <p className="max-w-[58ch] text-[17px] leading-relaxed text-[var(--muted-dark)] sm:text-[19px]">
+            Not advice. Not a binder. We find the one thing holding a founder-led business back, build the system that fixes it, and keep it running every month after.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <LinkButton href={BOOK_A_CALL_HREF} variant="primary">
+              Book a call
+            </LinkButton>
+            <LinkButton href="#built" variant="secondary">
+              See what we&apos;ve built
+            </LinkButton>
+          </div>
         </div>
       </section>
 
-      {/* THE PROBLEM — visual left (real category bars), text right */}
-      <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container section-y">
-          <TwoColSection
-            visual={
-              <FadeUp>
-                <CategoryBars strong categories={SAMPLE_CATEGORIES.slice(0, 4)} />
-              </FadeUp>
-            }
-          >
-            <FadeUp>
-              <SectionHeading eyebrow="The Problem" title="What's Actually Holding the Business Back" />
-            </FadeUp>
-            <div className="flex flex-col gap-4">
-              {PROBLEM_BLOCKS.map((block, i) => (
-                <FadeUp key={block.title} delayMs={i * 80}>
-                  <div>
-                    <h3 className="text-[14px] font-semibold text-[var(--cream)]">{block.title}</h3>
-                    <p className="mt-1 text-[13px] leading-relaxed text-[var(--muted)]">{block.description}</p>
-                  </div>
-                </FadeUp>
+      {/* FULL-WIDTH PRODUCT SHOT */}
+      <section className="page-container relative pb-14 sm:pb-20">
+        <BrowserShot
+          src="/images/platforms/rbl-safety.jpg"
+          alt="RBL Safety's live operations platform, built by VERUS, showing officer scheduling and the dispatch desk"
+          label="RBL SAFETY — LIVE RIGHT NOW"
+          width={1568}
+          height={590}
+          priority
+        />
+      </section>
+
+      {/* MARQUEE */}
+      <Marquee items={PLATFORMS.map((p) => p.name)} />
+
+      {/* WHAT WE DO — light */}
+      <section id="what-we-do" className="mkt-light">
+        <div className="page-container flex flex-col gap-12 py-20 sm:py-28">
+          <div className="flex flex-col gap-4">
+            <p className="mono-label">What we do</p>
+            <h2 className="max-w-[20ch] text-[36px] leading-[1.02] sm:text-[60px]">Most companies don&apos;t need advice. They need the thing built.</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
+            {WHAT_WE_DO.map((c) => (
+              <div key={c.n} className="flex flex-col gap-3 border-t border-[var(--hairline-strong)] pt-6">
+                <span className="mono-label">{c.n}</span>
+                <h3 className="text-[24px] leading-tight">{c.title}</h3>
+                <p className="text-[16px] leading-relaxed text-[var(--muted)]">{c.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <CtaBand heading="Stop running the company from your phone." line="One call. We'll tell you what we'd build first and what it would cost." />
+
+      {/* WHAT WE'VE BUILT — intro */}
+      <section id="built" className="page-container flex flex-col gap-4 pb-4 pt-20 sm:pt-28">
+        <p className="mono-label">What we&apos;ve built</p>
+        <h2 className="max-w-[18ch] text-[36px] leading-[1.02] sm:text-[60px]">Six companies run on software we built.</h2>
+        <p className="max-w-[62ch] text-[17px] leading-relaxed text-[var(--muted-dark)] sm:text-[19px]">
+          Not pilots. Not slide decks. These are the real screens, open right now, in businesses that depend on them to dispatch work, pay people and get paid.
+        </p>
+      </section>
+
+      {/* SIX PLATFORM ROWS — alternating dark / light, starting dark */}
+      {PLATFORMS.map((p, i) => (
+        <section key={p.slug} id={p.slug} className={i % 2 === 1 ? "mkt-light" : undefined} aria-labelledby={`${p.slug}-name`}>
+          <div className="page-container flex flex-col gap-8 py-16 sm:py-20">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <span className="mono-label">{String(i + 1).padStart(2, "0")}</span>
+              <h3 id={`${p.slug}-name`} className="text-[32px] leading-none sm:text-[42px]">
+                {p.name}
+              </h3>
+              <span className="inline-flex items-center rounded-full bg-[var(--accent)] px-3 py-1 text-[13px] font-semibold text-[#08090b]">{p.status}</span>
+            </div>
+            <BrowserShot src={p.image} alt={p.alt} label={`${p.name} — live`} width={1568} height={590} />
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              {[
+                ["Why", p.why],
+                ["What we built", p.built],
+                ["What it does", p.does],
+              ].map(([heading, body]) => (
+                <div key={heading} className="flex flex-col gap-2.5">
+                  <h4 className="mono-label">{heading}</h4>
+                  <p className="text-[16px] leading-relaxed text-[var(--muted)]">{body}</p>
+                </div>
               ))}
             </div>
-          </TwoColSection>
-        </div>
-      </section>
-
-      {/* SEE THE REAL ASSESSMENT — text left, screenshot right, alternating from The Problem above */}
-      <section className="page-container section-y">
-        <TwoColSection
-          reverse
-          visual={
-            <FadeUp>
-              <ScreenshotVisual
-                parallaxStrength={0.05}
-                maxWidthClassName="max-w-none"
-                src="/images/product/runner-screenshot.webp"
-                alt="The VERUS assessment runner mid-question, showing answer choices and a live provisional score"
-              />
-            </FadeUp>
-          }
-        >
-          <FadeUp>
-            <SectionHeading eyebrow="See It" title="Real Questions, a Live Score As You Go" />
-          </FadeUp>
-          <FadeUp delayMs={80}>
-            <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
-              Every question uses the same 0-3 ladder, and your provisional score updates as you answer — no guessing where you stand
-              until the end. This is the actual assessment runner, not a mockup.
-            </p>
-          </FadeUp>
-        </TwoColSection>
-      </section>
-
-      <div className="page-container">
-        <CompassHandoff />
-      </div>
-
-      {/* WHAT VERUS BUILDS — full-width numbers band */}
-      <section className="page-container section-y section-stack flex flex-col">
-        <FadeUp>
-          <SectionHeading eyebrow="What VERUS Builds" title="Systems and Processes — Always Both" align="center" />
-        </FadeUp>
-        <FadeUp>
-          <Card strong className="px-3 py-8 sm:px-6 sm:py-10">
-            <StatBand
-              stats={[
-                { value: 10, label: "Categories Assessed" },
-                { value: 120, label: "Diagnostic Questions" },
-                { value: 100, suffix: "-pt", label: "Enterprise Score" },
-                { value: 4, label: "Build Tiers" },
-              ]}
-            />
-          </Card>
-        </FadeUp>
-        <FadeUp>
-          <div className="flex flex-wrap justify-center gap-3">
-            {WHAT_VERUS_BUILDS.map((item) => (
-              <span key={item} className="glass-panel px-4 py-2 text-[12.5px] font-medium text-[var(--cream)]">
-                {item}
-              </span>
-            ))}
-            <span className="glass-panel px-4 py-2 text-[12.5px] font-medium text-[var(--cream)]">Ongoing Support</span>
           </div>
-        </FadeUp>
-      </section>
+        </section>
+      ))}
 
-      {/* HOW IT WORKS */}
-      <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container section-y section-stack flex flex-col">
-          <FadeUp>
-            <SectionHeading eyebrow="How It Works" title="Four Steps, Start to Finish" />
-          </FadeUp>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {HOW_IT_WORKS_STEPS.map((s, i) => (
-              <FadeUp key={s.step} delayMs={i * 80}>
-                <Card strong className="hover-lift flex h-full flex-col gap-2">
-                  <span className="font-tabular text-[22px] font-semibold text-[var(--gold-light)]">{s.step}</span>
-                  <h3 className="text-[14.5px] font-semibold text-[var(--cream)]">{s.title}</h3>
-                  <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{s.description}</p>
-                </Card>
-              </FadeUp>
+      {/* HOW WE HELP YOU */}
+      <section id="how-we-help" className="border-t border-[var(--hairline)]">
+        <div className="page-container flex flex-col gap-12 py-20 sm:py-28">
+          <div className="flex flex-col gap-4">
+            <p className="mono-label">How we help you</p>
+            <h2 className="max-w-[18ch] text-[36px] leading-[1.02] sm:text-[60px]">Which one of these is your company?</h2>
+            <p className="max-w-[60ch] text-[17px] leading-relaxed text-[var(--muted-dark)] sm:text-[19px]">
+              If you recognise yourself in one of these, we have already built the fix for somebody else.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {HOW_WE_HELP.map((c) => (
+              <div key={c.title} className="flex flex-col gap-4 rounded-[20px] border border-[var(--hairline)] bg-[var(--raised)] p-7 sm:p-9">
+                <h3 className="text-[26px] leading-tight text-[var(--accent)] sm:text-[30px]">&ldquo;{c.title}&rdquo;</h3>
+                <p className="text-[16px] leading-relaxed text-[var(--muted-dark)]">{c.body}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SERVICES — the four ongoing service areas, pointing at /services */}
-      <section className="page-container section-y section-stack flex flex-col">
-        <FadeUp>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <SectionHeading
-              eyebrow="Services"
-              title="The Work That Keeps Running After the Build"
-              description="VERUS doesn't just build the systems — we staff and run the work inside them."
-            />
-            <Link href="/services" className="shrink-0 text-[12.5px] font-medium text-[var(--gold-light)] hover:underline">
-              See all services →
-            </Link>
+      <CtaBand heading="Recognise your company in there?" line="Then we've already built most of your fix for somebody else." />
+
+      {/* WHAT HAPPENS NEXT — light */}
+      <section id="next-steps" className="mkt-light">
+        <div className="page-container flex flex-col gap-12 py-20 sm:py-28">
+          <div className="flex flex-col gap-4">
+            <p className="mono-label">Next steps</p>
+            <h2 className="text-[36px] leading-[1.02] sm:text-[60px]">What happens next.</h2>
+            <p className="text-[17px] leading-relaxed text-[var(--muted)] sm:text-[19px]">Three steps, and you can stop after any of them.</p>
           </div>
-        </FadeUp>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Typographic cards — no image, no icon — until real screenshots are supplied. */}
-          {SERVICE_AREAS.map((s, i) => (
-            <FadeUp key={s.slug} delayMs={i * 80}>
-              <Link href={`/services#${s.slug}`} className="block h-full">
-                <Card strong className="hover-lift flex h-full flex-col gap-2">
-                  <span className="font-tabular text-[22px] font-semibold text-[var(--gold-light)]">{s.index}</span>
-                  <h3 className="text-[14.5px] font-semibold text-[var(--cream)]">{s.title}</h3>
-                  <p className="text-[12.5px] leading-relaxed text-[var(--muted)]">{s.lead}</p>
-                </Card>
-              </Link>
-            </FadeUp>
-          ))}
-        </div>
-      </section>
-
-      <div className="page-container">
-        <CompassHandoff />
-      </div>
-
-      {/* THE ASSESSMENT AS ENTRY POINT — score visual left, text right */}
-      <section className="page-container section-y">
-        <TwoColSection
-          visual={
-            <FadeUp>
-              <Card strong className="flex flex-col gap-4">
-                <div className="flex flex-col items-center gap-1 text-center">
-                  <AnimatedScoreGauge score={SAMPLE_SCORE} className="w-28 sm:w-32" />
-                </div>
-                <BandScale score={SAMPLE_SCORE} bands={SAMPLE_BANDS} />
-              </Card>
-            </FadeUp>
-          }
-        >
-          <FadeUp>
-            <span className="section-eyebrow">Start Here</span>
-          </FadeUp>
-          <FadeUp delayMs={80}>
-            <h2 className="text-[26px] font-semibold leading-tight text-[var(--cream)] sm:text-[32px]">
-              Every Engagement Starts with Knowing Exactly What&apos;s Costing You.
-            </h2>
-          </FadeUp>
-          <FadeUp delayMs={160}>
-            <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
-              The free scan takes minutes and gives you a real score, on the same scale shown here. The Full Business Assessment goes
-              deep across every part of the operation and ranks your bottlenecks by what they&apos;re actually costing you.
-            </p>
-          </FadeUp>
-          <FadeUp delayMs={240}>
-            <LinkButton href="/scan" variant="primary" className="self-start px-6 py-3 text-[14px]">
-              Get Your Free Score
-            </LinkButton>
-          </FadeUp>
-        </TwoColSection>
-      </section>
-
-      {/* PULL QUOTE */}
-      <section className="border-y border-[var(--hairline)] bg-[var(--surface)]">
-        <div className="page-container section-y">
-          <FadeUp>
-            <PullQuote>{POSITIONING.approach}</PullQuote>
-          </FadeUp>
-        </div>
-      </section>
-
-      {/* PROOF POINTS — text left, ranked bottleneck list right, case studies below */}
-      <section>
-        <div className="page-container section-y section-stack flex flex-col">
-        <TwoColSection
-          reverse
-          visual={
-            <FadeUp>
-              <RankedBottleneckList strong items={SAMPLE_BOTTLENECKS} title="Sample Ranked Bottlenecks" />
-            </FadeUp>
-          }
-        >
-          <FadeUp>
-            <SectionHeading eyebrow="Proof" title="Built and Running, Not Just Proposed" />
-          </FadeUp>
-          <FadeUp delayMs={80}>
-            <p className="text-[13.5px] leading-relaxed text-[var(--muted)]">
-              Every assessment ranks your bottlenecks the same way — by what they&apos;re actually costing you, weighted, not by gut
-              feeling. Here&apos;s what that produced for two real clients.
-            </p>
-          </FadeUp>
-        </TwoColSection>
-
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {CASE_STUDIES.map((cs, i) => (
-            <FadeUp key={cs.slug} delayMs={i * 100}>
-              <Card strong className="hover-lift flex h-full flex-col gap-3">
-                <div>
-                  <p className="text-[15px] font-semibold text-[var(--cream)]">{cs.client}</p>
-                  <p className="text-[11.5px] text-[var(--muted)]">
-                    {cs.location} · {cs.industry}
-                  </p>
-                </div>
-                <p className="text-[13px] leading-relaxed text-[var(--muted)]">{cs.summary}</p>
-                <Link href="/case-studies" className="text-[12.5px] font-medium text-[var(--gold-light)] hover:underline">
-                  Read the case study →
-                </Link>
-              </Card>
-            </FadeUp>
-          ))}
-        </div>
-        </div>
-      </section>
-
-      {/* WHO THIS IS FOR / NOT FOR — real photo background, restrained behind a strong navy overlay */}
-      <PhotoSection src="/images/photography/construction-workers.webp" alt="" className="border-y border-[var(--hairline)]">
-        <div className="page-container section-y section-stack flex flex-col">
-          <FadeUp>
-            <SectionHeading eyebrow="Fit" title="Who This Is for — and Who It Isn't" align="center" />
-          </FadeUp>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <FadeUp>
-              <Card strong className="flex h-full flex-col gap-3">
-                <p className="section-label text-[var(--green)]!">This Is for You If</p>
-                <ul className="flex flex-col gap-2.5">
-                  {WHO_THIS_IS_FOR.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-[13px] leading-relaxed text-[var(--cream)]">
-                      <span className="text-[var(--green)]">✓</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </FadeUp>
-            <FadeUp delayMs={100}>
-              <Card strong className="flex h-full flex-col gap-3">
-                <p className="section-label text-[var(--red)]!">This Isn&apos;t for You If</p>
-                <ul className="flex flex-col gap-2.5">
-                  {WHO_THIS_IS_NOT_FOR.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-[13px] leading-relaxed text-[var(--cream)]">
-                      <span className="text-[var(--red)]">✕</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </FadeUp>
-          </div>
-        </div>
-      </PhotoSection>
-
-      {/* FAQ */}
-      <section className="page-container section-y section-stack flex flex-col">
-        <FadeUp>
-          <SectionHeading eyebrow="Questions" title="Straight Answers" align="center" />
-        </FadeUp>
-        <FadeUp>
-          <div className="mx-auto w-full max-w-2xl">
-            <FaqAccordion items={FAQ_ITEMS} />
-          </div>
-        </FadeUp>
-      </section>
-
-      {/* FINAL CTA — photo background for a strong close */}
-      <PhotoSection src="/images/photography/warehouse-interior.webp" alt="" className="border-t border-[var(--hairline)]">
-        <div className="page-container section-y flex flex-col items-center gap-6 text-center">
-          <FadeUp>
-            <h2 className="max-w-2xl text-[24px] font-semibold leading-tight text-[var(--cream)] sm:text-[30px]">
-              Find Out What&apos;s Actually Holding Your Company Back.
-            </h2>
-          </FadeUp>
-          <FadeUp delayMs={100}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <LinkButton href="/scan" variant="primary" className="px-6 py-3 text-[14px]">
-                Get Your Free Score
+          <ol className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
+            {NEXT_STEPS.map((s) => (
+              <li key={s.n} className="flex flex-col gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent)] text-[18px] font-bold text-[#08090b]" aria-hidden="true">
+                  {s.n}
+                </span>
+                <h3 className="text-[24px] leading-tight">
+                  <span className="sr-only">Step {s.n}: </span>
+                  {s.title}
+                </h3>
+                <p className="text-[16px] leading-relaxed text-[var(--muted)]">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-3">
+              <LinkButton href={BOOK_A_CALL_HREF} variant="primary">
+                Book a call
               </LinkButton>
-              <LinkButton href="/contact" variant="secondary" className="px-6 py-3 text-[14px]">
-                Book a Call
+              <LinkButton href={FREE_SCAN_HREF} variant="secondary">
+                Not ready? Take the free scan
               </LinkButton>
             </div>
-          </FadeUp>
+            <p className="text-[15px] text-[var(--muted)]">30 minutes. If it&apos;s not a fit, we&apos;ll tell you on the call.</p>
+          </div>
         </div>
-      </PhotoSection>
+      </section>
+
+      {/* FREE SCAN — dark */}
+      <section id="free-scan">
+        <div className="page-container grid grid-cols-1 items-center gap-12 py-20 sm:py-28 lg:grid-cols-2">
+          <div className="flex flex-col gap-5">
+            <p className="mono-label">Free scan</p>
+            <h2 className="text-[36px] leading-[1.02] sm:text-[52px]">Not ready to talk? Find out where you stand.</h2>
+            <p className="max-w-[54ch] text-[17px] leading-relaxed text-[var(--muted-dark)]">
+              Ten minutes, ten categories, a live score as you answer. You get your ranked bottlenecks and where you sit on the operator scale. Nothing to pay, no call required.
+            </p>
+            <div>
+              <LinkButton href={FREE_SCAN_HREF} variant="primary">
+                Take the free scan
+              </LinkButton>
+            </div>
+          </div>
+          <div className="h-[360px] overflow-hidden rounded-[20px] border border-[var(--hairline-strong)] bg-[var(--raised)] sm:h-[460px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/product/report-screenshot.webp"
+              alt="A VERUS free scan result showing the overall score, the operator scale and the ranked bottleneck list"
+              width={1400}
+              height={1931}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover object-top"
+            />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

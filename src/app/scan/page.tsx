@@ -14,7 +14,7 @@ export default async function ScanPage() {
   const questions = await getQuestionsForType(admin, "quick_scan");
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="mkt flex min-h-screen flex-col">
       <header className="flex items-center justify-between px-8 py-6">
         <BrandMark size="md" />
         <a href="/login" className="text-[12.5px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--gold-light)]">

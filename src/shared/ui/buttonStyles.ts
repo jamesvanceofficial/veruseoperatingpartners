@@ -21,6 +21,9 @@ export function buttonClassName({
   className?: string;
 }): string {
   return cn(
+    // btn / btn-<variant> carry no styles of their own — they're hooks the public site's .mkt theme (globals.css) uses to restyle buttons as pills.
+    "btn",
+    `btn-${variant}`,
     "glow-gold-focus inline-flex items-center justify-center gap-2 rounded-[var(--radius-sm)] px-3.5 py-2 text-[12.5px] font-medium transition-colors duration-150",
     variant === "primary" &&
       "glow-gold-hover glow-gold-idle border border-[color-mix(in_srgb,var(--gold)_55%,transparent)] bg-gradient-to-b from-[var(--gold-light)] to-[var(--gold)] text-[var(--black)]",
