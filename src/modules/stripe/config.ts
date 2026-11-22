@@ -2,9 +2,9 @@
  * Stripe products that are product-style plans: the Verus Trading Bot
  * and its add-on. Their subscribers are individuals, not COMPASS
  * organizations, so a subscription made up only of these products counts
- * as Software MRR, is never matched to an organization, and is never
+ * as Product MRR, is never matched to an organization, and is never
  * flagged as unmatched. Every other subscription is a client subscription
- * that is expected to link to an organization (Service MRR once linked).
+ * that is expected to link to an organization (Client MRR once linked).
  *
  * Product IDs, not names: a rename in Stripe can't silently reclassify
  * revenue. Add a new product here when a new self-serve plan launches.

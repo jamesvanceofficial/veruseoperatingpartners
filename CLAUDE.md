@@ -1118,11 +1118,11 @@ exist on any subscription at the time of writing.
 
 **Classification is by Stripe product ID** (`PRODUCT_PLAN_PRODUCT_IDS` in
 `config.ts` — Verus Trading Bot + Extra broker account). A subscription
-made only of those is a product plan: an individual subscriber, Software
+made only of those is a product plan: an individual subscriber, Product
 MRR, never matched to an organization, never flagged as unmatched.
-Everything else is a client subscription: Service MRR once linked to an
-organization; until then it's "unmatched" — in neither Software nor
-Service nor Total, but named with its MRR by the data-quality banner so it
+Everything else is a client subscription: Client MRR once linked to an
+organization; until then it's "unmatched" — in neither Product nor
+Client nor Total, but named with its MRR by the data-quality banner so it
 can't be missed. Add a new product's ID there when a new self-serve plan
 launches.
 
@@ -1150,14 +1150,24 @@ logged in `stripe_sync_runs`. Subscriptions that drop out of Stripe's live
 list are re-fetched individually so a cancellation shows as `canceled`,
 not a stale `active`.
 
-**Tiles** (`getStripeDashboardMetrics()` in `data.ts`): Total = Software +
-Service; Software = active product plans; Service = active client subs
-linked to an org; Active Subscriptions = Stripe status `active`; Upcoming
+**Tiles** (`getStripeDashboardMetrics()` in `data.ts`, plus one non-Stripe
+tile): Total = Product + Client + Services; Product MRR = active product
+plans (self-serve subscribers who bought online, not tied to a client
+org — the Verus Trading Bot); Client MRR = active client subs linked to
+an org VERUS built and supports (RBL Safety); **Services MRR** = resold
+services (VA placement, marketing management, SEO, bookkeeping), read
+live from COMPASS's own `subscription_line_items` where
+`revenue_category = 'service'` via the existing
+`getSubscriptionDashboardMetrics()`/`computeMRRByCategory()` — not
+synced from Stripe, $0 while no such line items exist (true as of this
+stage). Renamed from Stage 40's original Software/Service tiles (the
+`/subscriptions/[id]` page's own per-subscription Software/Service
+line-item labels are a separate thing and were left as-is); Active Subscriptions = Stripe status `active`; Upcoming
 Renewals = next invoice within 30 days; New MRR This Month = MRR of
 counted subscriptions created this calendar month. "This month"/"30 days"
 are UTC (the server clock), and every timestamp shown says UTC. Every tile
 carries a hint naming its source and the last successful sync time;
-Total/Service also name the next scheduled change (e.g. RBL's Dec 7, 2026
+Total/Client also name the next scheduled change (e.g. RBL's Dec 7, 2026
 move from $1,000 to $1,622/mo). Revenue and the banner render for VERUS
 staff only — the Stripe tables are staff-only, so a client viewer would
 otherwise see $0 tiles.

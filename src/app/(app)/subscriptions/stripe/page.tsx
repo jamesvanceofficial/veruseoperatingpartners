@@ -119,7 +119,7 @@ export default async function StripeSubscriptionsPage() {
               <>
                 <p className="text-[12px] text-[var(--muted)]">
                   No organization matched by customer email or company name. Attach each to an existing organization by hand — COMPASS never creates one automatically. Not counted in
-                  Service or Total MRR until attached.
+                  Client or Total MRR until attached.
                 </p>
                 <Table
                   columns={[
@@ -133,7 +133,7 @@ export default async function StripeSubscriptionsPage() {
           </section>
 
           <section className="flex flex-col gap-3">
-            <p className="section-label">Client Subscriptions · Service MRR ({linked.length})</p>
+            <p className="section-label">Client Subscriptions · Client MRR ({linked.length})</p>
             {linked.length === 0 ? (
               <p className="text-[12.5px] text-[var(--muted)]">None linked yet.</p>
             ) : (
@@ -165,7 +165,7 @@ export default async function StripeSubscriptionsPage() {
           </section>
 
           <section className="flex flex-col gap-3">
-            <p className="section-label">Verus Trading Bot Subscribers · Software MRR ({productPlan.length})</p>
+            <p className="section-label">Verus Trading Bot Subscribers · Product MRR ({productPlan.length})</p>
             <p className="text-[12px] text-[var(--muted)]">Product-plan subscribers are individuals, not client organizations — never matched and never flagged.</p>
             {productPlan.length === 0 ? <p className="text-[12.5px] text-[var(--muted)]">None synced yet.</p> : <Table columns={base} rows={productPlan} />}
           </section>

@@ -34,7 +34,7 @@ export function DataQualityBanner({ issues }: { issues: DataQualityIssues }) {
       {unmatchedSubscriptions.length > 0 ? (
         <div className="text-[12.5px] text-[var(--cream)]">
           {unmatchedSubscriptions.length === 1 ? "1 Stripe subscription has" : `${unmatchedSubscriptions.length} Stripe subscriptions have`} no linked organization (
-          {formatCurrency(unmatchedSubscriptions.reduce((s, u) => s + u.mrr, 0))}/mo, not counted in Service or Total MRR until attached):{" "}
+          {formatCurrency(unmatchedSubscriptions.reduce((s, u) => s + u.mrr, 0))}/mo, not counted in Client or Total MRR until attached):{" "}
           {unmatchedSubscriptions.map((u, i) => (
             <span key={u.id}>
               {i > 0 ? "; " : ""}

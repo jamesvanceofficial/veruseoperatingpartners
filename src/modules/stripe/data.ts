@@ -101,11 +101,11 @@ export type StripeDashboardMetrics = {
   lastSync: StripeSyncRun | null;
   lastSuccessfulSyncAt: string | null;
   totalMRR: number;
-  softwareMRR: number;
-  softwareCount: number;
-  serviceMRR: number;
-  serviceCount: number;
-  serviceScheduled: ScheduledChangeSummary;
+  productMRR: number;
+  productCount: number;
+  clientMRR: number;
+  clientCount: number;
+  clientScheduled: ScheduledChangeSummary;
   totalScheduled: ScheduledChangeSummary;
   activeCount: number;
   upcomingRenewals: number;
@@ -118,13 +118,17 @@ export type StripeDashboardMetrics = {
 };
 
 /**
- * Every MRR figure on the dashboard, read from the synced Stripe mirror —
- * never from hand-entered subscription_line_items.
- * - Software = live product-plan subscriptions (Verus Trading Bot).
- * - Service = live client subscriptions linked to an organization.
- * - Total = Software + Service. A client subscription not yet attached to
- *   an organization is in neither until it's linked; the data-quality
- *   banner names it (and its MRR) so it can't be missed.
+ * The Stripe-sourced MRR figures on the dashboard, read from the synced
+ * Stripe mirror.
+ * - Product = live product-plan subscriptions: self-serve subscribers not
+ *   tied to a client organization (Verus Trading Bot).
+ * - Client = live client subscriptions linked to an organization VERUS
+ *   built and supports.
+ * - totalMRR here = Product + Client. The dashboard's Total MRR adds the
+ *   third tile, Services MRR (resold services — subscription_line_items
+ *   with revenue_category 'service', not from Stripe), on top. A client
+ *   subscription not yet attached to an organization is in neither until
+ *   it's linked; the data-quality banner names it (and its MRR).
  * - "This month" / "next 30 days" are UTC, the server's clock.
  */
 export async function getStripeDashboardMetrics(supabase: SupabaseClient, now = new Date()): Promise<StripeDashboardMetrics> {
@@ -150,11 +154,11 @@ export async function getStripeDashboardMetrics(supabase: SupabaseClient, now = 
     lastSync: runs[0] ?? null,
     lastSuccessfulSyncAt: (lastOk.data?.[0]?.finished_at as string | undefined) ?? null,
     totalMRR: sum(counted),
-    softwareMRR: sum(software),
-    softwareCount: software.length,
-    serviceMRR: sum(service),
-    serviceCount: service.length,
-    serviceScheduled: soonestScheduledChange(service),
+    productMRR: sum(software),
+    productCount: software.length,
+    clientMRR: sum(service),
+    clientCount: service.length,
+    clientScheduled: soonestScheduledChange(service),
     totalScheduled: soonestScheduledChange(counted),
     activeCount: live.length,
     upcomingRenewals: renewals.length,
