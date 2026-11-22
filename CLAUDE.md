@@ -1839,7 +1839,12 @@ other table below is still staff-write-only, no exceptions.
   `location_count` (Stage 8 — input to the build recommendation
   algorithm), source, `referred_by_org_id` (self-FK), `assigned_owner` (FK
   profiles), notes, created_at, updated_at. Read = default (was already
-  staff-only write until Stage 3 added write policies).
+  staff-only write until Stage 3 added write policies). `is_demo`
+  (migration `0061`, boolean, default false) marks a fictional demo org —
+  set on Northline Mechanical only. A demo org keeps its real type
+  (Northline stays `active_client` so the marketing screenshots look
+  right); the flag only excludes it from the dashboard data-quality check
+  (active client with no linked Stripe subscription). No UI edits it.
 - `profiles` — id (= `auth.users.id`), full_name, email, role, org_id,
   created_at. `client_owner`/`client_user` require a non-null `org_id`.
   Write: staff can insert/update any profile; a user can update their own
